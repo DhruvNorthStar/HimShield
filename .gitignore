@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# Data: large, binary and regenerable. Share it through the team drive, never git.
+# The one exception is data/processed/*.csv (a few hundred KB, useful to share).
+# ---------------------------------------------------------------------------
+data/raw/*
+!data/raw/.gitkeep
+data/shapefiles/*
+!data/shapefiles/.gitkeep
+data/**/*.tif
+data/**/*.tiff
+data/**/*.hgt
+data/**/*.zip
+data/**/*.nc
+data/**/*.grd
+data/**/*.img
+*.aux.xml
+*.ovr
+
+# Models: binary, tens of MB, rebuilt by the training scripts
+models/*
+!models/.gitkeep
+*.pkl
+*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# QGIS backups and temp files
+*.qgs~
+*.qgz~
+*.qgd
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# IDEs (personal settings differ per teammate)
+.idea/
+.vscode/
+
+# Windows / macOS clutter
+Thumbs.db
+desktop.ini
+.DS_Store

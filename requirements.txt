@@ -1,0 +1,43 @@
+# Pinned dependencies. Same versions as environment.yml.
+#
+# RECOMMENDED: use environment.yml with conda (see README). Use this file only
+# as the fallback, and only with Python 3.11 from python.org in a venv:
+#
+#   py -3.11 -m venv .venv
+#   .venv\Scripts\activate
+#   python -m pip install --upgrade pip
+#   pip install -r requirements.txt
+#
+# This works on Windows because rasterio and pyogrio publish wheels with GDAL
+# bundled for Python 3.11. It FAILS on Python 3.13/3.14, where pip finds no
+# wheel, tries to compile GDAL from source and stops with "GDAL API version
+# must be specified" or "Microsoft Visual C++ 14.0 is required".
+
+# core data
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+
+# machine learning
+scikit-learn==1.7.2
+imbalanced-learn==0.14.0
+statsmodels==0.14.5
+joblib==1.5.2
+
+# geospatial
+rasterio==1.4.3
+geopandas==1.1.1
+shapely==2.1.1
+pyproj==3.7.1
+pyogrio==0.11.1
+
+# plotting, maps, dashboard
+matplotlib==3.10.6
+seaborn==0.13.2
+folium==0.20.0
+streamlit==1.49.1
+
+# notebooks and git hygiene
+jupyterlab==4.2.5
+ipykernel==6.29.5
+nbstripout==0.8.1

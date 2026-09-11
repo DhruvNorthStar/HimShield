@@ -1,0 +1,43 @@
+# Conda environment for the whole team. This is the recommended install path on Windows.
+#
+#   conda env create -f environment.yml
+#   conda activate landslide
+#   python verify_setup.py
+#
+# Why conda-forge and not plain pip: rasterio, geopandas, pyogrio and pyproj
+# wrap C libraries (GDAL, GEOS, PROJ). conda-forge ships all of them as one
+# matched set of Windows binaries, so there is nothing to compile and no DLL
+# mismatch. Do not `pip install` any of these into this environment later.
+#
+# Versions are pinned so all three laptops run identical code. Python 3.11 is
+# deliberate: every package below has mature Windows builds for it.
+name: landslide
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  # core data
+  - numpy=2.2.6
+  - pandas=2.3.3
+  - scipy=1.15.3
+  # machine learning
+  - scikit-learn=1.7.2
+  - imbalanced-learn=0.14.0
+  - statsmodels=0.14.5
+  - joblib=1.5.2
+  # geospatial
+  - rasterio=1.4.3
+  - geopandas=1.1.1
+  - shapely=2.1.1
+  - pyproj=3.7.1
+  - pyogrio=0.11.1
+  # plotting, maps, dashboard
+  - matplotlib=3.10.6
+  - seaborn=0.13.2
+  - folium=0.20.0
+  - streamlit=1.49.1
+  # notebooks and git hygiene
+  - jupyterlab=4.2.5
+  - ipykernel=6.29.5
+  - nbstripout=0.8.1
+  - pip

@@ -1,0 +1,18 @@
+# Store text with LF line endings in the repo; Git converts to CRLF on Windows checkout.
+# This stops "every line changed" diffs when teammates use different editors.
+* text=auto
+
+# Strip notebook outputs at commit time (needs `nbstripout --install` once per clone).
+# Outputs, execution counts and embedded images are what make notebooks conflict.
+*.ipynb filter=nbstripout
+*.ipynb diff=ipynb
+
+# Binary files: never try to merge or diff these as text.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.pkl binary
+*.tif binary
+*.tiff binary
+*.gpkg binary
+*.qgz binary
