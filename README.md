@@ -29,10 +29,12 @@ Then open **Miniforge Prompt** from the Start menu. Use it for every command bel
 
 ```
 cd C:\Projects\landslide-uttarakhand
-conda env create -f environment.yml
+conda env create -f environment.lock.yml
 conda activate landslide
 python verify_setup.py
 ```
+
+`environment.lock.yml` holds the exact versions, so all three laptops get identical packages. (`environment.yml` is the looser source file it was generated from. Only edit that one when adding a package, then regenerate the lock.)
 
 `verify_setup.py` must end with `READY`. If it prints a FAIL line, it also prints a hint. Fix that before doing anything else.
 
@@ -58,6 +60,8 @@ rasterio and geopandas are thin Python layers over C libraries (GDAL, GEOS, PROJ
 | `pip install rasterio` tries to compile and fails with "GDAL API version must be specified" or "Microsoft Visual C++ 14.0 is required" | No prebuilt wheel for your Python version (common on 3.13 and 3.14) | Use Python 3.11. The conda env pins it. |
 | `ImportError: DLL load failed` | pip and conda copies of GDAL mixed in one env, or a QGIS GDAL on PATH | Install geospatial packages only from conda-forge. Never `pip install` them into the conda env. |
 | `pyproj` or `to_crs` errors mentioning `proj.db` | `PROJ_LIB` / `PROJ_DATA` / `GDAL_DATA` set globally by a QGIS, OSGeo4W or PostGIS install | `verify_setup.py` warns about it. Remove the variable in System Properties > Environment Variables. |
+| `verify_setup.py` shows an old numpy/pandas "loaded from OUTSIDE this env" | An earlier `pip install --user` left packages in `AppData\Roaming\Python\Python311`, and Python searches that folder first | The env sets `PYTHONNOUSERSITE=1` on activation, which ignores that folder. Always activate the env; do not run `python.exe` from the env folder directly. |
+| `Warning: Cannot find ... (GDAL_DATA is not defined)` | Env not activated, so GDAL cannot find its data files | `conda activate landslide` first. In PyCharm/VS Code, select the conda env as interpreter (they activate it for you). |
 | Random "file in use" or duplicated files | Project folder synced by OneDrive | Keep the repo in `C:\Projects\`, outside OneDrive. |
 | Training script hangs or starts itself repeatedly | Windows starts parallel workers by re-importing the script | All training code sits under `if __name__ == "__main__":`. |
 

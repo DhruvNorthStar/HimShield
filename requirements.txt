@@ -1,7 +1,7 @@
-# Pinned dependencies. Same versions as environment.yml.
+# Pinned dependencies: the exact versions conda resolved in environment.lock.yml.
 #
-# RECOMMENDED: use environment.yml with conda (see README). Use this file only
-# as the fallback, and only with Python 3.11 from python.org in a venv:
+# RECOMMENDED: use environment.lock.yml with conda (see README). Use this file
+# only as the fallback, and only with Python 3.11 from python.org in a venv:
 #
 #   py -3.11 -m venv .venv
 #   .venv\Scripts\activate
@@ -16,28 +16,28 @@
 # core data
 numpy==2.2.6
 pandas==2.3.3
-scipy==1.15.3
+scipy==1.15.2
 
 # machine learning
 scikit-learn==1.7.2
-imbalanced-learn==0.14.0
-statsmodels==0.14.5
-joblib==1.5.2
+imbalanced-learn==0.14.2
+statsmodels==0.14.6
+joblib==1.5.3
 
 # geospatial
-rasterio==1.4.3
-geopandas==1.1.1
-shapely==2.1.1
-pyproj==3.7.1
+rasterio==1.4.4
+geopandas==1.1.4
+shapely==2.1.2
+pyproj==3.7.2
 pyogrio==0.11.1
 
 # plotting, maps, dashboard
-matplotlib==3.10.6
+matplotlib==3.10.9
 seaborn==0.13.2
 folium==0.20.0
 streamlit==1.49.1
 
 # notebooks and git hygiene
-jupyterlab==4.2.5
+jupyterlab==4.2.7
 ipykernel==6.29.5
-nbstripout==0.8.1
+nbstripout==0.8.2

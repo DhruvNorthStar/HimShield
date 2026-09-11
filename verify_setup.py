@@ -100,12 +100,32 @@ def check_python() -> None:
         record("FAIL", label, "use Python 3.10 or 3.11 (geospatial wheels lag behind newer versions)")
 
 
+LEAK_HINT = ("A copy installed outside this env is shadowing the conda package, usually an old "
+             "`pip install --user` in AppData\\Roaming\\Python, or a PYTHONPATH variable. See README "
+             "'Why conda, and what fails on Windows'.")
+
+
+def loaded_outside_env(mod) -> str:
+    """Return the folder a module was loaded from if it is NOT inside this environment, else ''."""
+    path = getattr(mod, "__file__", None)
+    if not path:
+        return ""
+    folder = Path(path).resolve().parent
+    return "" if Path(sys.prefix).resolve() in folder.parents else str(folder)
+
+
 def check_imports() -> None:
     print("\n-- Required packages")
     for module, package in REQUIRED:
         try:
             mod = importlib.import_module(module)
-            record("OK", package, getattr(mod, "__version__", "(version unknown)"))
+            version = getattr(mod, "__version__", "(version unknown)")
+            leak = loaded_outside_env(mod)
+            if leak:
+                record("FAIL", package, f"{version} loaded from OUTSIDE this env: {leak}")
+                print(f"       hint: {LEAK_HINT}")
+            else:
+                record("OK", package, version)
         except Exception as exc:  # noqa: BLE001 - we want to report every failure type
             fail(package, exc)
     print("\n-- Optional packages")
@@ -176,7 +196,9 @@ def check_ml_stack() -> None:
     from statsmodels.stats.outliers_influence import variance_inflation_factor
     from statsmodels.tools.tools import add_constant
 
-    X, y = make_classification(n_samples=300, n_features=6, weights=[0.67, 0.33], random_state=42)
+    # n_redundant=0: redundant columns are exact linear combinations, which make VIF infinite by design.
+    X, y = make_classification(n_samples=300, n_features=6, n_informative=4, n_redundant=0,
+                               weights=[0.67, 0.33], random_state=42)
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=42)
     scaler = StandardScaler().fit(X_tr)
     X_tr_s, X_te_s = scaler.transform(X_tr), scaler.transform(X_te)
@@ -188,7 +210,7 @@ def check_ml_stack() -> None:
     auc_rf = roc_auc_score(y_te, rf.predict_proba(X_te_s)[:, 1])
     Xc = add_constant(X_tr_s)
     vifs = [variance_inflation_factor(Xc, i) for i in range(1, Xc.shape[1])]
-    assert all(np.isfinite(vifs))
+    assert all(np.isfinite(vifs)), f"non-finite VIF values: {vifs}"
     record("OK", "ML chain (SMOTE, SVM, RF, VIF)", f"toy AUC svm={auc_svm:.2f} rf={auc_rf:.2f}")
 
 
@@ -217,6 +239,11 @@ def check_environment() -> None:
             print("             checks above failed, remove it: System Properties > Environment Variables.")
     if Path(sys.prefix).name.lower() in ("miniforge3", "miniconda3", "anaconda3"):
         record("WARN", "running in the conda BASE env", "run `conda activate landslide` first")
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    is_conda_env = (Path(sys.prefix) / "conda-meta").exists()
+    if is_conda_env and (not conda_prefix or Path(conda_prefix).resolve() != Path(sys.prefix).resolve()):
+        record("WARN", "conda env not activated",
+               "python.exe was run directly. Activation sets GDAL_DATA and PROJ_DATA; run `conda activate landslide`")
     project = Path(__file__).resolve().parent
     if "onedrive" in str(project).lower():
         record("WARN", "project is inside OneDrive", "move it (e.g. C:\\Projects) to avoid file locks and sync conflicts")

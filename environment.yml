@@ -9,35 +9,47 @@
 # matched set of Windows binaries, so there is nothing to compile and no DLL
 # mismatch. Do not `pip install` any of these into this environment later.
 #
-# Versions are pinned so all three laptops run identical code. Python 3.11 is
-# deliberate: every package below has mature Windows builds for it.
+# Pinning works in two layers:
+#   1. This file pins each package to a minor series ("=1.4" means 1.4.x).
+#      Exact patch pins here make conda-forge unsolvable, because shapely,
+#      rasterio and pyogrio must all link the SAME build of GEOS/GDAL and only
+#      some patch combinations share one.
+#   2. environment.lock.yml records the exact versions conda resolved. That is
+#      the file the team installs from, so all three laptops are identical.
+#
+# Python 3.11 is deliberate: every package below has mature Windows builds for it.
 name: landslide
 channels:
   - conda-forge
 dependencies:
   - python=3.11
   # core data
-  - numpy=2.2.6
-  - pandas=2.3.3
-  - scipy=1.15.3
+  - numpy=2.2
+  - pandas=2.3
+  - scipy=1.15
   # machine learning
-  - scikit-learn=1.7.2
-  - imbalanced-learn=0.14.0
-  - statsmodels=0.14.5
-  - joblib=1.5.2
+  - scikit-learn=1.7
+  - imbalanced-learn=0.14
+  - statsmodels=0.14
+  - joblib=1.5
   # geospatial
-  - rasterio=1.4.3
-  - geopandas=1.1.1
-  - shapely=2.1.1
-  - pyproj=3.7.1
-  - pyogrio=0.11.1
+  - rasterio=1.4
+  - geopandas=1.1
+  - shapely=2.1
+  - pyproj=3.7
+  - pyogrio=0.11
   # plotting, maps, dashboard
-  - matplotlib=3.10.6
-  - seaborn=0.13.2
-  - folium=0.20.0
-  - streamlit=1.49.1
+  - matplotlib=3.10
+  - seaborn=0.13
+  - folium=0.20
+  - streamlit=1.49
   # notebooks and git hygiene
-  - jupyterlab=4.2.5
-  - ipykernel=6.29.5
-  - nbstripout=0.8.1
+  - jupyterlab=4.2
+  - ipykernel=6.29
+  - nbstripout=0.8
   - pip
+variables:
+  # Ignore packages from an old `pip install --user` (AppData\Roaming\Python).
+  # Without this, Python loads those BEFORE the env's own packages and you get
+  # the wrong numpy/pandas silently. Applied on `conda activate landslide`.
+  PYTHONNOUSERSITE: "1"

@@ -24,10 +24,13 @@ How it is generated, so the values are plausible rather than random noise:
    terms (slope risk peaks near 35 degrees, a mid-elevation band, distance
    decays, a steep-and-wet interaction) plus noise for everything we do not
    measure. This is why an RBF kernel should beat a linear one here.
-4. Landslide points are drawn with probability proportional to that risk.
-   Non-landslide points are drawn uniformly from the remaining points,
-   excluding water bodies, at config.NEG_TO_POS_RATIO per landslide. This
-   mirrors how Step 2e samples real negatives.
+4. Each pool point then either fails or does not (a coin flip weighted by its
+   risk), with the overall failure rate fixed at TARGET_PREVALENCE. Landslide
+   points are sampled from the points that failed. Non-landslide points are
+   sampled uniformly from points where no landslide occurred, excluding water
+   bodies, at config.NEG_TO_POS_RATIO per landslide. This mirrors Step 2e:
+   real negatives come from terrain with no recorded landslide, and some of
+   that terrain is still risky, which is why no model reaches AUC 1.0.
 5. Realistic defects are injected on purpose so the EDA has something to
    catch: aspect = -1 on flat cells (the QGIS convention) and a few percent
    missing values where real rasters have NoData gaps.
@@ -40,6 +43,16 @@ from src import config
 N_POOL = 60_000       # candidate terrain points
 N_POSITIVE = 1_200    # landslide points (an arbitrary size for testing, not the real inventory count)
 N_RAIN_CELLS = 70     # roughly the number of 0.25 degree IMD cells over Uttarakhand
+
+# Difficulty knobs. Tuned so test AUC lands in the range published landslide
+# studies report (about 0.80-0.95): easy enough to show the pipeline works,
+# hard enough that the models do not look magically perfect.
+# Quick baseline at these settings (70/30 split, no grid search):
+#   linear SVM 0.84, RBF SVM 0.86, RF 0.90 test AUC.
+# Do not tune these to favour one model; that would make the comparison dishonest.
+SIGNAL_SCALE = 1.0    # multiplies every terrain effect in the hidden log-odds
+NOISE_SD = 0.8        # spread of the "everything we do not measure" term
+TARGET_PREVALENCE = 0.05  # share of pool points that experience a landslide
 
 BELTS = {
     "terai_bhabar": dict(
@@ -132,10 +145,9 @@ def build_terrain_pool(rng: np.random.Generator) -> pd.DataFrame:
 
 def hidden_log_odds(pool: pd.DataFrame, rng: np.random.Generator) -> np.ndarray:
     slope, elev, rain = pool["slope"], pool["elevation"], pool["rainfall"]
-    z = (
-        -5.0
-        + 3.0 * np.exp(-((slope - 35) / 12) ** 2)        # risk peaks on ~35 degree slopes
-        + 1.2 * np.exp(-((elev - 1600) / 700) ** 2)      # mid-elevation band
+    signal = (
+        3.0 * np.exp(-((slope - 35) / 10) ** 2)          # risk peaks on ~35 degree slopes, falls on cliffs
+        + 2.0 * np.exp(-((elev - 1600) / 700) ** 2)      # mid-elevation band (low in plains AND high peaks)
         + 1.0 * (rain - 1600) / 500
         + 1.6 * np.exp(-pool["dist_roads"] / 300)        # road cuts undercut slopes
         + 1.0 * np.exp(-pool["dist_streams"] / 250)      # toe erosion by streams
@@ -146,18 +158,39 @@ def hidden_log_odds(pool: pd.DataFrame, rng: np.random.Generator) -> np.ndarray:
         + pool["lithology"].map(LITHOLOGY_EFFECT)
         + pool["lulc"].map(LULC_EFFECT)
         + pool["soil_type"].map(SOIL_EFFECT)
-        + rng.normal(0, 0.8, size=len(pool))             # everything we do not measure
     )
-    return z.to_numpy()
+    noise = rng.normal(0, NOISE_SD, size=len(pool))      # everything we do not measure
+    return (SIGNAL_SCALE * signal + noise).to_numpy()   # intercept is calibrated in sample_points
+
+
+def _sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1 / (1 + np.exp(-x))
+
+
+def _calibrate_intercept(z: np.ndarray, prevalence: float) -> float:
+    """Find b so that the mean of sigmoid(b + z) equals the target prevalence (bisection)."""
+    lo, hi = -50.0, 50.0
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        if _sigmoid(mid + z).mean() > prevalence:
+            hi = mid
+        else:
+            lo = mid
+    return (lo + hi) / 2
 
 
 def sample_points(pool: pd.DataFrame, z: np.ndarray, rng: np.random.Generator) -> pd.DataFrame:
-    p = 1 / (1 + np.exp(-z))
-    pos_idx = rng.choice(len(pool), size=N_POSITIVE, replace=False, p=p / p.sum())
+    p = _sigmoid(_calibrate_intercept(z, TARGET_PREVALENCE) + z)
+    failed = rng.random(len(pool)) < p
 
-    remaining = np.setdiff1d(np.arange(len(pool)), pos_idx)
-    remaining = remaining[pool["lulc"].to_numpy()[remaining] != "Water"]  # Step 2e: exclude water bodies
-    neg_idx = rng.choice(remaining, size=N_POSITIVE * config.NEG_TO_POS_RATIO, replace=False)
+    pos_candidates = np.flatnonzero(failed)
+    if len(pos_candidates) < N_POSITIVE:
+        raise ValueError(f"only {len(pos_candidates)} failures in the pool; raise N_POOL or TARGET_PREVALENCE")
+    pos_idx = rng.choice(pos_candidates, size=N_POSITIVE, replace=False)
+
+    not_water = pool["lulc"].to_numpy() != "Water"  # Step 2e: exclude water bodies
+    neg_candidates = np.flatnonzero(~failed & not_water)
+    neg_idx = rng.choice(neg_candidates, size=N_POSITIVE * config.NEG_TO_POS_RATIO, replace=False)
 
     df = pd.concat([pool.iloc[pos_idx].assign(landslide=1), pool.iloc[neg_idx].assign(landslide=0)])
     return df.sample(frac=1, random_state=config.RANDOM_STATE).reset_index(drop=True)
