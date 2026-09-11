@@ -26,6 +26,20 @@ OUTPUTS_DIR = ROOT / "outputs"
 FIGURES_DIR = OUTPUTS_DIR / "figures"
 NOTEBOOKS_DIR = ROOT / "notebooks"
 
+# Raw downloads, one folder per factor (Step 1). See docs/01_data_sourcing.md.
+RAW_DEM_DIR = RAW_DIR / "dem"                # SRTM or Copernicus 1-degree tiles
+RAW_RAINFALL_DIR = RAW_DIR / "rainfall"      # IMD yearly files or CHIRPS annual GeoTIFFs
+RAW_LULC_DIR = RAW_DIR / "lulc"              # Bhuvan LULC or ESA WorldCover tiles
+RAW_SOIL_DIR = RAW_DIR / "soil"              # SoilGrids WRB or HWSD v2
+RAW_GEOLOGY_DIR = RAW_DIR / "geology"        # GSI lithology polygons and fault lines
+RAW_LANDSLIDE_DIR = RAW_DIR / "landslides"   # GSI inventory (or fallback catalogue)
+RAW_OSM_DIR = RAW_DIR / "osm"                # OpenStreetMap extract for roads
+RAW_BOUNDARY_DIR = RAW_DIR / "boundary"      # administrative boundaries as downloaded
+
+# Cleaned vector layers produced in QGIS (Step 2), all in PROJECT_CRS
+STATE_BOUNDARY = SHAPEFILE_DIR / "uttarakhand_boundary.gpkg"
+DISTRICT_BOUNDARIES = SHAPEFILE_DIR / "uttarakhand_districts.gpkg"
+
 # ---------------------------------------------------------------------------
 # Which dataset the pipeline runs on
 # ---------------------------------------------------------------------------

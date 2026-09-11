@@ -79,6 +79,8 @@ Always run from the repo root with the environment active.
 |---|---|---|
 | Environment check | `python verify_setup.py` | ready |
 | Synthetic dataset | `python -m src.make_synthetic` | ready |
+| Data sourcing guide | [docs/01_data_sourcing.md](docs/01_data_sourcing.md) | ready |
+| Open fallback downloads | `python -m src.get_open_data --list` | ready |
 | EDA | `notebooks/01_eda.ipynb` | Step 3 |
 | Preprocessing | `python -m src.preprocess` | Step 4 |
 | Train SVM | `python -m src.train_svm` | Step 5 |
