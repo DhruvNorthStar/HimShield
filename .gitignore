@@ -13,6 +13,8 @@ data/**/*.zip
 data/**/*.nc
 data/**/*.grd
 data/**/*.img
+data/**/*.vrt
+data/**/*.tif.vrt
 *.aux.xml
 *.ovr
 
