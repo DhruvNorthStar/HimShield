@@ -1,0 +1,106 @@
+<VRTDataset rasterXSize="18000" rasterYSize="14400">
+  <SRS dataAxisToSRSAxisMapping="2,1">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform>  7.6999861111111116e+01,  2.7777777777777778e-04,  0.0000000000000000e+00,  3.2000138888888891e+01,  0.0000000000000000e+00, -2.7777777777777778e-04</GeoTransform>
+  <VRTRasterBand dataType="Float32" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N28_00_E079_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="7200" yOff="10800" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N28_00_E080_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="10800" yOff="10800" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N29_00_E077_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="0" yOff="7200" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N29_00_E078_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="3600" yOff="7200" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N29_00_E079_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="7200" yOff="7200" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N29_00_E080_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="10800" yOff="7200" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N30_00_E077_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="0" yOff="3600" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N30_00_E078_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="3600" yOff="3600" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N30_00_E079_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="7200" yOff="3600" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N30_00_E080_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="10800" yOff="3600" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N30_00_E081_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="14400" yOff="3600" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N31_00_E077_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N31_00_E078_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="3600" yOff="0" xSize="3600" ySize="3600" />
+    </SimpleSource>
+    <SimpleSource resampling="nearest">
+      <SourceFilename relativeToVRT="0">C:/Projects/landslide-uttarakhand/data/raw/dem/Copernicus_DSM_COG_10_N31_00_E079_00_DEM.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="3600" RasterYSize="3600" DataType="Float32" BlockXSize="1024" BlockYSize="1024" />
+      <SrcRect xOff="0" yOff="0" xSize="3600" ySize="3600" />
+      <DstRect xOff="7200" yOff="0" xSize="3600" ySize="3600" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <OverviewList resampling="nearest">2 4 8</OverviewList>
+</VRTDataset>

@@ -45,6 +45,17 @@ The state's bounding box is about 334 km by 304 km. At 30 m that is roughly 11,1
    - Bilinear, not nearest neighbour: elevation is continuous, and nearest neighbour leaves stair-steps that turn into false slope patterns.
 4. **`gdal:cliprasterbymasklayer`**. Input `dem_utm.tif`, mask `uttarakhand_boundary.gpkg`. Tick **Match the extent of the clipped raster to the extent of the mask layer**, set NoData to -9999, and tick **Keep resolution of input raster**. Save as **`dem.tif`**.
 
+**Watch the file type in every Save dialog.** QGIS remembers the last format you used. If the type is left on VRT, typing `dem.tif` produces a file called `dem.tif.vrt`, which is a pointer to other files rather than a raster of its own. It looks correct in QGIS and reports the right size and CRS, but every read walks back through the chain to the original tiles, reprojecting as it goes, and GRASS then takes hours instead of minutes. In the Save dialog choose **GeoTIFF (*.tif)**, and afterwards check the file on disk really is `dem.tif`.
+
+If you already have `dem.tif.vrt`, you do not need to redo the work. Convert it once:
+
+```
+Raster > Conversion > Translate (convert format)
+  Input: dem (the .vrt layer)
+  Advanced parameters > Additional creation options: COMPRESS=DEFLATE and PREDICTOR=3
+  Converted: data/processed/dem.tif   (file type GeoTIFF)
+```
+
 `dem.tif` now defines the grid for everything else. **Every later raster must match its extent and resolution exactly**, or sampled values will belong to the wrong place on the ground. The easy way: in each tool, open the Extent dropdown and choose **Calculate from layer > dem**.
 
 **Time:** 20 to 40 minutes.
@@ -55,32 +66,57 @@ The state's bounding box is about 334 km by 304 km. At 30 m that is roughly 11,1
 
 **Why:** these four describe the shape of the ground, and slope is usually the strongest single predictor of landslides.
 
-- **elevation** is `dem.tif` itself. Nothing to compute.
-- **slope: `gdal:slope`** (Raster > Analysis > Slope). Input `dem.tif`, Z factor 1.0, leave "slope expressed as percent" **unticked** so you get degrees. Save as `slope.tif`. Expect 0 to about 75 degrees.
-- **aspect: `gdal:aspect`** (Raster > Analysis > Aspect). Input `dem.tif`. Leave "return trigonometric angle" unticked so you get compass degrees, 0 to 360 clockwise from north, and leave "return 0 for flat" **unticked**. Save as `aspect_raw.tif`.
-- **curvature: `grass:r.slope.aspect`**. Input `dem.tif`. Of its many outputs take **pcurvature** (profile curvature, measured down the slope line, which controls whether water speeds up or ponds). Save as `curvature_raw.tif`, and leave the other outputs unset to save time.
+**elevation** is `dem.tif` itself. Nothing to compute. The other three come from **one** run of `grass:r.slope.aspect`, which reads the DEM once and writes all of them.
 
-Then two clean-up passes in **Raster > Raster Calculator**:
+### Run r.slope.aspect
 
-1. **Flat cells have no aspect.** GDAL gives them NoData, and leaving it that way turns a fact into a missing value. Our schema uses **-1 for flat**, matching the synthetic dataset and `src/preprocess.py`:
+1. **Processing > Toolbox**, search `r.slope.aspect`, open it (GRASS group).
+2. **Elevation:** `dem`.
+3. **Format for reporting the slope:** `degrees`.
+4. **Type of output aspect and slope layer:** `FCELL` (decimals, not whole numbers).
+5. **Multiplicative factor to convert elevation units to meters:** `1`. Heights and the grid are both in metres already.
+6. **Minimum slope value for which aspect is computed:** `0`.
+7. Outputs: set **Slope** to `data/processed/slope.tif`, **Aspect** to `data/processed/aspect_grass.tif`, **Profile curvature** to `data/processed/curvature_raw.tif`. For every other output, click the **...** and choose **Skip output**, otherwise GRASS writes several more 450 MB files you do not need.
+8. Open **Advanced parameters**, set **GRASS region cellsize** to `30`, and set the region extent from `dem`.
+9. Run. Expect **15 to 40 minutes** and a few GB of temporary space.
 
-   ```
-   ("slope@1" < 1) * -1 + ("slope@1" >= 1) * "aspect_raw@1"
-   ```
+### Convert the aspect to compass degrees
 
-   Save as `aspect.tif`.
+**This is the trap in Step 2b.** GRASS measures aspect anticlockwise from east (90 = north, 180 = west, 270 = south, 360 = east) and writes 0 on flat ground. Our schema uses compass degrees clockwise from north, with -1 for flat. Skip this and every aspect value is wrong in a way nothing later detects.
 
-2. **Curvature units.** GRASS returns 1/m, so values look like 0.0004 and are hard to read. Multiply by 100 for the 1/100 m units in our schema:
+**Raster > Raster Calculator**, expression:
 
-   ```
-   "curvature_raw@1" * 100
-   ```
+```
+("slope@1" >= 1) * ( ("aspect_grass@1" > 0) * ("aspect_grass@1" <= 90) * (90 - "aspect_grass@1") + ("aspect_grass@1" > 90) * (450 - "aspect_grass@1") ) - ("slope@1" < 1)
+```
 
-   Save as `curvature.tif`.
+Set the output to `data/processed/aspect.tif`, and set the extent and cell size from `dem`.
 
-**Check the curvature sign.** In GRASS `r.slope.aspect`, **positive is convex (ridges) and negative is concave (hollows)**, which is what our schema assumes. Other packages use the opposite convention, so if you swap tools, verify the sign on a known ridge first.
+Check it after: north-facing slopes should read near 0 or 360, east near 90, south near 180, west near 270, and flat ground exactly -1.
 
-**Time:** 30 to 60 minutes. `r.slope.aspect` over the whole state is slow.
+If you would rather avoid the conversion, `gdal:aspect` returns compass degrees directly; run it on `dem.tif`, leave "return trigonometric angle" unticked, and then apply only the flat rule: `("slope@1" < 1) * -1 + ("slope@1" >= 1) * "aspect_gdal@1"`.
+
+### Fix the curvature units
+
+GRASS returns curvature in 1/m, so values read as 0.0004. Multiply by 100 for the 1/100 m units in our schema:
+
+```
+"curvature_raw@1" * 100
+```
+
+Save as `data/processed/curvature.tif`.
+
+**Check the sign.** In GRASS, **positive is convex (ridges) and negative is concave (hollows)**, which is what our schema assumes. Other packages use the opposite convention, so verify on a known ridge if you ever swap tools.
+
+### Verify before moving on
+
+```
+python -m src.check_layers
+```
+
+Every layer must sit on the same grid as `dem.tif` and hold sensible values. A layer that is shifted by one cell still returns numbers in Step 2f, and they belong to the wrong place on the ground.
+
+**Time:** 30 to 60 minutes, mostly waiting on GRASS.
 
 ---
 
