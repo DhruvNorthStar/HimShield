@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 12 September 2026. Update this file whenever a decision is made or a dataset arrives.
+Last updated: 12 September 2026 (data day 2). Update this file whenever a decision is made or a dataset arrives.
 
 ## 1. Snapshot
 
@@ -101,6 +101,23 @@ NEG_TO_POS_RATIO = 2           NEGATIVE_BUFFER_M = 500     PROJECT_CRS = EPSG:32
 DEM_RESOLUTION_M = 30          DEMO_DISTRICT = Rudraprayag PRIMARY_CV_METRIC = roc_auc
 DROPPED_COLUMNS = {}           (nothing dropped yet)
 ```
+
+## 3b. Deadline
+
+Phase 2 is due about 4 weeks out: treat it as **25 working days from 13 September 2026**, so roughly mid
+October 2026. Exact date to be confirmed.
+
+## 3c. The GSI inventory: what we found on 12 September 2026
+
+BhuSanket shows the inventory in a map viewer with no download button. Behind the viewer sits an ArcGIS
+service at `bhusanket.gsi.gov.in/gisserver/rest/services/Hosted/India_All_Landslided/FeatureServer/0`,
+holding **31,551 landslide points nationally** (a separate endpoint counts 36,072 records). Requested
+directly, that service answers **"Token Required"**, so it is access controlled; only the portal proxy
+can read it.
+
+We did not pull the data through that proxy. Going around an access control is not defensible in a
+viva and not something to build a submission on. The legitimate routes stay: register on Bhukosh, or
+ask GSI directly. Until then the provisional inventory is NASA GLC (see the data table).
 
 ## 4. Data status
 

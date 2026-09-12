@@ -37,9 +37,11 @@ The state's bounding box is about 334 km by 304 km. At 30 m that is roughly 11,1
    missing tile becomes a hole that turns into NULL columns after extraction, and a void becomes
    missing terrain in the middle of the mountains.
 1. Drag all 14 tiles from `data/raw/dem/` into QGIS.
-2. **`gdal:merge`** (Raster > Miscellaneous > Merge). Input: all 14 layers. Output data type `Float32` for Copernicus (its heights are decimals), or `Int16` for SRTM. Save as `data/processed/dem_merged.tif`.
+2. **`gdal:buildvirtualraster`** (Raster > Miscellaneous > Build Virtual Raster). Input: all 14 layers. Save as `data/processed/dem_merged.vrt`.
+   - A virtual raster is a small text file that makes the 14 tiles behave as one layer, so this finishes in seconds and writes almost nothing to disk. The real pixels get written once, in the warp at step 3.
+   - The alternative, **`gdal:merge`**, writes a single 1 GB file first and takes several minutes. Use it only if a later tool refuses the .vrt. If you do, set the output type to `Float32` for Copernicus (its heights are decimals), never `Int16`, which would truncate them.
    - Check it covers the whole state with no black gaps, and that heights run from roughly 200 m in the Terai to about 7,800 m at Nanda Devi.
-3. **`gdal:warpreproject`** (Raster > Projections > Warp). Source CRS EPSG:4326, target CRS **EPSG:32644**, resampling **Bilinear**, output resolution **30**, NoData **-9999**. Save as `dem_utm.tif`.
+3. **`gdal:warpreproject`** (Raster > Projections > Warp). Input `dem_merged.vrt`. Source CRS EPSG:4326, target CRS **EPSG:32644**, resampling **Bilinear**, output resolution **30**, NoData **-9999**. Save as `dem_utm.tif`.
    - Bilinear, not nearest neighbour: elevation is continuous, and nearest neighbour leaves stair-steps that turn into false slope patterns.
 4. **`gdal:cliprasterbymasklayer`**. Input `dem_utm.tif`, mask `uttarakhand_boundary.gpkg`. Tick **Match the extent of the clipped raster to the extent of the mask layer**, set NoData to -9999, and tick **Keep resolution of input raster**. Save as **`dem.tif`**.
 
