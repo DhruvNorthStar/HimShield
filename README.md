@@ -83,6 +83,7 @@ Always run from the repo root with the environment active.
 | Open fallback downloads | `python -m src.get_open_data --list` | ready |
 | Check DEM tiles before mosaicking | `python -m src.check_dem` | ready |
 | QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
+| Where the project stands | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | living document |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
 | EDA | `python -m src.eda` or `notebooks/01_eda.ipynb` | ready |
 | Preprocessing | `python -m src.preprocess` | Step 4 |
