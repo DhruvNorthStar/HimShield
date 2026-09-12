@@ -54,7 +54,8 @@ def main() -> int:
     if config.STATE_BOUNDARY.exists():
         state_geom = gpd.read_file(config.STATE_BOUNDARY).to_crs(config.GEOGRAPHIC_CRS).union_all()
 
-    print(f"{'file':<30} {'size':>11} {'dtype':>7} {'min':>7} {'max':>7} {'voids all':>10} {'voids in state':>15}")
+    print(f"{'file':<46} {'size':>10} {'dtype':>8} {'min m':>7} {'max m':>7} "
+          f"{'voids all':>10} {'voids in state':>15}")
     for path in files:
         name = path.name
         sources["SRTM" if SRTM_PATTERN.search(name) else
@@ -79,8 +80,8 @@ def main() -> int:
                     if in_state.any():
                         inside_pct = 100 * void_mask[in_state].mean()
             shown = f"{inside_pct:>14.2f}%" if inside_pct is not None else "     outside state"
-            print(f"{name:<30} {src.width}x{src.height:<5} {str(src.dtypes[0]):>7} "
-                  f"{valid.min() if valid.size else 0:>7} {valid.max() if valid.size else 0:>7} "
+            print(f"{name:<46} {src.width}x{src.height:<4} {str(src.dtypes[0]):>8} "
+                  f"{valid.min() if valid.size else 0:>7,.0f} {valid.max() if valid.size else 0:>7,.0f} "
                   f"{100 * void_mask.mean():>9.2f}% {shown}")
             if src.crs is None or src.crs.to_epsg() != 4326:
                 problems.append(f"{name}: CRS is {src.crs}, expected EPSG:4326 as downloaded.")
