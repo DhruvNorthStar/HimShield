@@ -81,6 +81,8 @@ Always run from the repo root with the environment active.
 | Synthetic dataset | `python -m src.make_synthetic` | ready |
 | Data sourcing guide | [docs/01_data_sourcing.md](docs/01_data_sourcing.md) | ready |
 | Open fallback downloads | `python -m src.get_open_data --list` | ready |
+| QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
+| QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
 | EDA | `notebooks/01_eda.ipynb` | Step 3 |
 | Preprocessing | `python -m src.preprocess` | Step 4 |
 | Train SVM | `python -m src.train_svm` | Step 5 |

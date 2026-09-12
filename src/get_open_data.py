@@ -17,6 +17,7 @@ renamed when complete, so a half-finished file is never mistaken for a good one.
 import argparse
 import math
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -167,12 +168,17 @@ def download(url: str, dest: Path, retries: int = 3) -> None:
 # ---------------------------------------------------------------------------
 # Boundary post-processing: state outline + district polygons in the project CRS
 # ---------------------------------------------------------------------------
+def _ascii(text: str) -> str:
+    """Fold accents: geoBoundaries writes 'Uttarakhand' as 'Uttarākhand' and districts likewise."""
+    return unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode().strip()
+
+
 def prepare_boundary() -> None:
     import geopandas as gpd
 
     adm1 = gpd.read_file(config.RAW_BOUNDARY_DIR / "geoBoundaries-IND-ADM1.geojson")
     adm2 = gpd.read_file(config.RAW_BOUNDARY_DIR / "geoBoundaries-IND-ADM2.geojson")
-    state = adm1[adm1["shapeName"].str.lower().isin(["uttarakhand", "uttaranchal"])]
+    state = adm1[adm1["shapeName"].map(lambda n: _ascii(n).lower()).isin(["uttarakhand", "uttaranchal"])]
     if state.empty:
         raise SystemExit("Uttarakhand not found in ADM1. Names present: " + ", ".join(sorted(adm1["shapeName"])))
 
@@ -184,7 +190,8 @@ def prepare_boundary() -> None:
     source = "geoBoundaries gbOpen IND (fallback; replace with Survey of India boundary if obtained)"
     state_out = gpd.GeoDataFrame({"state": ["Uttarakhand"], "source": [source]}, geometry=[outline],
                                  crs=config.PROJECT_CRS)
-    districts_out = gpd.GeoDataFrame({"district": districts["shapeName"].to_numpy(), "source": source},
+    districts_out = gpd.GeoDataFrame({"district": [_ascii(n) for n in districts["shapeName"]],
+                                      "district_original": districts["shapeName"].to_numpy(), "source": source},
                                      geometry=districts.geometry.to_numpy(), crs=config.PROJECT_CRS)
     config.SHAPEFILE_DIR.mkdir(parents=True, exist_ok=True)
     state_out.to_file(config.STATE_BOUNDARY, driver="GPKG")

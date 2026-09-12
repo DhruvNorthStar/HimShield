@@ -86,16 +86,22 @@ If you later get the Survey of India boundary, save it at the same two paths in 
 
 **Tiles:** each covers 1 x 1 degree, is named like `n30_e079_1arc_v3.tif` after its south-west corner, and is about 25 MB.
 
-Uttarakhand spans roughly 28.7 to 31.5 N and 77.6 to 81.0 E. These 11 tiles certainly intersect it:
+Uttarakhand spans roughly 28.7 to 31.5 N and 77.6 to 81.0 E. Tested against our boundary layer on 12 September 2026, **exactly 14 tiles** touch the state:
 
-| | E077 | E078 | E079 | E080 |
-|---|---|---|---|---|
-| **N31** | | n31_e078 | n31_e079 | |
-| **N30** | n30_e077 | n30_e078 | n30_e079 | n30_e080 |
-| **N29** | n29_e077 | n29_e078 | n29_e079 | n29_e080 |
-| **N28** | | | n28_e079 | |
+| | E077 | E078 | E079 | E080 | E081 |
+|---|---|---|---|---|---|
+| **N31** | n31_e077 | n31_e078 | n31_e079 | | |
+| **N30** | n30_e077 | n30_e078 | n30_e079 | n30_e080 | n30_e081 |
+| **N29** | n29_e077 | n29_e078 | n29_e079 | n29_e080 | |
+| **N28** | | | n28_e079 | n28_e080 | |
 
-Slivers along the edges may add 1 to 4 more: n28_e080 (Banbasa), n30_e081 (Lipulekh), and possibly n28_e078 or n31_e077. **Expect 11 to 15 tiles, about 0.3 to 0.4 GB in total.** Download every tile EarthExplorer returns for the boundary polygon. For the exact list from our own boundary, run `python -m src.get_open_data --list dem` after the boundary step. It uses the same 1-degree grid (Copernicus `N30_00_E079` is SRTM `n30_e079`).
+At about 25 MB per SRTM tile that is roughly 350 MB. Three of them barely clip a corner of the state (n30_e081 near Lipulekh, n28_e080 near Banbasa, n31_e077 in north-west Uttarkashi), but download all 14: a missing corner leaves a hole in the mosaic. To reprint this list at any time:
+
+```
+python -m src.get_open_data --list dem
+```
+
+It uses the same 1-degree grid as SRTM (Copernicus `N30_00_E079` is SRTM `n30_e079`).
 
 **Fallback: Copernicus DEM GLO-30** (ESA/Airbus, 30 m, no account).
 
