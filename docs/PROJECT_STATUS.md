@@ -13,8 +13,8 @@ Last updated: 12 September 2026 (data day 2). Update this file whenever a decisi
 | Environment | conda env `landslide`, Python 3.11.16, at `%USERPROFILE%\miniforge3\envs\landslide` |
 | QGIS | 3.44.12 LTR at `C:\Program Files\QGIS 3.44.12` |
 | Data source in use | **synthetic** (`src/config.py`, `DEFAULT_DATA_SOURCE`) |
-| Steps done | 0, 0.5, 1, 3, 4, 5, 6 built; 2a and 2b complete in QGIS |
-| Steps left | 2c to 2g (in QGIS), 7, 8, 9 |
+| Steps done | 0, 0.5, 1, 3, 4, 5, 6, 7 built; 2a and 2b complete in QGIS |
+| Steps left | 2c to 2g (in QGIS), 8, 9 |
 | Team | one person doing all of it |
 
 What runs today, end to end:

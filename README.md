@@ -89,7 +89,7 @@ Always run from the repo root with the environment active.
 | Preprocessing | `python -m src.preprocess` | ready |
 | Train SVM | `python -m src.train_svm` | ready |
 | Train RF | `python -m src.train_rf` | ready |
-| Evaluate and compare | `python -m src.evaluate` | Step 7 |
+| Evaluate and compare | `python -m src.evaluate` | ready |
 | Dashboard | `streamlit run dashboard/app.py` | Step 8 |
 | Demo map | (script added in Step 9) | Step 9 |
 

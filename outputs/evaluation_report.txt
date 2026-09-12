@@ -1,0 +1,53 @@
+*** SYNTHETIC DATA - NOT REAL *** (dataset_synthetic.csv) Results are for pipeline testing only.
+
+HELD-OUT TEST SET: 1,078 rows
+
+--- SVM (RBF) (threshold 0.5) ---
+              precision    recall  f1-score   support
+
+      stable      0.853     0.775     0.812       720
+   landslide      0.618     0.732     0.670       358
+
+    accuracy                          0.761      1078
+   macro avg      0.736     0.753     0.741      1078
+weighted avg      0.775     0.761     0.765      1078
+
+--- Random Forest (threshold 0.5) ---
+              precision    recall  f1-score   support
+
+      stable      0.884     0.781     0.829       720
+   landslide      0.643     0.793     0.710       358
+
+    accuracy                          0.785      1078
+   macro avg      0.763     0.787     0.769      1078
+weighted avg      0.804     0.785     0.789      1078
+
+
+SUMMARY
+                   SVM (RBF)  Random Forest
+AUC                   0.8304         0.8682
+average precision     0.6694         0.7424
+accuracy              0.7607         0.7848
+precision             0.6179         0.6425
+recall                0.7318         0.7933
+f1                    0.6701         0.7100
+specificity           0.7750         0.7806
+
+VERDICT
+Random Forest is the better model on this data.
+
+On AUC, the metric that does not depend on a threshold, Random Forest scores 0.8682 against 0.8304, a gap of 0.0378.
+Resampling the test set 1,000 times puts that gap between +0.0234 and +0.0529, which excludes zero. The difference is larger than the noise in a test set this size.
+
+SVM (RBF): at the usual 0.5 cut-off it catches 73% of real landslides (262 of 358), and 62% of the places it flags are real. It misses 96 landslides and raises 162 false alarms.
+Random Forest: at the usual 0.5 cut-off it catches 79% of real landslides (284 of 358), and 64% of the places it flags are real. It misses 74 landslides and raises 158 false alarms.
+
+Why the ranking comes out this way:
+- Random Forest splits on thresholds, which is the shape terrain failure actually takes: risk changes sharply around a slope angle rather than sliding smoothly.
+- It also handles the one-hot rock and land-cover columns without needing them to be comparable in scale, and it models interactions between factors for free.
+- Inside the SVM, the RBF kernel beats a linear one by only +0.0090 AUC. The non-linearity argument is weak on this dataset, and saying so is more defensible than assuming the fancier kernel must be better.
+
+Limitations to state alongside these numbers:
+- The stable points are places with no recorded landslide, which is not the same as places where none can happen. Some of them are risky ground that has never been mapped, which caps how high any score here can go.
+- Train and test rows were split at random, so points near each other in the landscape can land on both sides. Terrain is spatially correlated, so these scores are likely a little optimistic compared with predicting a region never seen.
+- SYNTHETIC DATA - NOT REAL: every number above comes from simulated data and describes nothing about Uttarakhand.
