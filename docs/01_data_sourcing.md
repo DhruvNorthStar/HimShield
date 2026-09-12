@@ -27,7 +27,7 @@ Give each primary source a time limit: **2 working days**, or **5 for Bhuvan** b
 | Factor(s) | Primary | Fallback (no account) | Essential? |
 |---|---|---|---|
 | landslide points | GSI inventory (Bhukosh / BhuSanket) | NASA COOLR catalogue | **essential**, and no fallback is as good |
-| elevation, slope, aspect, curvature, streams | SRTM 1 arc-second (EarthExplorer) | Copernicus DEM GLO-30 | **essential** |
+| elevation, slope, aspect, curvature, streams | **Copernicus DEM GLO-30** (chosen: SRTM had 766 km2 of voids) | SRTM 1 arc-second (EarthExplorer) | **essential** |
 | rainfall | IMD 0.25 degree gridded | CHIRPS v2.0 annual | essential |
 | lulc | Bhuvan LULC 250K | ESA WorldCover 2021 | essential |
 | lithology | GSI geology (Bhukosh) | USGS Geologic Map of South Asia (coarse) | essential |
@@ -74,7 +74,29 @@ If you later get the Survey of India boundary, save it at the same two paths in 
 
 ---
 
-## b) DEM: SRTM 1 arc-second (30 m)
+## b) DEM: Copernicus GLO-30, after testing SRTM
+
+**Decision made on 12 September 2026: we use Copernicus DEM GLO-30, not SRTM.** We downloaded the
+SRTM tiles first and checked them with `python -m src.check_dem`, which found:
+
+- 766 km2 inside Uttarakhand with no elevation at all (1.33 percent of cells): 476 km2 in Uttarkashi,
+  254 km2 in Pithoragarh, 16 in Bageshwar, 8 in Champawat. SRTM flew in 2000 and its radar could not
+  see into some steep Himalayan valleys, so those cells are empty.
+- The voids sit in the highest terrain, where valid neighbouring cells are above 4,000 m.
+
+Filling them by interpolation would invent slope values in the steepest ground in the state, which is
+precisely the ground this project is about. Copernicus GLO-30 is void free, comes from newer radar
+(2011 to 2015), is more accurate on steep slopes, and needs no account:
+
+```
+python -m src.get_open_data dem      # 14 tiles, 581 MB
+python -m src.check_dem              # confirm 14 tiles, no voids, one source
+```
+
+The SRTM tiles are kept in `data/raw/dem_srtm_unused/` with a note, so the comparison can go in the
+report. **Do not mix the two sources in one mosaic:** their heights differ, and the seams show.
+
+### If you prefer SRTM anyway
 
 **Account:** USGS ERS (free).
 

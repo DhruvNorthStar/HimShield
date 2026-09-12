@@ -81,6 +81,7 @@ Always run from the repo root with the environment active.
 | Synthetic dataset | `python -m src.make_synthetic` | ready |
 | Data sourcing guide | [docs/01_data_sourcing.md](docs/01_data_sourcing.md) | ready |
 | Open fallback downloads | `python -m src.get_open_data --list` | ready |
+| Check DEM tiles before mosaicking | `python -m src.check_dem` | ready |
 | QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
 | EDA | `python -m src.eda` or `notebooks/01_eda.ipynb` | ready |

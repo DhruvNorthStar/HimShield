@@ -27,8 +27,17 @@ The state's bounding box is about 334 km by 304 km. At 30 m that is roughly 11,1
 
 **Why:** the DEM arrives as 14 separate one-degree tiles. Everything later needs one continuous surface, and any gap becomes a hole in the final map.
 
+0. **Check the tiles first**, which takes seconds and saves hours:
+
+   ```
+   python -m src.check_dem
+   ```
+
+   It must report 14 tiles, one source, and no voids inside the state before you mosaic anything. A
+   missing tile becomes a hole that turns into NULL columns after extraction, and a void becomes
+   missing terrain in the middle of the mountains.
 1. Drag all 14 tiles from `data/raw/dem/` into QGIS.
-2. **`gdal:merge`** (Raster > Miscellaneous > Merge). Input: all 14 layers. Output data type `Int16` for SRTM or Copernicus heights. Save as `data/processed/dem_merged.tif`.
+2. **`gdal:merge`** (Raster > Miscellaneous > Merge). Input: all 14 layers. Output data type `Float32` for Copernicus (its heights are decimals), or `Int16` for SRTM. Save as `data/processed/dem_merged.tif`.
    - Check it covers the whole state with no black gaps, and that heights run from roughly 200 m in the Terai to about 7,800 m at Nanda Devi.
 3. **`gdal:warpreproject`** (Raster > Projections > Warp). Source CRS EPSG:4326, target CRS **EPSG:32644**, resampling **Bilinear**, output resolution **30**, NoData **-9999**. Save as `dem_utm.tif`.
    - Bilinear, not nearest neighbour: elevation is continuous, and nearest neighbour leaves stair-steps that turn into false slope patterns.
