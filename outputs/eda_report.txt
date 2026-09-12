@@ -1,0 +1,47 @@
+*** SYNTHETIC DATA - NOT REAL *** (dataset_synthetic.csv) Results are for pipeline testing only.
+
+MISSING VALUES
+              missing  percent
+soil_type          64     1.78
+lithology          39     1.08
+rainfall           17     0.47
+landslide           0     0.00
+elevation           0     0.00
+aspect              0     0.00
+slope               0     0.00
+curvature           0     0.00
+lulc                0     0.00
+dist_roads          0     0.00
+dist_streams        0     0.00
+dist_faults         0     0.00
+
+CLASS SEPARATION
+              mean_landslide  mean_stable  point_biserial_r
+factor                                                     
+rainfall            2030.474     1707.911             0.398
+slope                 32.763       26.288             0.228
+curvature             -0.902        0.045            -0.216
+dist_roads           990.147     2324.811            -0.184
+dist_faults         2647.940     3880.228            -0.143
+elevation           1583.672     1898.320            -0.132
+dist_streams         363.304      496.716            -0.114
+aspect               181.445      177.596             0.018
+
+NOTES
+Class balance: 1,200 landslide and 2,400 stable points, ratio 1:2.00. config.NEG_TO_POS_RATIO is 2.
+  Predicting 'stable' for everything would already score 66.7% accuracy, which is why accuracy alone is a weak measure here and we report AUC, precision and recall too.
+Missing values in 3 column(s): soil_type 1.78%, lithology 1.08%, rainfall 0.47%.
+  In real data these are usually NoData at the state edge or a raster that does not fully cover the boundary. Step 4 fills them (median or most frequent).
+Aspect is -1 (flat ground, no direction) on 38 rows (1.1%).
+  Aspect is circular: 359 degrees and 1 degree are neighbours, but a model reads them as far apart. Step 4 converts it to sine and cosine, or to compass sectors.
+LEAK RISK: every one of the 201 soil_type = Fluvisols rows is stable. That is perfect separation inside this dataset only.
+  Usually an artefact of the sampling rule, not a real effect. Drop those rows or merge the class before training, and say which you did.
+LEAK RISK: every one of the 265 lithology = Alluvium rows is stable. That is perfect separation inside this dataset only.
+  Usually an artefact of the sampling rule, not a real effect. Drop those rows or merge the class before training, and say which you did.
+LEAK RISK: every one of the 8 lulc = Water rows is landslide. That is perfect separation inside this dataset only.
+  Usually an artefact of the sampling rule, not a real effect. Drop those rows or merge the class before training, and say which you did.
+lulc has 1 class(es) under 1% of rows: Water.
+  Rare classes make unstable dummy columns. Consider grouping them as 'Other'.
+No numeric pair correlates above 0.8, so the VIF step may drop nothing.
+Strongest separation between the classes: rainfall (r = +0.40), slope (r = +0.23), curvature (r = -0.22).
+Almost no separation ( |r| < 0.05 ): aspect. These may still matter through interactions, so keep them unless VIF drops them.

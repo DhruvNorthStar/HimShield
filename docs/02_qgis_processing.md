@@ -1,6 +1,6 @@
 # Step 2: QGIS processing
 
-Turns the Step 1 downloads into one CSV with the exact project schema. This is the longest and most error-prone step of Phase 2. Budget **3 to 5 working days** for two people.
+Turns the Step 1 downloads into one CSV with the exact project schema. This is the longest and most error-prone step of Phase 2. Working alone, budget **5 to 8 working days**, and treat each sub-step below as one sitting. The times in the table at the end are machine time, not your time: start a long tool running and do something else.
 
 Every algorithm name below was checked against the installed QGIS 3.44.12 LTR on 12 September 2026, so you can paste an ID such as `grass:r.slope.aspect` into the Processing Toolbox search box and land on the right tool.
 

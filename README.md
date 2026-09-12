@@ -83,7 +83,7 @@ Always run from the repo root with the environment active.
 | Open fallback downloads | `python -m src.get_open_data --list` | ready |
 | QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
-| EDA | `notebooks/01_eda.ipynb` | Step 3 |
+| EDA | `python -m src.eda` or `notebooks/01_eda.ipynb` | ready |
 | Preprocessing | `python -m src.preprocess` | Step 4 |
 | Train SVM | `python -m src.train_svm` | Step 5 |
 | Train RF | `python -m src.train_rf` | Step 6 |
@@ -159,10 +159,16 @@ landslide-uttarakhand/
 `-- verify_setup.py    run first
 ```
 
-## Team
+## Working order (one person)
 
-| Member | Phase 2 focus |
-|---|---|
-| _name_ | data sourcing and QGIS (Steps 1-2) |
-| _name_ | QGIS distance factors and sampling, then EDA (Steps 2-3) |
-| _name_ | ML pipeline on synthetic data, dashboard (Steps 4-8) |
+The whole build is being done by one person, so the order matters more than any split of work. The
+pipeline runs on the synthetic dataset from day one, which means the ML half is finished and tested
+before the real CSV arrives, and swapping in real data is a one-line change.
+
+| Order | Work | Depends on |
+|---|---|---|
+| 1 | Register on the portals, place the Bhuvan order | nothing, do it first: approvals take days |
+| 2 | Steps 3 to 8 on synthetic data (EDA, preprocessing, SVM, RF, evaluation, dashboard) | nothing |
+| 3 | Step 1 downloads, in the background while Step 2 runs | registrations |
+| 4 | Step 2 in QGIS, one sub-step per sitting | downloads |
+| 5 | Switch to real data, rerun Steps 3 to 8, then Step 9 | dataset.csv |

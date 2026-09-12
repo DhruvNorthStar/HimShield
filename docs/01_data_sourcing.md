@@ -242,13 +242,17 @@ Streams are **not downloaded**: Step 2c derives them from the DEM, so they line 
 3. Add a row to [data_sources_log.md](data_sources_log.md): source, file, date, who downloaded it, and anything odd. That table becomes the data section of the report.
 4. Never commit anything from `data/raw/`. Share files through the team drive (see CONTRIBUTING.md).
 
-## Suggested split
+## Order of work for one person
 
-| Person | Step 1 tasks |
-|---|---|
-| A | boundary, DEM, roads (then Step 2a to 2c) |
-| B | GSI: inventory, lithology, faults; soil (then Step 2d and 2e) |
-| C | rainfall, LULC order; carries on with Steps 3 to 8 on synthetic data |
+| Order | Task | Why here |
+|---|---|---|
+| 1 | Register everywhere, place the Bhuvan order | approvals run in the background while you work |
+| 2 | `python -m src.get_open_data boundary` | every other step needs the outline |
+| 3 | DEM (14 tiles) | the longest download, and Step 2 starts with it |
+| 4 | GSI inventory, lithology and faults | the one irreplaceable source; chase it early |
+| 5 | rainfall, land cover, soil, roads | needed later in Step 2, so they can arrive while you work |
+
+Start each download before you sit down to a QGIS sub-step, so waiting overlaps with working.
 
 ## What will take longer than expected
 
