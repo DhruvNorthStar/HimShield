@@ -86,7 +86,7 @@ Always run from the repo root with the environment active.
 | Where the project stands | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | living document |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
 | EDA | `python -m src.eda` or `notebooks/01_eda.ipynb` | ready |
-| Preprocessing | `python -m src.preprocess` | Step 4 |
+| Preprocessing | `python -m src.preprocess` | ready |
 | Train SVM | `python -m src.train_svm` | Step 5 |
 | Train RF | `python -m src.train_rf` | Step 6 |
 | Evaluate and compare | `python -m src.evaluate` | Step 7 |
