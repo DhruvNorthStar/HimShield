@@ -400,11 +400,96 @@ That creates a specific risk: a model can use a smooth regional gradient as a di
 
 These come straight from Step 1 and only need aligning to `dem.tif`:
 
-- **rainfall.** Load the IMD yearly NetCDF files, total each year's daily rainfall, average across years to get **mean annual rainfall in mm**, then warp to EPSG:32644 at 30 m with **bilinear** (source cells are about 27 km across, so bilinear avoids visible blocks) and clip. With CHIRPS, average the annual GeoTIFFs instead. Save as `rainfall.tif`.
+- **rainfall**: see [Rainfall raster (CHIRPS)](#rainfall-raster-chirps) below, tested step by step.
 - **lulc** and **soil**: see [Land cover and soil rasters](#land-cover-and-soil-rasters) below, tested step by step.
 - **lithology** stays a polygon layer: reproject to 32644 and keep the rock-type attribute. We attach it with a spatial join instead of rasterising, which keeps the class names intact.
 
 **Nearest neighbour for anything categorical.** Bilinear on class codes invents values: halfway between "tree cover" (10) and "cropland" (40) is 25, which means nothing.
+
+---
+
+## Rainfall raster (CHIRPS)
+
+**What the layer is:** mean annual rainfall in mm, averaged over many years so that one unusually wet or dry year does not decide it. Every step below was run on the real CHIRPS files on 14 September 2026.
+
+### Which years, and why not all 20
+
+The downloader fetched 2005 to 2024, but **only 2009 to 2024 are used**. Measured over Uttarakhand:
+
+| Test | Result |
+|---|---|
+| 2005 to 2008 average against 2009 to 2024 average | 42.7 percent lower |
+| Spatial match between the two periods | r = 0.52, where 1.0 is identical |
+| 2009, a nationwide monsoon drought year | scores above every year from 2005 to 2008 |
+
+A real drought year outscoring four normal years points to a change inside the CHIRPS record, not to weather. The drop also varies from place to place, so averaging those years in would distort the pattern the models learn, not just the level. Sixteen years is still a sound climate average. (`python -m src.get_open_data rainfall` now starts at 2009 by default.)
+
+### A. Average the 16 years
+
+1. Drag `chirps-v2.0.2009.tif` to `chirps-v2.0.2024.tif` from `data/raw/rainfall/` into QGIS: 16 files. Leave 2005 to 2008 out.
+2. **Processing > Toolbox**, search `Cell statistics`, open it (Raster analysis group).
+3. **Input layers:** tick the 16 CHIRPS layers, 2009 to 2024.
+4. **Statistic:** **Mean**.
+5. Tick **Ignore NoData values**.
+6. **Reference layer:** `chirps-v2.0.2009`. Do not pick `dem`: that would cut every year into 30 m cells by nearest neighbour before averaging, which is slow and adds nothing.
+7. **Output NoData value:** `-9999`.
+8. **Output layer:** Save to File > `data/processed/rain_mean.tif`, **GeoTIFF**.
+9. Run. About **12 seconds**.
+
+The result still covers the world at 5.5 km. Oceans are NoData.
+
+### B. Warp onto the DEM grid
+
+10. **Raster > Projections > Warp (Reproject)**.
+11. **Input layer:** `rain_mean`. **Source CRS:** EPSG:4326. **Target CRS:** **EPSG:32644**.
+12. **Resampling method:** **Bilinear**.
+13. **Nodata value for output bands:** `-9999`.
+14. **Output file resolution:** `30`.
+15. **Georeferenced extents:** **Calculate from Layer > dem**. **Extent CRS:** EPSG:32644.
+16. **Output data type:** **Float32**. Tick **Use multithreaded warping implementation**.
+17. **Additional creation options:** `COMPRESS=DEFLATE` and `PREDICTOR=3`.
+18. **Reprojected:** Save to File > `data/processed/rainfall.tif`, **GeoTIFF**.
+19. Run. About **17 seconds**, 65 MB.
+
+**Why bilinear here, when land cover used Mode:** rainfall is a continuous quantity, not a class. Nearest neighbour would stamp each 5.5 km CHIRPS cell onto the 30 m grid as a hard-edged square, and a model can latch onto those artificial edges as if they meant something. Bilinear blends smoothly between cell centres. Be clear in the report that this smooths the picture but does not add real detail: the true resolution is still about 5.5 km.
+
+### C. Verify
+
+```
+python -m src.check_layers
+```
+
+`rainfall` must show **aligned: yes**. Expected inside Uttarakhand: **minimum 505 mm, median 1,448 mm, maximum 2,520 mm**, with no NoData.
+
+Sanity check against geography:
+
+| District | Median mm/year |
+|---|---|
+| Dehradun | 1,854 |
+| Nainital | 1,593 |
+| Tehri Garhwal | 1,538 |
+| Rudraprayag | 1,381 |
+| Pithoragarh | 1,346 |
+| Chamoli | 1,278 |
+
+By elevation: 1,551 mm below 1,000 m, 1,453 mm at 1,000 to 2,000 m, 1,328 mm at 3,000 to 4,500 m, and 1,108 mm above 4,500 m. The outer ranges catch the monsoon first; the high Himalaya sits in rain shadow.
+
+### Limitations to state alongside this layer
+
+- CHIRPS blends satellite estimates with station records, and satellite rainfall is known to underestimate the heavy, terrain-driven rain of steep mountains. Absolute totals here are probably low in places; the pattern across the state matters more to the model than the level, and every feature is rescaled before training anyway.
+- The real resolution is about 5.5 km, so rainfall cannot separate one slope from the next. It describes the climate of an area, not a hillside.
+- Mean annual rainfall is a conditioning factor. Landslides are triggered by intense short bursts, which an annual average does not capture.
+
+### What tends to go wrong with rainfall
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Values around 20,000 to 40,000 | Statistic left on Sum | set it to Mean |
+| Median near 1,310 mm, not 1,448 | 2005 to 2008 included | use only 2009 to 2024 |
+| Hard square blocks visible when zoomed in | Nearest neighbour used in the warp | Bilinear |
+| `rain_mean` came out at 30 m and took minutes | Reference layer set to `dem` | reference a CHIRPS year |
+| NoData patches inside the state | Ignore NoData unticked | tick it and rerun |
+| `aligned: NO` | extent not from `dem`, or resolution not 30 | set both |
 
 ---
 

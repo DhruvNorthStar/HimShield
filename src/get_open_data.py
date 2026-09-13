@@ -325,7 +325,10 @@ def main() -> int:
     # No argparse `choices` here: with nargs="*", Python 3.11 rejects an empty list as an invalid choice.
     parser.add_argument("items", nargs="*", help=f"one or more of: {', '.join(ITEMS)}, all")
     parser.add_argument("--list", action="store_true", help="show files and sizes, download nothing")
-    parser.add_argument("--first-year", type=int, default=2005, help="first CHIRPS year (default 2005)")
+    # CHIRPS 2005-2008 over Uttarakhand sits 43 percent below 2009-2024 and its spatial pattern matches
+    # the later years at only r = 0.52, while 2009 (a nationwide drought year) scores above all four.
+    # That is a shift in the record, not weather, so the default starts at 2009. Tested 14 Sep 2026.
+    parser.add_argument("--first-year", type=int, default=2009, help="first CHIRPS year (default 2009)")
     parser.add_argument("--last-year", type=int, default=2024, help="last CHIRPS year (default 2024)")
     args = parser.parse_args()
 

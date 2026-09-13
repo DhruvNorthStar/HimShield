@@ -177,7 +177,7 @@ In Step 2 these become one raster of **mean annual rainfall (mm/year)**: the sum
 **Fallback: CHIRPS v2.0 annual totals** (0.05 degree, about 5.5 km, no account).
 
 ```
-python -m src.get_open_data rainfall                      # 2005-2024: 20 files x 58 MB = 1.15 GB
+python -m src.get_open_data rainfall                      # 2009-2024: 16 files x 58 MB = 0.92 GB
 python -m src.get_open_data rainfall --first-year 2015    # fewer years, smaller download
 ```
 
