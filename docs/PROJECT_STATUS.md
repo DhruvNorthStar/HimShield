@@ -1,22 +1,22 @@
 # Project status
 
-Last updated: 14 September 2026, end of session. Update this file whenever a decision is made or a dataset arrives. For a full briefing, see [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md).
+Last updated: 14 September 2026, second session. Update this file whenever a decision is made or a dataset arrives. For a full briefing, see [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md).
 
 ## 1. Snapshot
 
 | | |
 |---|---|
 | Project | HimShield: landslide susceptibility mapping, Uttarakhand, SVM vs Random Forest |
-| Phase | 2 of 3, about 72 percent complete |
-| Deadline | 25 working days from 13 September 2026, about 16 October 2026 (to be confirmed) |
+| Phase | 2 of 3, about 75 percent complete |
+| Deadline | **Monday 19 October 2026**: 25 working days from 13 September, with Gandhi Jayanti (2 October) a college holiday |
 | Repo | https://github.com/DhruvNorthStar/HimShield (public), pushed after every commit |
 | Local copy | `C:\Projects\landslide-uttarakhand` |
 | Environment | conda env `landslide`, Python 3.11.16 |
 | QGIS | 3.44.12 LTR, GRASS provider enabled |
 | Data source in use | **synthetic**, until the real CSV exists |
 | Built | Steps 0, 0.5, 1, 3, 4, 5, 6, 7 |
-| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil |
-| Pending | rainfall processing, lithology, landslide points, stable points, extraction; Steps 8 and 9 |
+| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil, rainfall: **all 10 rasters** |
+| Pending | lithology, landslide points, stable points, extraction; Steps 8 and 9 |
 | Team | one person |
 
 ## 2. Progress on 14 September 2026
@@ -28,10 +28,12 @@ Last updated: 14 September 2026, end of session. Update this file whenever a dec
 | `dist_roads.tif` | ✅ verified: 0 to 100,360 m |
 | `dist_streams.tif` | ✅ verified: 0 to 111,522 m (redone after an all-zero first attempt) |
 | `dist_faults.tif` | ✅ verified: 0 to 275,434 m |
-| `check_layers` | ✅ passing all 9 built layers (dem, slope, aspect, curvature, three distances, lulc, soil) |
-| CHIRPS rainfall | ✅ downloaded: 20 annual files, 2005 to 2024, 1.15 GB, in 245 s |
-| Rainfall processing in QGIS | ⏳ pending; steps written and rehearsed on the real files |
-| Bhukosh | ❌ still not accessible: not registered yet, and the site would not load in the in-app browser |
+| CHIRPS rainfall | ✅ downloaded; 2009 to 2024 kept (16 files, 880 MB), 2005 to 2008 deleted |
+| `rainfall.tif` | ✅ verified: aligned; inside the state 506 to 2,519 mm, median 1,448 mm, no NoData; district medians within 1 mm of the rehearsal; `rain_mean.tif` identical to an independent 2009 to 2024 mean |
+| `check_layers` | ✅ passing **all 10 layers**, nothing missing |
+| `verify_setup.py` | ✅ READY, 0 warnings (rechecked at the start of the second session) |
+| Deadline | ✅ confirmed: Monday 19 October 2026 |
+| Bhukosh | ⏳ user registering today, and the project guide's letter to GSI goes out today |
 
 Also found and fixed today:
 
@@ -54,7 +56,7 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 | dist_faults | 0 to 275,434 m | 8 GEM faults; weak factor |
 | lulc | codes 10 to 100 | Mode resampling |
 | soil | codes 0 to 29 | nearest neighbour; code 0 = no soil |
-| rainfall | pending | expected median 1,448 mm, range 505 to 2,520 mm |
+| rainfall | 390 to 2,520 mm over the grid, 506 to 2,519 inside the state | CHIRPS mean 2009 to 2024, bilinear |
 
 ## 4. Results so far (synthetic data, not findings about Uttarakhand)
 
@@ -72,23 +74,21 @@ RF wins by 0.0379 AUC (bootstrap 95% interval +0.0234 to +0.0529). RBF beats lin
 
 | Factor | Status |
 |---|---|
-| DEM, boundary, land cover, soil, roads, faults | processed and verified |
-| Rainfall | downloaded (CHIRPS), QGIS processing pending |
+| DEM, boundary, land cover, soil, roads, faults, rainfall | processed and verified |
 | Landslide inventory | **provisional**: NASA GLC, 205 points in the state, only 85 accurate to 5 km. GSI inventory needs Bhukosh |
 | Lithology | missing: needs Bhukosh |
 
 ## 6. Open issues
 
-- GSI inventory blocking; decision on about 25 September: GSI data, or hand-digitised Rudraprayag scars.
+- GSI inventory blocking; decision on day 10 (Friday 25 September): GSI data, or hand-digitised Rudraprayag scars.
 - Lithology may have to be dropped through `DROPPED_COLUMNS`.
 - `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data.
-- `data/processed/` holds 3.7 GB, much of it intermediates; cleanup needs the user's go-ahead.
+- `data/processed/` holds about 3.8 GB, much of it intermediates; cleanup needs the user's go-ahead.
 
 ## 7. Next steps
 
-1. Register on Bhukosh and request the GSI inventory through the project guide.
-2. Rainfall processing in QGIS, then `check_layers` for 10 of 10.
-3. Step 8 dashboard and Step 9 groundwork on synthetic models.
-4. Inventory decision on day 10.
-5. Landslide points, stable points, extraction, export, `label_categories`.
-6. Switch to real data, rerun Steps 3 to 7, then Step 9.
+1. User: Bhukosh registration and the guide's letter to GSI (14 September).
+2. Step 8 dashboard and Step 9 groundwork on synthetic models (in progress).
+3. Inventory decision on day 10, Friday 25 September.
+4. Landslide points, stable points, extraction, export, `label_categories`.
+5. Switch to real data, rerun Steps 3 to 7, then Step 9.

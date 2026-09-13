@@ -1,6 +1,6 @@
 # PROJECT HANDOFF: HimShield
 
-Written 14 September 2026 at the end of a working session, so a fresh Claude Code session can continue without losing context. Read this whole file before doing anything. `docs/PROJECT_STATUS.md` is the living status document; this file is the complete briefing.
+Written 14 September 2026 at the end of a working session, so a fresh Claude Code session can continue without losing context. Updated later on 14 September: rainfall raster built and verified, deadline confirmed as 19 October. Read this whole file before doing anything. `docs/PROJECT_STATUS.md` is the living status document; this file is the complete briefing.
 
 ---
 
@@ -17,20 +17,20 @@ Binary classification: given terrain conditioning factors at a location, predict
 
 ### Deadline
 
-Phase 2 is due **25 working days from 13 September 2026**. Counting Monday to Friday from 14 September, that is **about Friday 16 October 2026** (19 October if Gandhi Jayanti on 2 October is not a working day). The exact date is still to be confirmed with the user. Today, 14 September, is day 1.
+Phase 2 is due **25 working days from 13 September 2026: Monday 19 October 2026**. Day 1 is Monday 14 September; days run Monday to Friday, and Gandhi Jayanti (Friday 2 October) is a college holiday (confirmed by the user on 14 September). Any other college holiday before then pushes the date back one working day.
 
 ---
 
 ## 2. Status at handoff
 
-**Phase 2 is about 72 percent complete.** Everything on the ML side runs end to end on synthetic data. The remaining work is mostly QGIS and data, and one dataset (the real GSI landslide inventory) is blocking.
+**Phase 2 is about 75 percent complete.** Everything on the ML side runs end to end on synthetic data. The remaining work is mostly QGIS and data, and one dataset (the real GSI landslide inventory) is blocking.
 
 | Step | State |
 |---|---|
 | 0 Environment | done, `verify_setup.py` prints READY |
 | 0.5 Git and GitHub | done, pushed to public repo after every commit |
 | 1 Data sourcing | mostly done; inventory provisional, lithology missing |
-| 2 QGIS processing | 2a, 2b, 2c, land cover and soil **done and verified**; rainfall downloaded, processing **pending**; lithology, landslide points, stable points, extraction **not started** |
+| 2 QGIS processing | 2a, 2b, 2c, land cover, soil and rainfall **done and verified** (all 10 rasters); lithology, landslide points, stable points, extraction **not started** |
 | 3 EDA | done (synthetic) |
 | 4 Preprocessing | done (synthetic) |
 | 5 SVM | done (synthetic) |
@@ -161,7 +161,7 @@ No LICENSE file. The user was told the repo is "all rights reserved" without one
 | `geology/` | `gem_active_faults_harmonized.geojson` | 10.6 MB | used, weak |
 | `landslides/` | `global_landslide_catalog_NASA.shp` (+ .dbf .prj .shx .zip) | 3.6 MB zip | **provisional** |
 | `osm/roads_tiles/` | 17 cached Overpass tile JSON files | 103 MB | cache, deletable |
-| `rainfall/` | `chirps-v2.0.2005.tif` to `chirps-v2.0.2024.tif`, 20 files | 1.15 GB | downloaded; **only 2009 to 2024 to be used** |
+| `rainfall/` | `chirps-v2.0.2009.tif` to `chirps-v2.0.2024.tif`, 16 files (2005 to 2008 deleted by the user) | 880 MB | used |
 
 ### Vector layers, `data\shapefiles\` (EPSG:32644)
 
@@ -187,7 +187,7 @@ Grid: **11,123 × 10,135 cells, 30 m, EPSG:32644, extent 170670 to 504360 E, 317
 | `dist_faults.tif` | 0 to 275,434 m | |
 | `lulc.tif` | codes 10 to 100 | Mode resampling |
 | `soil.tif` | codes 0 to 29 | nearest neighbour; code 0 kept intact |
-| `rainfall.tif` | **not built yet** | |
+| `rainfall.tif` | 390 to 2,520 mm over the grid; 506 to 2,519 inside the state | mean of 2009 to 2024, bilinear, 60 MB; intermediate `rain_mean.tif` (EPSG:4326, 0.05°) |
 
 **Intermediates also in `data\processed\`** (not needed downstream, deletable only with the user's agreement): `aspect_grass.tif`, `curvature_raw.tif`, `streams.tif`, `streams_raw.tif`, `drainage.tif`, `roads_rast.tif`, `faults_rast.tif`, `dem_rudraprayag.tif`, `dem.tif.vrt`, `dem_utm.tif.vrt`, `dem_merged.vrt`, `faults_clip.gpkg`, `faults_no_fold.gpkg`, `state_buffer_50km.gpkg`, `rudraprayag_boundary.gpkg`, `prepared.joblib`. `aspect.tif`, `curvature.tif` and the three `dist_*.tif` are uncompressed (~431 MB each) and could be recompressed losslessly. The folder totals 3.7 GB.
 
@@ -210,10 +210,11 @@ Grid: **11,123 × 10,135 cells, 30 m, EPSG:32644, extent 170670 to 504360 E, 317
 | 2c faults | `dist_faults.tif` | clip in lat/long first, 50 km buffer, remove anticline, reproject, rasterise, proximity |
 | land cover | `lulc.tif` | VRT with "separate band" unticked, warp Mode, extent from dem, 30 m, `-ovr NONE` |
 | soil | `soil.tif` | warp nearest neighbour, NoData left empty |
+| rainfall | `rainfall.tif` | cell statistics mean of 16 CHIRPS years, warp bilinear to the dem grid (section 8) |
 
 ### Remaining, in order
 
-1. **Rainfall** (section 8 below). Data is on disk.
+1. **Rainfall**: done on 14 September and verified (section 8).
 2. **Lithology**: needs Bhukosh. If it never arrives, add `lithology` to `DROPPED_COLUMNS` in `src/config.py` with the reason and record the drop in the README.
 3. **2d landslide points**: reproject, clip, polygons to points with `native:pointonsurface`, delete duplicates, add `landslide = 1`.
 4. **2e stable points**: 500 m buffer around landslides, water mask from `lulc.tif` code 80, difference, `native:randompointsinpolygons` with 2 × positives and 500 m minimum spacing, `landslide = 0`.
@@ -226,9 +227,11 @@ The `dem` layer in `uttarakhand.qgz` pointed at `dem.tif.vrt` instead of `dem.ti
 
 ---
 
-## 8. Rainfall processing (pending, next QGIS task)
+## 8. Rainfall processing (done 14 September 2026, verified)
 
-Full click-by-click steps are in `docs/02_qgis_processing.md` under **"Rainfall raster (CHIRPS)"**. Rehearsed on the real files on 14 September.
+Full click-by-click steps are in `docs/02_qgis_processing.md` under **"Rainfall raster (CHIRPS)"**. Rehearsed on the real files on 14 September, then run by the user the same day.
+
+**Verification of the user's run:** `check_layers` shows 10 of 10 layers aligned. Inside the state: minimum 506 mm, median 1,448 mm, maximum 2,519 mm, no NoData; every district median within 1 mm of the rehearsal. `rain_mean.tif` is identical (difference 0.000 mm) to an independently computed 2009 to 2024 mean, so the right 16 years were used. The only deviation is `PREDICTOR=2` instead of 3, which affects compression only (60 MB instead of 65 MB), not values.
 
 **Use only 2009 to 2024 (16 files).** Over Uttarakhand, the 2005 to 2008 average is 42.7 percent below 2009 to 2024, its spatial pattern matches at only r = 0.52, and 2009 (a nationwide drought year) scores above all four. That is a shift in the CHIRPS record, not weather.
 
@@ -383,7 +386,7 @@ From the repo root:
 conda activate landslide
 python verify_setup.py               # must end with READY, 0 warnings
 python -m src.check_dem              # 14 tiles, 14 Copernicus, all checks passed
-python -m src.check_layers           # 9 layers aligned; "Not built yet: rainfall"; exit 0
+python -m src.check_layers           # 10 layers aligned, nothing missing; exit 0
 python -m src.make_synthetic         # 3,600 rows, 1,200 landslide, 2,400 stable
 python -m src.eda                    # 5 figures + outputs/eda_report.txt
 python -m src.preprocess             # 29 features, SMOTE 1,680/1,680, test 720/358
@@ -393,14 +396,14 @@ python -m src.evaluate               # RF wins, interval +0.0234 to +0.0529
 git status -sb                       # clean, main...origin/main
 ```
 
-`check_layers` was last run on 14 September 2026 and passed all 9 layers. Training scripts spawn worker processes; on Windows they must stay under `if __name__ == "__main__":`.
+`check_layers` was last run on 14 September 2026 and passed all 10 layers. Training scripts spawn worker processes; on Windows they must stay under `if __name__ == "__main__":`.
 
 ---
 
 ## 15. Next steps in priority order
 
 1. **User: register on Bhukosh**, and ask the project guide to request the GSI inventory in writing. This unblocks the inventory and lithology, and approval takes days.
-2. **User: rainfall processing in QGIS** (section 8), then `check_layers` for 10 of 10.
+2. ~~User: rainfall processing in QGIS~~: done 14 September, `check_layers` 10 of 10.
 3. **Claude: Step 8 dashboard**, `dashboard/app.py`, three pages (Overview; Model Comparison with metrics and the ROC figure; Predict with sliders using `prepare_for_prediction()` and both models). Must run with `streamlit run dashboard/app.py`. Function over polish. Builds on synthetic models now.
 4. **Claude: Step 9 groundwork**: a script that predicts RF susceptibility over the Rudraprayag grid from the aligned rasters, classifies into the 5 risk zones, renders folium to `outputs/demo_map_rudraprayag.html`, and reports pixel count, time taken and the projected time for the whole state. It can be built and timed now; the real result needs real models.
 5. **Day 10, about 25 September: inventory decision** (GSI, or hand-digitised Rudraprayag).
@@ -418,7 +421,7 @@ git status -sb                       # clean, main...origin/main
 | 7 to 10 | 22 to 25 Sep | inventory decision on day 10 |
 | 11 to 15 | 28 Sep to 5 Oct | 2d to 2g, dataset.csv, switch to real data, rerun Steps 3 to 7 and 9 |
 | 16 to 22 | 6 to 14 Oct | report, figures, limitations, viva preparation |
-| 23 to 25 | 14 to 16 Oct | buffer |
+| 23 to 25 | 15, 16 and 19 Oct | buffer; **deadline Monday 19 October** (2 October is a holiday) |
 
 ## 17. How this user likes to work
 

@@ -113,12 +113,12 @@ Always run from the repo root with the environment active.
 | `landslide` | target: 1 = landslide, 0 = stable | int |
 | `slope` | slope angle from DEM | degrees |
 | `aspect` | slope direction from DEM, -1 where flat | degrees from north |
-| `elevation` | SRTM elevation | m |
+| `elevation` | elevation (Copernicus GLO-30 DEM) | m |
 | `curvature` | surface curvature from DEM | negative = concave |
-| `rainfall` | mean annual rainfall (IMD) | mm/year |
-| `soil_type` | soil class | category name |
+| `rainfall` | mean annual rainfall 2009 to 2024 (CHIRPS) | mm/year |
+| `soil_type` | soil class (SoilGrids WRB) | category name |
 | `lithology` | rock type (GSI) | category name |
-| `lulc` | land use / land cover (Bhuvan) | category name |
+| `lulc` | land use / land cover (ESA WorldCover 2021) | category name |
 | `dist_roads` | distance to nearest road (OSM) | m |
 | `dist_streams` | distance to nearest stream (from DEM) | m |
 | `dist_faults` | distance to nearest fault (GSI) | m |
