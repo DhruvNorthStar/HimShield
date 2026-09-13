@@ -1,4 +1,4 @@
-# Landslide susceptibility mapping, Uttarakhand
+# HimShield: landslide susceptibility mapping, Uttarakhand
 
 A comparative study of Support Vector Machine and Random Forest for predicting landslide-prone terrain in Uttarakhand, India. BCA final-year PBL project.
 
