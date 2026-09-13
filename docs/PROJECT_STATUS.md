@@ -1,76 +1,62 @@
 # Project status
 
-Last updated: 14 September 2026. Update this file whenever a decision is made or a dataset arrives.
+Last updated: 14 September 2026, end of session. Update this file whenever a decision is made or a dataset arrives. For a full briefing, see [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md).
 
 ## 1. Snapshot
 
 | | |
 |---|---|
 | Project | HimShield: landslide susceptibility mapping, Uttarakhand, SVM vs Random Forest |
-| Phase | 2 of 3, about 70 percent complete |
-| Deadline | 25 working days from 13 September 2026, so roughly mid October |
+| Phase | 2 of 3, about 72 percent complete |
+| Deadline | 25 working days from 13 September 2026, about 16 October 2026 (to be confirmed) |
 | Repo | https://github.com/DhruvNorthStar/HimShield (public), pushed after every commit |
 | Local copy | `C:\Projects\landslide-uttarakhand` |
 | Environment | conda env `landslide`, Python 3.11.16 |
 | QGIS | 3.44.12 LTR, GRASS provider enabled |
 | Data source in use | **synthetic**, until the real CSV exists |
 | Built | Steps 0, 0.5, 1, 3, 4, 5, 6, 7 |
-| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover and soil |
-| Left | rainfall, lithology, landslide points, stable points, extraction; Steps 8 and 9 |
+| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil |
+| Pending | rainfall processing, lithology, landslide points, stable points, extraction; Steps 8 and 9 |
 | Team | one person |
 
-Everything below runs end to end today:
+## 2. Progress on 14 September 2026
 
-```
-conda activate landslide
-python verify_setup.py          python -m src.check_dem       python -m src.check_layers
-python -m src.make_synthetic    python -m src.eda             python -m src.preprocess
-python -m src.train_svm         python -m src.train_rf        python -m src.evaluate
-```
-
-## 2. What is built
-
-### Code
-
-| File | What it does |
+| Item | Result |
 |---|---|
-| `src/config.py` | Every path, column name, seed, grid and artifact name |
-| `src/make_synthetic.py` | The labelled synthetic dataset used until real data exists |
-| `src/get_open_data.py` | No-account downloads: boundary, DEM, land cover, soil, rainfall, faults, tiled OSM roads |
-| `src/check_dem.py` | Validates DEM tiles before the mosaic |
-| `src/check_layers.py` | Validates every derived raster against the dem.tif grid, and fails constant or mostly-zero distance layers |
-| `src/label_categories.py` | QGIS export to dataset.csv with the exact schema; labels soil code 0 as No soil (rock or ice) |
-| `src/eda.py` | Step 3: reports, quality checks, five figures |
-| `src/preprocess.py` | Step 4: missing values, encoding, VIF, split, scale, SMOTE |
-| `src/train_svm.py` | Step 5: RBF grid search plus a linear kernel, SMOTE inside each CV fold |
-| `src/train_rf.py` | Step 6: grid search, impurity and permutation importance |
-| `src/evaluate.py` | Step 7: metrics, three figures, bootstrap comparison, written verdict |
-| `src/viz.py`, `src/artifacts.py` | Shared plot style and watermark; metadata merging |
-| `verify_setup.py` | Per-package OK/FAIL plus functional checks |
+| `lulc.tif` | ✅ verified: aligned, codes 10 to 100, class shares match the tested run exactly (tree cover 53.82%, grassland 17.25%, snow and ice 7.82%, water 0.57%) |
+| `soil.tif` | ✅ verified: aligned, codes 0 to 29, within 0.05 points of the tested run (Cambisols 45.38%, Luvisols 21.08%, Leptosols 17.38%, no soil 11.27%) |
+| `dist_roads.tif` | ✅ verified: 0 to 100,360 m |
+| `dist_streams.tif` | ✅ verified: 0 to 111,522 m (redone after an all-zero first attempt) |
+| `dist_faults.tif` | ✅ verified: 0 to 275,434 m |
+| `check_layers` | ✅ passing all 9 built layers (dem, slope, aspect, curvature, three distances, lulc, soil) |
+| CHIRPS rainfall | ✅ downloaded: 20 annual files, 2005 to 2024, 1.15 GB, in 245 s |
+| Rainfall processing in QGIS | ⏳ pending; steps written and rehearsed on the real files |
+| Bhukosh | ❌ still not accessible: not registered yet, and the site would not load in the in-app browser |
 
-### Documents
+Also found and fixed today:
 
-`README.md`, `CONTRIBUTING.md`, `docs/01_data_sourcing.md`, `docs/02_qgis_processing.md` (every
-QGIS step rehearsed on real data before it was written), `docs/data_sources_log.md`, this file,
-`notebooks/01_eda.ipynb`, and the QGIS project `uttarakhand.qgz`.
+- **SoilGrids code 0 is not Acrisols.** It covers 11.3% of the state at a median elevation of 5,224 m, so it is glaciers and bare rock. `src/label_categories.py` now labels it "No soil (rock or ice)", and the earlier "Acrisols 8%" in the data log is corrected.
+- **CHIRPS 2005 to 2008 are inconsistent.** 42.7% below 2009 to 2024, spatial match only r = 0.52, and 2009 (a drought year) scores above all four. Only 2009 to 2024 are used; the downloader now defaults to 2009.
+- **Repository housekeeping.** Derived QGIS vector layers are ignored, the geoBoundaries-derived Rudraprayag outline was untracked, and the README, CONTRIBUTING and this file were brought in line with the public solo workflow.
 
-## 3. Derived layers, verified 14 September 2026
+## 3. Derived layers
 
-All on one grid: 11,123 x 10,135 cells, 30 m, EPSG:32644. `python -m src.check_layers` passes.
+All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 
 | Layer | Range | Notes |
 |---|---|---|
 | dem | 184 to 7,800.55 m | Copernicus GLO-30 |
-| slope | 0 to 80.16 degrees | |
-| aspect | -1 to 360 | 4,107,242 flat cells (-1) |
-| curvature | -6.61 to 6.74 | profile curvature x 100 |
-| dist_roads | 0 to 100,360 m | 27,312 OSM segments, 45,736 km, 10 km margin past the border |
-| dist_streams | 0 to 111,522 m | r.watershed, threshold 1,000 cells (0.9 km2) |
-| dist_faults | 0 to 275,434 m | 8 GEM faults within 50 km; weak factor, see section 5 |
-| lulc | codes 10 to 100 | Mode resampling; tree cover 53.8%, grassland 17.3%, snow and ice 7.8%, water 0.57% |
-| soil | codes 0 to 29 | nearest neighbour; Cambisols 45.4%, Luvisols 21.1%, Leptosols 17.4%, no soil 11.3% |
+| slope | 0 to 80.16° | |
+| aspect | -1 to 360 | 4,107,242 flat cells |
+| curvature | -6.61 to 6.74 | profile curvature × 100 |
+| dist_roads | 0 to 100,360 m | 27,312 OSM segments, 10 km border margin |
+| dist_streams | 0 to 111,522 m | r.watershed threshold 1,000 cells |
+| dist_faults | 0 to 275,434 m | 8 GEM faults; weak factor |
+| lulc | codes 10 to 100 | Mode resampling |
+| soil | codes 0 to 29 | nearest neighbour; code 0 = no soil |
+| rainfall | pending | expected median 1,448 mm, range 505 to 2,520 mm |
 
-## 4. Results so far (synthetic data, so not findings about Uttarakhand)
+## 4. Results so far (synthetic data, not findings about Uttarakhand)
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
@@ -80,62 +66,29 @@ All on one grid: 11,123 x 10,135 cells, 30 m, EPSG:32644. `python -m src.check_l
 | Recall at 0.5 | 0.732 | 0.793 |
 | Landslides missed | 96 of 358 | 74 of 358 |
 
-Random Forest wins by 0.0379 AUC, bootstrap 95 percent interval +0.0234 to +0.0529. Inside the SVM,
-the RBF kernel beats a linear one by only +0.0090.
+RF wins by 0.0379 AUC (bootstrap 95% interval +0.0234 to +0.0529). RBF beats linear SVM by only +0.0090.
 
 ## 5. Data status
 
 | Factor | Status |
 |---|---|
-| DEM, boundary, land cover, soil, roads | **have**, processed and verified |
-| Faults | **have but weak**: only 4.8% of the state lies within 5 km of a fault, 61% lies beyond 50 km. Replace with GSI structural lines if possible; if it ranks suspiciously high on real data, drop it |
-| Landslide inventory | **provisional**: NASA GLC, 205 points in state, only 85 accurate to 5 km. The GSI inventory needs Bhukosh |
-| Rainfall | missing: IMD yearly files, or `python -m src.get_open_data rainfall` (CHIRPS) |
-| Lithology | missing: needs Bhukosh, no usable open substitute |
+| DEM, boundary, land cover, soil, roads, faults | processed and verified |
+| Rainfall | downloaded (CHIRPS), QGIS processing pending |
+| Landslide inventory | **provisional**: NASA GLC, 205 points in the state, only 85 accurate to 5 km. GSI inventory needs Bhukosh |
+| Lithology | missing: needs Bhukosh |
 
-## 6. Problems found and fixed
+## 6. Open issues
 
-| Problem | How it showed up | Fix |
-|---|---|---|
-| SMOTE leaking inside cross-validation | SVM CV 0.9199 against test 0.6884 | SMOTE moved inside each fold |
-| `dist_streams` 0 in all 112.7 million cells | proximity run with no target value, so NoData counted as stream | rerun with target value 1 |
-| `check_layers` passed that all-zero raster | 0 to 0 sits inside a legal range | now fails constant and mostly-zero distance layers |
-| `check_layers` would fail a correct `dist_faults` | grid corners are 275 km from any fault, limit was 200 km | limit raised to 500 km, above the 452 km grid diagonal |
-| Soil code 0 read as Acrisols | 11.3% of the state, median elevation 5,224 m | labelled No soil (rock or ice) |
-| GEM faults broke on reprojection | 30 of 13,696 global faults got infinite coordinates | clip in latitude/longitude first |
-| A fold listed among faults | one anticline inside the 50 km area | removed before rasterising |
-| QuickOSM timed out | 61,260 road segments in one request | tiled, resumable Overpass download |
-| SRTM voids and missing tiles | 766 km2 of the state with no elevation | switched to Copernicus GLO-30 |
-| Step 2a saved as a VRT chain | `dem.tif.vrt` walked back to the raw tiles | converted to a real GeoTIFF |
-| Old `pip --user` numpy shadowing the env | numpy 1.25 loaded instead of 2.2.6 | `PYTHONNOUSERSITE=1` |
-| Accented state name | geoBoundaries writes Uttarakhand with a macron | accents folded before matching |
-| GRASS aspect convention | anticlockwise from east | conversion expression in Step 2b |
-| Water-class leak | every water point was a landslide | water rows dropped in Step 4 |
+- GSI inventory blocking; decision on about 25 September: GSI data, or hand-digitised Rudraprayag scars.
+- Lithology may have to be dropped through `DROPPED_COLUMNS`.
+- `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data.
+- `data/processed/` holds 3.7 GB, much of it intermediates; cleanup needs the user's go-ahead.
 
-## 7. Decisions, and why
+## 7. Next steps
 
-| Decision | Reason |
-|---|---|
-| Copernicus DEM, not SRTM | SRTM had 766 km2 of voids inside the state |
-| EPSG:32644 statewide | metric grid; 0.1 percent scale error at the west edge beats a seam |
-| 1:2 landslide to stable, 500 m buffer | 1:1 leaves SMOTE nothing to do; ground beside a landslide is not stable |
-| SMOTE after the split and inside CV folds | anything else scores memorisation |
-| Aspect as sine and cosine | it is circular |
-| AUC as the headline metric | accuracy is near useless at a 1:2 balance |
-| Roads with a 10 km border margin | a border point may be nearest a road in Nepal or Himachal |
-| Stream threshold 1,000 cells | 0.9 km2 of catchment before a channel starts |
-| Faults within 50 km, folds removed | faults are sparse; the nearest to eastern Pithoragarh is in Nepal |
-| Mode for land cover, nearest for soil | Mode when shrinking 10 m to 30 m, nearest when enlarging 250 m to 30 m; never average class codes |
-| Soil code 0 as its own class | marking it missing would let Step 4 call glaciers Cambisols |
-| Synthetic data until the real CSV | Steps 3 to 8 finished and tested early |
-
-## 8. Next steps
-
-1. Register on **Bhukosh**. It is the only route to the real inventory and to lithology.
-2. Rainfall raster: CHIRPS via the script, or IMD yearly files.
-3. Landslide points and stable-point sampling, once an inventory is in hand.
-4. Extraction and export to `dataset.csv`, then switch config to real data and rerun Steps 3 to 7.
-5. Step 8 dashboard and Step 9 Rudraprayag demo map.
-
-Decision point around 26 September: without GSI data, digitise landslide scars for Rudraprayag by hand
-and scope Phase 2 to that district.
+1. Register on Bhukosh and request the GSI inventory through the project guide.
+2. Rainfall processing in QGIS, then `check_layers` for 10 of 10.
+3. Step 8 dashboard and Step 9 groundwork on synthetic models.
+4. Inventory decision on day 10.
+5. Landslide points, stable points, extraction, export, `label_categories`.
+6. Switch to real data, rerun Steps 3 to 7, then Step 9.
