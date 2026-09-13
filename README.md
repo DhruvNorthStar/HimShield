@@ -16,6 +16,15 @@ Phase 3, not built yet: full-state raster prediction, SHAP explainability, a pol
 
 Do this once per laptop. It takes about 15 minutes, most of it downloading.
 
+### 0. Get the code
+
+```
+git clone https://github.com/DhruvNorthStar/HimShield.git
+cd HimShield
+```
+
+This repository holds the code, documentation, the synthetic dataset and the figures. Raw downloads, derived rasters and trained models are not in it, because of their size: rebuild them with [docs/01_data_sourcing.md](docs/01_data_sourcing.md) and [docs/02_qgis_processing.md](docs/02_qgis_processing.md).
+
 ### 1. Install Miniforge
 
 Miniforge is a small conda installer that uses the conda-forge channel by default. Install it with either:
@@ -28,13 +37,13 @@ Then open **Miniforge Prompt** from the Start menu. Use it for every command bel
 ### 2. Create the environment
 
 ```
-cd C:\Projects\landslide-uttarakhand
+cd HimShield
 conda env create -f environment.lock.yml
 conda activate landslide
 python verify_setup.py
 ```
 
-`environment.lock.yml` holds the exact versions, so all three laptops get identical packages. (`environment.yml` is the looser source file it was generated from. Only edit that one when adding a package, then regenerate the lock.)
+`environment.lock.yml` holds the exact versions, so every machine gets identical packages. (`environment.yml` is the looser source file it was generated from. Only edit that one when adding a package, then regenerate the lock.)
 
 `verify_setup.py` must end with `READY`. If it prints a FAIL line, it also prints a hint. Fix that before doing anything else.
 
@@ -126,7 +135,7 @@ None so far.
 
 When the QGIS export is saved as `data/processed/dataset.csv`:
 
-1. Change `DEFAULT_DATA_SOURCE = "real"` in `src/config.py` and commit it, so all three of us switch together.
+1. Change `DEFAULT_DATA_SOURCE = "real"` in `src/config.py` and commit it, so every script switches over at once.
 2. Rerun the pipeline from preprocessing onward. Models trained on synthetic data must not be kept.
 
 `models/metadata.json` records which data source each model was trained on.
