@@ -82,6 +82,8 @@ Always run from the repo root with the environment active.
 | Data sourcing guide | [docs/01_data_sourcing.md](docs/01_data_sourcing.md) | ready |
 | Open fallback downloads | `python -m src.get_open_data --list` | ready |
 | Check DEM tiles before mosaicking | `python -m src.check_dem` | ready |
+| OpenStreetMap roads, tiled and resumable | `python -m src.get_open_data roads` | ready |
+| Check derived rasters against dem.tif | `python -m src.check_layers` | ready |
 | QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
 | Where the project stands | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | living document |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |

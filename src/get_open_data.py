@@ -40,7 +40,16 @@ SOILGRIDS_WCS = "https://maps.isric.org/mapserv?map=/map/wrb.map"
 SOILGRIDS_LEGEND_URL = "https://files.isric.org/soilgrids/latest/data/wrb/MostProbable.rat.json"
 CHIRPS_URL = "https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_annual/tifs/chirps-v2.0.{year}.tif"
 
-ITEMS = ("boundary", "dem", "lulc", "soil", "rainfall", "faults")
+ITEMS = ("boundary", "dem", "lulc", "soil", "rainfall", "faults", "roads")
+
+# Roads: OpenStreetMap through the Overpass API, fetched in small tiles so no single request
+# is big enough to time out. The whole state bounding box holds about 61,000 road segments.
+ROAD_CLASSES = ("motorway", "trunk", "primary", "secondary", "tertiary", "unclassified",
+                "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link")
+OVERPASS_URLS = ("https://overpass-api.de/api/interpreter",
+                 "https://maps.mail.ru/osm/tools/overpass/api/interpreter")
+ROAD_TILE_DEG = 0.75
+ROAD_BUFFER_M = 10_000
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +125,9 @@ def plan(item: str, first_year: int, last_year: int) -> list[tuple[str, Path]]:
     if item == "rainfall":  # CHIRPS v2.0 annual totals (mm/year), global 0.05 degree GeoTIFFs
         return [(CHIRPS_URL.format(year=y), config.RAW_RAINFALL_DIR / f"chirps-v2.0.{y}.tif")
                 for y in range(first_year, last_year + 1)]
+
+    if item == "roads":  # queried tile by tile in download_roads(), not a plain file download
+        return []
 
     if item == "faults":  # GEM Global Active Faults (includes the MFT, MBT and MCT systems)
         return [(GEM_FAULTS_URL, config.RAW_GEOLOGY_DIR / "gem_active_faults_harmonized.geojson")]
@@ -206,6 +218,108 @@ def prepare_boundary() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Roads from OpenStreetMap
+# ---------------------------------------------------------------------------
+def road_tiles() -> list[tuple[float, float, float, float]]:
+    """Small lat/long boxes (south, west, north, east) over the state plus a 10 km margin.
+
+    The margin matters. A point near the state border can be close to a road in Himachal,
+    Uttar Pradesh or Nepal, and leaving those roads out would overstate its distance to a road.
+    """
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    state = gpd.read_file(config.STATE_BOUNDARY)
+    area = state.buffer(ROAD_BUFFER_M).to_crs(config.GEOGRAPHIC_CRS).union_all()
+    min_lon, min_lat, max_lon, max_lat = area.bounds
+    tiles = []
+    lat = min_lat
+    while lat < max_lat:
+        lon = min_lon
+        while lon < max_lon:
+            south, west = round(lat, 4), round(lon, 4)
+            north, east = round(min(lat + ROAD_TILE_DEG, max_lat), 4), round(min(lon + ROAD_TILE_DEG, max_lon), 4)
+            if box(west, south, east, north).intersects(area):
+                tiles.append((south, west, north, east))
+            lon += ROAD_TILE_DEG
+        lat += ROAD_TILE_DEG
+    return tiles
+
+
+def fetch_overpass(query: str) -> dict:
+    """POST a query, retrying with a growing pause. Public Overpass servers rate-limit hard."""
+    import json
+    import time
+    import urllib.parse
+
+    data = urllib.parse.urlencode({"data": query}).encode()
+    last_error = None
+    for attempt in range(6):
+        url = OVERPASS_URLS[attempt % len(OVERPASS_URLS)]
+        try:
+            request = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(request, timeout=300) as response:
+                return json.loads(response.read())
+        except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError) as exc:
+            last_error = exc
+            wait = 20 * (attempt + 1)
+            print(f"    {url.split(chr(47))[2]} refused or timed out; waiting {wait} s and retrying")
+            time.sleep(wait)
+    raise SystemExit(f"Overpass failed after 6 attempts ({last_error}). Try again later, or use QuickOSM.")
+
+
+def download_roads() -> None:
+    import json
+    import time
+
+    import geopandas as gpd
+    from shapely.geometry import LineString
+
+    if not config.STATE_BOUNDARY.exists():
+        raise SystemExit("Run the boundary item first: python -m src.get_open_data boundary")
+    cache = config.RAW_OSM_DIR / "roads_tiles"
+    cache.mkdir(parents=True, exist_ok=True)
+    pattern = "^(" + "|".join(ROAD_CLASSES) + ")$"
+    tiles = road_tiles()
+    print(f"  {len(tiles)} tiles of {ROAD_TILE_DEG} degrees covering the state plus a "
+          f"{ROAD_BUFFER_M // 1000} km margin. Finished tiles are cached, so a rerun resumes.")
+
+    records = []
+    for i, (south, west, north, east) in enumerate(tiles, 1):
+        path = cache / f"tile_{south}_{west}.json"
+        if path.exists():
+            payload, note = json.loads(path.read_text(encoding="utf-8")), "cached"
+        else:
+            query = (f"[out:json][timeout:240];way[highway~\"{pattern}\"]"
+                     f"({south},{west},{north},{east});out tags geom;")
+            payload, note = fetch_overpass(query), "downloaded"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            time.sleep(3)  # be polite to a free public service
+        ways = [el for el in payload.get("elements", [])
+                if el.get("type") == "way" and len(el.get("geometry", [])) >= 2]
+        for el in ways:
+            tags = el.get("tags", {})
+            records.append({"osm_id": el["id"], "highway": tags.get("highway"), "name": tags.get("name"),
+                            "ref": tags.get("ref"),
+                            "geometry": LineString([(pt["lon"], pt["lat"]) for pt in el["geometry"]])})
+        print(f"  tile {i:>2}/{len(tiles)} at {south},{west}: {len(ways):>6,} ways ({note})")
+
+    if not records:
+        raise SystemExit("No roads came back. Check the internet connection, or use QuickOSM.")
+    roads = gpd.GeoDataFrame(records, crs=config.GEOGRAPHIC_CRS).drop_duplicates("osm_id")
+    state = gpd.read_file(config.STATE_BOUNDARY)
+    area = gpd.GeoDataFrame(geometry=state.buffer(ROAD_BUFFER_M), crs=config.PROJECT_CRS)
+    roads = gpd.clip(roads.to_crs(config.PROJECT_CRS), area)
+    out = config.SHAPEFILE_DIR / "roads.gpkg"
+    roads.to_file(out, driver="GPKG")
+    km = (roads.length.groupby(roads["highway"]).sum() / 1000).sort_values(ascending=False)
+    print(f"  {len(roads):,} road segments, {km.sum():,.0f} km, written to {out.relative_to(config.ROOT)}")
+    for highway, length in km.items():
+        print(f"    {highway:<16} {length:>8,.0f} km")
+    print("  Road data: OpenStreetMap contributors, ODbL. Record it in docs/data_sources_log.md.")
+
+
+# ---------------------------------------------------------------------------
 def main() -> int:
     parser = argparse.ArgumentParser(description="Download open fallback datasets (no registration).")
     # No argparse `choices` here: with nargs="*", Python 3.11 rejects an empty list as an invalid choice.
@@ -252,6 +366,8 @@ def main() -> int:
             download(url, dest)
         if item == "boundary":
             prepare_boundary()
+        if item == "roads":
+            download_roads()
     print("\nDone. Record each file's source and download date in docs/data_sources_log.md.")
     return 0
 

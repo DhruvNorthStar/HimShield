@@ -120,48 +120,187 @@ Every layer must sit on the same grid as `dem.tif` and hold sensible values. A l
 
 ---
 
-## 2c. Distance factors (the sub-step most likely to bite)
+## 2c. Distance factors: roads and streams
 
-**Why these three:** road cuts remove support from the base of a slope, streams erode the toe of a slope, and rock near a fault is fractured and weak. All three are standard conditioning factors.
+**Why these:** road cuts remove support from the base of a slope, and streams erode the toe of a slope. Distance to each is a standard conditioning factor.
 
-The pattern is the same each time: **get lines, rasterise them, measure distance from them.**
+The pattern is the same for both: **get the lines, turn them into a raster of 1s, then measure distance from the 1s.**
 
-### Roads
+Every step below was run on Rudraprayag district on 13 September 2026, and the numbers quoted come from those runs. `data/processed/dem_rudraprayag.tif` is ready for you to rehearse on: the whole stream chain took 16 seconds there, against an estimated 15 to 60 minutes for the state.
 
-1. Install **QuickOSM**: Plugins > Manage and Install Plugins > search "QuickOSM" > Install.
-2. **Vector > QuickOSM > Quick query.** Key `highway`, leave Value empty, and type `Uttarakhand` in the "In" box. Open **Advanced** and raise the timeout to 300 seconds. Run.
-   - If Overpass times out, which is likely for a whole state, run it district by district using `uttarakhand_districts.gpkg`, or use the Geofabrik fallback from Step 1 and clip it.
-3. Keep only real roads with **`native:extractbyexpression`**:
+---
+
+### Part 1: get the roads
+
+The state's bounding box holds **61,260 road segments** (counted through Overpass). A single QuickOSM request that size times out, so it has to be split. Two routes, both ending with `data/shapefiles/roads.gpkg`.
+
+#### Route A, recommended: one command
+
+```
+conda activate landslide
+python -m src.get_open_data roads
+```
+
+It queries OpenStreetMap in 17 small tiles, retries when the free servers refuse, caches each finished tile so a rerun resumes, keeps a 10 km margin beyond the border, keeps only real road classes, and writes `roads.gpkg` in EPSG:32644. Expect 5 to 15 minutes.
+
+**Why the 10 km margin matters:** a point near the border can be closest to a road in Himachal, Uttar Pradesh or Nepal. Leaving those out would overstate its distance to a road.
+
+#### Route B: QuickOSM by hand
+
+Use this if you want to do it in QGIS. Six extent layers are prepared for you in `data/processed/quickosm_extents/`, each small enough for one request.
+
+1. **Plugins > Manage and Install Plugins > All**, search `QuickOSM`, click **Install Plugin**, close.
+2. Drag `roads_part_1.gpkg` to `roads_part_6.gpkg` from `data/processed/quickosm_extents/` into QGIS.
+3. **Vector > QuickOSM > QuickOSM**. Open the **Quick query** tab.
+4. **Key:** `highway`. Leave **Value** empty.
+5. Change the dropdown that says **In** to **Layer Extent**, and pick `roads_part_1`.
+6. Open **Advanced**. Tick only **Lines**; untick Points, Multilinestrings and Multipolygons. Set **Timeout** to `900`.
+7. Click **Run query**. Wait for a layer named like `highway_...` to appear.
+8. Repeat steps 5 to 7 for parts 2 to 6.
+9. **Vector > Data Management Tools > Merge Vector Layers**. Input layers: the six `highway` layers. Destination CRS: **EPSG:32644**. Save as `data/processed/roads_merged.gpkg`.
+10. **Processing Toolbox**, search **Extract by expression**. Input `roads_merged`, expression:
+
+    ```
+    "highway" IN ('motorway','trunk','primary','secondary','tertiary','unclassified','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link')
+    ```
+
+    Save as `data/shapefiles/roads.gpkg`. Footpaths and tracks are not road cuts, so they come out.
+
+I could not open the QuickOSM window on this machine, since the plugin is not installed yet. The labels above follow the plugin documentation; if one differs, the setting it names will be nearby.
+
+Roads that cross a part edge appear twice after merging. That does no harm: the distance to a road is the same whether it is drawn once or twice.
+
+---
+
+### Part 2: rasterise the roads
+
+1. Drag `data/shapefiles/roads.gpkg` into QGIS.
+2. **Raster > Conversion > Rasterize (Vector to Raster)**.
+3. **Input layer:** `roads`.
+4. **Field to use for a burn-in value:** leave empty.
+5. **A fixed value to burn:** `1`.
+6. **Output raster size units:** **Georeferenced units**. (Pixels would give you a raster 30 pixels wide.)
+7. **Width/Horizontal resolution:** `30`. **Height/Vertical resolution:** `30`.
+8. **Output extent:** click the button beside it, **Calculate from Layer > dem**. This is what lines the result up with every other layer.
+9. **Assign a specified NoData value to output bands:** `0`.
+10. **Output data type:** **Byte**.
+11. **Advanced parameters > Additional creation options:** `COMPRESS=DEFLATE`.
+12. **Rasterized:** Save to File > `data/processed/roads_rast.tif`, file type **GeoTIFF**.
+13. Run. Zoom in: roads show as thin lines of cells.
+
+---
+
+### Part 3: distance to roads
+
+1. **Raster > Analysis > Proximity (Raster Distance)**.
+2. **Input layer:** `roads_rast`. **Band number:** `1`.
+3. **A list of pixel values in the source image to be considered target pixels:** `1`.
+4. **Distance units:** **Georeferenced coordinates**. The default, Pixel coordinates, gives "12" where the truth is "360 m", and nothing later warns you.
+5. **The maximum distance to be generated:** `0`, meaning no limit.
+6. **Output data type:** **Float32**.
+7. **Advanced parameters > Additional creation options:** `COMPRESS=DEFLATE` and `PREDICTOR=3`.
+8. **Proximity map:** Save to File > `data/processed/dist_roads.tif`, GeoTIFF.
+9. Run.
+
+On Rudraprayag this gave 0 m on every road cell, a median of 1,622 m and a maximum of 21 km, in the high valleys with no roads at all.
+
+---
+
+### Part 4: derive streams with r.watershed
+
+**Rehearse first:** do this part once with `dem_rudraprayag` as the elevation. It takes about 12 seconds, and you can look at the result before committing an hour to the state.
+
+1. **Processing > Toolbox**, search `r.watershed`, open it (GRASS group).
+2. **Elevation:** `dem`.
+3. **Minimum size of exterior watershed basin:** `1000`.
+4. Tick **Enable Single Flow Direction (D8) flow**.
+5. Tick **Enable disk swap memory option (-m): Operation is slow**.
+6. **Maximum memory to be used with -m flag (in MB):** `3000`.
+7. Outputs. Set only these two, both as GeoTIFF:
+   - **Number of cells that drain through each cell** > `data/processed/flow_acc.tif`
+   - **Stream segments** > `data/processed/streams.tif`
+
+   For every other output (drainage, basins, half-basins, LS factor, S factor, TCI, SPI), click **...** and choose **Skip output**.
+8. **Advanced parameters:** **GRASS GIS region cellsize** `30`, and set the region extent from `dem`.
+9. Run. Rudraprayag: 12 seconds. Whole state: roughly **15 to 60 minutes**.
+
+**Why each setting:**
+
+- **Threshold 1000** means a channel starts once 1,000 cells of 30 m, 0.9 km2, drain into it. On Rudraprayag that produced 1,142 stream segments covering 1.7 percent of the district. Lower gives more, smaller streams. Write the value down; you will be asked.
+- **Single flow direction** sends all water from a cell to its one steepest neighbour, which gives clean one-cell-wide streams. The default, multiple flow direction, spreads flow and is better for wetness modelling than for drawing channels.
+- **Disk swap** because in normal mode `r.watershed` holds about 3.5 GB in memory for the whole state. This laptop has 7.7 GB, and QGIS plus Windows use a good share of it. Disk swap is slower but will not crash. You do not need it for the Rudraprayag rehearsal.
+
+**A red error that is not an error:** the log shows `ERROR 6: ... SetColorTable() only supported for Byte or UInt16 bands in TIFF format`. GRASS tries to attach a colour table to the accumulation raster and GeoTIFF refuses. The file is written correctly. Ignore it.
+
+---
+
+### Part 5: turn the streams into 1s (do not skip)
+
+**This is the trap in Step 2c, and it was caught by testing.** `streams.tif` does not hold 1s. Each stream cell holds a segment ID (2 to 2,284 on Rudraprayag), and every other cell holds NoData, stored as **65535**. Proximity with no target value treats every non-zero cell as a target, and 65535 is non-zero. Run it directly and **every single cell comes out as distance 0**: tested, all 4.1 million of them.
+
+1. **Raster > Raster Calculator**.
+2. Expression:
 
    ```
-   "highway" IN ('motorway','trunk','primary','secondary','tertiary','unclassified','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link')
+   "streams@1" > 0
    ```
 
-   Footpaths and tracks are not road cuts, and leaving them in washes out the signal.
-4. **`native:reprojectlayer`** to EPSG:32644, then **`native:clip`** to the state boundary. Save as `data/shapefiles/roads.gpkg`.
-5. **`gdal:rasterize`**: burn value **1**, output resolution 30, extent from `dem`, NoData **0**, output type Byte. Save as `roads_rast.tif`.
-6. **`gdal:proximity`**: input `roads_rast.tif`, **Values = 1**, **Distance units = GEO** (georeferenced units, metres here), output type Float32, extent from `dem`. Save as **`dist_roads.tif`**.
-   - Distance units must be GEO. The default is pixels, which reports "12" where the truth is "360 m", and nothing downstream would warn you.
+3. **Reference layer(s):** tick `dem`.
+4. **Output layer:** `data/processed/streams_binary.tif`, GeoTIFF.
+5. OK. Stream cells become 1, everything else NoData.
 
-### Streams (derived from the DEM, not downloaded)
+---
 
-**Why derive them:** streams computed from the DEM sit exactly where the terrain says water flows, so distance-to-stream lines up with slope and curvature. A downloaded river layer would be slightly offset from our grid.
+### Part 6: distance to streams
 
-1. **`grass:r.watershed`**: input `dem.tif`, **Threshold 1000** cells, tick **SFD (D8) flow**, and produce the **accumulation** output. Save as `flow_acc.tif`.
-2. **`grass:r.stream.extract`**: input `dem.tif`, accumulation `flow_acc.tif`, **threshold 1000**. Take the **stream vector** output and save it as `data/shapefiles/streams.gpkg`.
-3. Rasterise and run proximity exactly as for roads, giving **`dist_streams.tif`**.
+Same as Part 3, with a different input:
 
-**About the threshold:** 1,000 cells of 30 m means 0.9 km2 of upslope catchment before a channel starts. A lower number gives a denser network. Compare the result against the rivers on QGIS's OpenStreetMap basemap and the blue lines on a topographic sheet, then **write down the number you used** and be ready to justify it.
+1. **Raster > Analysis > Proximity (Raster Distance)**.
+2. **Input layer:** `streams_binary`. **Band:** `1`.
+3. **Target pixel values:** `1`.
+4. **Distance units:** **Georeferenced coordinates**.
+5. **Maximum distance:** `0`. **Output data type:** **Float32**.
+6. Creation options `COMPRESS=DEFLATE` and `PREDICTOR=3`.
+7. Save as `data/processed/dist_streams.tif`, GeoTIFF.
 
-**Warnings:** this is the slowest part of Step 2. `r.watershed` over 113 million cells can take **30 to 90 minutes** and a lot of memory. Test the whole chain on Rudraprayag first by clipping `dem.tif` to that district: it runs in minutes and catches mistakes before you spend an hour. If GRASS runs out of memory, raise its memory parameter under Advanced, or process the state in halves and merge.
+On Rudraprayag: 0 m on all 36,187 stream cells, median 451 m, maximum 2,876 m. Streams sit much closer together than roads in steep terrain, so these distances are far shorter than the road distances. That is expected.
 
-### Faults
+---
 
-1. Load the GSI structural lines, or the GEM faults fallback, reproject to 32644, and clip to the state.
-2. Rasterise and run proximity as above, giving **`dist_faults.tif`**.
-3. Check that the major Himalayan thrusts cross the state roughly west to east. If your fault layer is nearly empty, distance-to-fault means little, so say so rather than shipping a column of near-identical numbers.
+### Part 7: verify
 
-**Time for 2c:** half a day to a day, mostly waiting on `r.watershed`.
+```
+python -m src.check_layers
+```
+
+`dist_roads` and `dist_streams` must both show **aligned: yes**, with a minimum of 0. Warning signs:
+
+| What check_layers shows | Meaning |
+|---|---|
+| `dist_streams` max of 0 | Part 5 skipped: NoData was treated as stream |
+| max around 700 | distance ran in pixels, not metres |
+| `aligned: NO` | extent not taken from `dem` |
+
+**Faults** use exactly Parts 2 and 3, with the faults layer as input and `dist_faults.tif` as output. Reproject and clip the faults to the state first.
+
+---
+
+### What tends to go wrong in 2c
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| QuickOSM hangs, then "timeout" or "Too Many Requests" | request too big, or the free server is busy | use the six parts; wait a few minutes; or use Route A |
+| QuickOSM result is empty | extent layer not selected, or Lines unticked | check the Layer Extent choice and the Lines box |
+| Distance to streams is 0 everywhere | proximity ran on `streams.tif` directly | Part 5, then target value `1` |
+| Distances are small whole numbers | Distance units left on Pixel coordinates | Georeferenced coordinates |
+| Road raster is 30 pixels wide | size units left on Pixels | Georeferenced units, 30 and 30 |
+| `check_layers` says aligned: NO | extent not calculated from `dem` | redo with Calculate from Layer > dem |
+| `r.watershed` crashes or "out of memory" | whole state in normal memory mode | tick disk swap, memory 3000 |
+| `r.watershed` takes over 2 hours | reading a .vrt, or memory set too low | confirm input is `dem.tif`; memory 3000 |
+| Red `ERROR 6 ... SetColorTable` | colour table on a non-Byte raster | harmless, ignore |
+| Disk fills | unused r.watershed outputs left on temporary files | Skip output for everything except accumulation and streams |
+
+**Time for 2c:** roads 15 minutes by command or about 1 hour by QuickOSM; streams 30 to 90 minutes, mostly waiting; distance rasters 10 minutes each.
 
 ---
 
