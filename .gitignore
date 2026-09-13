@@ -15,6 +15,10 @@ data/**/*.grd
 data/**/*.img
 data/**/*.vrt
 data/**/*.tif.vrt
+# Derived vector layers from QGIS (buffers, clips, boundaries). Rebuilt from the guides, and some carry
+# source licences (ODbL, CC BY-SA) that a public copy would have to honour. The QuickOSM extent
+# rectangles live in a subfolder, which this pattern does not reach, so they stay tracked.
+data/processed/*.gpkg
 data/**/*.tfw
 data/**/*.prj
 data/**/*.qml
