@@ -36,8 +36,8 @@ Phase 2 is due **25 working days from 13 September 2026: Monday 19 October 2026*
 | 5 SVM | done (synthetic) |
 | 6 Random Forest | done (synthetic) |
 | 7 Evaluation | done (synthetic) |
-| 8 Dashboard | **not started** |
-| 9 Rudraprayag demo map | **not started** |
+| 8 Dashboard | **done** (synthetic): `streamlit run dashboard/app.py`, four pages, browser-tested 14 September |
+| 9 Rudraprayag demo map | **groundwork done** (synthetic): `python -m src.demo_map`, timed; real result needs real models. RF: 2,145,236 cells in about 14 s (about 148,000 cells/s), state projected about 7 min of scoring. SVM: 444 s (4,827 cells/s), state projected about 204 min. Full state must be tiled (about 14 GB in one pass). The synthetic SVM scored all of Rudraprayag 0.000: tested and traced to `dist_faults` alone (real 56 to 127 km, 13 to 30 sd beyond synthetic training); RF unaffected. `demo_map` now warns when a factor is more than half out of range |
 
 **Naming mismatch to be aware of:** the user calls the land cover and soil work "Step 2d". In `docs/02_qgis_processing.md`, section **2d is "Landslide points"**, and land cover and soil live under **"Land cover and soil rasters"**. Rainfall lives under **"Rainfall raster (CHIRPS)"**. Use the user's wording in conversation, and the document's headings when pointing to the file.
 
@@ -119,6 +119,9 @@ No LICENSE file. The user was told the repo is "all rights reserved" without one
 | `src/evaluate.py` | Step 7: metrics at 0.5 and Youden threshold, ROC/confusion/PR figures, bootstrap AUC difference, written verdict |
 | `src/viz.py` | Shared plot style; Okabe-Ito blue/vermillion class colours; synthetic watermark on saved figures |
 | `src/artifacts.py` | Merges each step's section into `models/metadata.json`; writes and loads `feature_names.json` |
+| `src/demo_map.py` | Step 9: scores every Rudraprayag cell from the aligned rasters (water skipped) in 250,000-row chunks through `prepare_for_prediction`, five fixed-break zones, writes `data/processed/susceptibility_rudraprayag_<model>.tif`, `outputs/demo_map_rudraprayag.html` and a `demo_map` metadata section; reports values and classes outside training, and projects full-state time; `--model svm` for the SVM version |
+| `dashboard/app.py` | Step 8: Streamlit app with Overview, Model Comparison, Predict and Rudraprayag Map pages; reads exit artifacts and saved figures only |
+| `.streamlit/config.toml` | Light theme with Okabe-Ito blue controls, usage statistics off |
 | `verify_setup.py` | Environment check: per-package OK/FAIL, GDAL raster and vector IO, PROJ, the ML chain, packages loaded from outside the env |
 
 ### Documents and other tracked files
@@ -143,7 +146,7 @@ No LICENSE file. The user was told the repo is "all rights reserved" without one
 | `outputs/figures/*.png` (9) | EDA, feature importance, ROC, confusion matrices, precision-recall; all watermarked synthetic |
 | `outputs/eda_report.txt`, `outputs/evaluation_report.txt` | Text reports (synthetic) |
 
-`dashboard/` and `models/` hold only `.gitkeep` in git. `dashboard/app.py` does not exist yet.
+`models/` holds only `.gitkeep` in git. `outputs/demo_map_*.html` and `.claude/` (the local preview launcher) are ignored on purpose.
 
 ---
 
@@ -294,6 +297,10 @@ If there is still no GSI data, **digitise landslide scars for Rudraprayag by han
 | CHIRPS, 2009 to 2024 only | 25 times more cells than IMD; 2005 to 2008 are inconsistent |
 | Synthetic data until the real CSV | Steps 3 to 7 finished and tested early; switching is one line |
 | Seed 42 everywhere | reproducibility |
+| Risk zones at fixed breaks 0.2, 0.4, 0.6, 0.8 | natural breaks and quantiles are recomputed per map, so a zone would mean different scores on different runs and models; quantiles force 20 percent into every zone |
+| Zone colours: one vermillion hue, light to dark | ordered classes need a sequential ramp, not green to red (fails colour-blind readers); matches the landslide colour in every figure; validated as an ordinal ramp (light end 2.19:1 on the basemap) |
+| Water cells skipped on the map | models never saw water (Step 2e and Step 4), so any score there would be invented |
+| Synthetic class bridge in `demo_map.py`, synthetic runs only | the simulated dataset's class names (Forest, Glacier) differ from WorldCover and SoilGrids; without the bridge every cell would silently score as the reference class |
 
 ---
 
@@ -348,7 +355,7 @@ RF top features (impurity / permutation): slope 0.2665 / 0.1161, rainfall 0.1668
 
 - **GSI inventory** not obtained; provisional NASA points too sparse and inaccurate (section 9).
 - **Lithology** missing, needs Bhukosh.
-- **`dist_faults` is weak**: only 4.8 percent of the state within 5 km of a fault, 61 percent beyond 50 km. It behaves like a regional gradient and could act as a disguised location. Replace with GSI structural lines if possible; if it ranks suspiciously high on real data, drop it via `DROPPED_COLUMNS`.
+- **`dist_faults` is weak**: only 4.8 percent of the state within 5 km of a fault, 61 percent beyond 50 km. It behaves like a regional gradient and could act as a disguised location. Replace with GSI structural lines if possible; if it ranks suspiciously high on real data, drop it via `DROPPED_COLUMNS`. Measured 14 September: every cell in Rudraprayag is 55.7 to 127.1 km from the nearest GEM fault (median 96.3 km), even though the Main Central Thrust crosses the district, because GEM holds active faults only.
 - **Random train/test split** ignores spatial autocorrelation, so scores are likely optimistic; stated in the evaluation report.
 - **Stable points mean "no recorded landslide"**, not "cannot fail"; stated in the evaluation report.
 - **`data/processed/` holds 3.7 GB**, much of it intermediates and uncompressed rasters. Cleanup offered, never done without the user's go-ahead.
@@ -366,6 +373,7 @@ NEG_TO_POS_RATIO = 2                  NEGATIVE_BUFFER_M = 500
 PROJECT_CRS = 'EPSG:32644'            GEOGRAPHIC_CRS = 'EPSG:4326'    DEM_RESOLUTION_M = 30
 N_JOBS = -1                           PRIMARY_CV_METRIC = 'roc_auc'
 DEMO_DISTRICT = 'Rudraprayag'         RISK_ZONES = ['Very Low', 'Low', 'Moderate', 'High', 'Very High']
+RISK_ZONE_BREAKS = [0.2, 0.4, 0.6, 0.8]   # fixed equal breaks; config.risk_zone(score) names the zone
 DROPPED_COLUMNS = {}
 SVM_RBF_PARAM_GRID = {'C': [0.1, 1, 10, 100], 'gamma': [1, 0.1, 0.01, 0.001]}
 SVM_LINEAR_PARAM_GRID = {'C': [0.1, 1, 10, 100]}
@@ -393,6 +401,8 @@ python -m src.preprocess             # 29 features, SMOTE 1,680/1,680, test 720/
 python -m src.train_svm              # RBF CV 0.8602, test 0.8305
 python -m src.train_rf               # CV 0.8896, test 0.8682
 python -m src.evaluate               # RF wins, interval +0.0234 to +0.0529
+python -m src.demo_map               # 2,145,236 cells scored, about 20 s, map in outputs/
+streamlit run dashboard/app.py       # four pages at http://localhost:8501
 git status -sb                       # clean, main...origin/main
 ```
 
@@ -404,8 +414,8 @@ git status -sb                       # clean, main...origin/main
 
 1. **User: register on Bhukosh**, and ask the project guide to request the GSI inventory in writing. This unblocks the inventory and lithology, and approval takes days.
 2. ~~User: rainfall processing in QGIS~~: done 14 September, `check_layers` 10 of 10.
-3. **Claude: Step 8 dashboard**, `dashboard/app.py`, three pages (Overview; Model Comparison with metrics and the ROC figure; Predict with sliders using `prepare_for_prediction()` and both models). Must run with `streamlit run dashboard/app.py`. Function over polish. Builds on synthetic models now.
-4. **Claude: Step 9 groundwork**: a script that predicts RF susceptibility over the Rudraprayag grid from the aligned rasters, classifies into the 5 risk zones, renders folium to `outputs/demo_map_rudraprayag.html`, and reports pixel count, time taken and the projected time for the whole state. It can be built and timed now; the real result needs real models.
+3. **Done 14 September. Claude: Step 8 dashboard**, `dashboard/app.py`, three pages (four were built) (Overview; Model Comparison with metrics and the ROC figure; Predict with sliders using `prepare_for_prediction()` and both models). Must run with `streamlit run dashboard/app.py`. Function over polish. Builds on synthetic models now.
+4. **Done 14 September (`src/demo_map.py`). Claude: Step 9 groundwork**: a script that predicts RF susceptibility over the Rudraprayag grid from the aligned rasters, classifies into the 5 risk zones, renders folium to `outputs/demo_map_rudraprayag.html`, and reports pixel count, time taken and the projected time for the whole state. It can be built and timed now; the real result needs real models.
 5. **Day 10, about 25 September: inventory decision** (GSI, or hand-digitised Rudraprayag).
 6. **User: 2d to 2g** (landslide points, stable points, extraction, export), then `python -m src.label_categories`.
 7. Drop any column that cannot be produced (`lithology`, possibly `dist_faults`) through `DROPPED_COLUMNS`, and record why.

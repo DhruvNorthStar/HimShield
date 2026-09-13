@@ -313,6 +313,13 @@ def main() -> int:
     for feature, share in diagnostics["outside_training_range_percent"].items():
         low, high = profile["ranges"][feature]
         print(f"  {feature}: {share:.1f}% of cells outside the training range {low:,.1f} to {high:,.1f}")
+        if share > 50:
+            # Seen on the synthetic models (14 September): real dist_faults in Rudraprayag is 56 to 127 km,
+            # far beyond training, and the RBF SVM scored every cell 0.000 while RF was unaffected. An RBF
+            # kernel decays towards its intercept away from all support vectors; trees just use their
+            # last split. Swapping that one input for a typical value restored the SVM scores.
+            print(f"    WARNING: most of the district lies outside what the models saw for {feature}. "
+                  f"RBF SVM scores can collapse to one class there; treat this map as unreliable.")
     for feature, classes in diagnostics["classes_unknown_to_model"].items():
         listed = ", ".join(f"{name} ({count:,} cells)" for name, count in classes.items())
         print(f"  {feature}: classes the model has no column for, scored as the reference class: {listed}")

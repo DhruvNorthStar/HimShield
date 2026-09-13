@@ -14,9 +14,9 @@ Last updated: 14 September 2026, second session. Update this file whenever a dec
 | Environment | conda env `landslide`, Python 3.11.16 |
 | QGIS | 3.44.12 LTR, GRASS provider enabled |
 | Data source in use | **synthetic**, until the real CSV exists |
-| Built | Steps 0, 0.5, 1, 3, 4, 5, 6, 7 |
+| Built | Steps 0, 0.5, 1, 3, 4, 5, 6, 7, **8 (dashboard)**, **9 groundwork (Rudraprayag map script)** |
 | Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil, rainfall: **all 10 rasters** |
-| Pending | lithology, landslide points, stable points, extraction; Steps 8 and 9 |
+| Pending | lithology, landslide points, stable points, extraction; Step 9 on real models |
 | Team | one person |
 
 ## 2. Progress on 14 September 2026
@@ -34,6 +34,8 @@ Last updated: 14 September 2026, second session. Update this file whenever a dec
 | `verify_setup.py` | ✅ READY, 0 warnings (rechecked at the start of the second session) |
 | Deadline | ✅ confirmed: Monday 19 October 2026 |
 | Bhukosh | ⏳ user registering today, and the project guide's letter to GSI goes out today |
+| Step 8 dashboard | ✅ `streamlit run dashboard/app.py`: Overview, Model Comparison, Predict, Rudraprayag Map. Every page loaded and the Predict controls tested in a browser, no server errors |
+| Step 9 groundwork | ✅ `python -m src.demo_map`: Random Forest scored 2,145,236 cells (6,105 water cells skipped) in 13.6 s, 19.8 s end to end; whole state projected at about 6 to 7 min of scoring, 9 to 10 min end to end, but only in tiles (a single pass needs about 14 GB). `--model svm`: 444 s for the same cells (4,827 cells per second, 31 times slower than RF), about 204 min projected for the state. **The synthetic SVM scored every cell 0.000 (all Very Low) while RF spread normally (median 0.247).** Tested: swapping only `dist_faults` for a typical training value restores SVM scores (median 0.117), and keeping only the real `dist_faults` drives them to 0. Real distances there (56 to 127 km) sit 13 to 30 standard deviations beyond the synthetic training data; an RBF kernel decays towards its intercept, trees saturate. A synthetic-data artefact, but `demo_map` now warns when most of the district is out of range |
 
 Also found and fixed today:
 
@@ -82,7 +84,7 @@ RF wins by 0.0379 AUC (bootstrap 95% interval +0.0234 to +0.0529). RBF beats lin
 
 - GSI inventory blocking; decision on day 10 (Friday 25 September): GSI data, or hand-digitised Rudraprayag scars.
 - Lithology may have to be dropped through `DROPPED_COLUMNS`.
-- `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data.
+- `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data. **Measured 14 September: inside Rudraprayag the nearest GEM fault is 55.7 to 127.1 km away (median 96.3 km)**, although the Main Central Thrust crosses the district; GEM lists active faults only. In the demo district the layer is a regional gradient, not a fault proximity. GSI structural lines from Bhukosh would fix this; otherwise drop it through `DROPPED_COLUMNS`.
 - `data/processed/` holds about 3.8 GB, much of it intermediates; cleanup needs the user's go-ahead.
 
 ## 7. Next steps
