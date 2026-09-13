@@ -75,6 +75,17 @@ def main() -> int:
                 problems.append(f"{name}.tif ranges {lo:,.2f} to {hi:,.2f}, outside {low} to {high}: {note}")
             if nodata_pct > 60:
                 problems.append(f"{name}.tif is {nodata_pct:.0f}% NoData. Check the clip and the source coverage.")
+            # A range check alone passes a raster that is 0 everywhere, because 0 is a legal distance.
+            if lo == hi:
+                problems.append(f"{name}.tif holds one value ({lo:,.2f}) in every cell, so it carries no "
+                                f"information for the models.")
+            if name.startswith("dist_"):
+                zero_share = float((data == 0).sum()) / max(int(data.count()), 1)
+                if zero_share > 0.5:
+                    problems.append(
+                        f"{name}.tif is 0 on {100 * zero_share:.0f}% of cells, so almost everything counts as "
+                        f"a target. Proximity treated NoData as a feature: set 'target pixel values' to 1 on "
+                        f"the binary input and rerun (Step 2c, Parts 5 and 6).")
 
     if "aspect" in EXPECTED and (config.PROCESSED_DIR / "aspect.tif").exists():
         with rasterio.open(config.PROCESSED_DIR / "aspect.tif") as src:
