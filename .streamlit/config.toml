@@ -1,0 +1,14 @@
+# Streamlit settings for `streamlit run dashboard/app.py`, read from the repo root.
+
+[theme]
+base = "light"
+# Okabe-Ito blue, the project's "stable" colour. Sliders and buttons stay neutral instead of
+# painting every control in an alarm red on a hazard dashboard.
+primaryColor = "#0072B2"
+
+[browser]
+# Do not send usage statistics to Streamlit.
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"

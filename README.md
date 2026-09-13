@@ -101,8 +101,8 @@ Always run from the repo root with the environment active.
 | Train SVM | `python -m src.train_svm` | ready |
 | Train RF | `python -m src.train_rf` | ready |
 | Evaluate and compare | `python -m src.evaluate` | ready |
-| Dashboard | `streamlit run dashboard/app.py` | Step 8 |
-| Demo map | (script added in Step 9) | Step 9 |
+| Dashboard: overview, model comparison, predict, demo map | `streamlit run dashboard/app.py` | ready |
+| Rudraprayag susceptibility map (Random Forest) | `python -m src.demo_map` | ready; add `--model svm` for the SVM version |
 
 ## Dataset schema
 

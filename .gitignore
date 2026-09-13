@@ -58,3 +58,10 @@ env/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Step 9 web maps: rebuilt in about 20 s by `python -m src.demo_map`, and every run changes the
+# embedded image, which would bloat the history. Force-add the final real-data map if it must be submitted.
+outputs/demo_map_*.html
+
+# Local Claude Code settings (preview launcher)
+.claude/

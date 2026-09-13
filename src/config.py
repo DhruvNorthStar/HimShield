@@ -177,3 +177,17 @@ METADATA_PATH = MODELS_DIR / "metadata.json"
 DEMO_DISTRICT = "Rudraprayag"
 DEMO_MAP_HTML = OUTPUTS_DIR / "demo_map_rudraprayag.html"
 RISK_ZONES = ["Very Low", "Low", "Moderate", "High", "Very High"]
+
+# Landslide-score cut-offs between the five zones: equal steps of 0.2.
+# Why not natural breaks (Jenks) or quantiles, which many papers use: both are computed from
+# each map's own scores, so the same score can be "High" on one run and "Moderate" on the next,
+# and quantiles force 20 percent of the district into every zone whatever the terrain. Fixed
+# breaks mean one thing on every map, in the dashboard, and for SVM and RF alike, so zone areas
+# can be compared directly. Revisit once real-data scores exist, and say which rule was used.
+RISK_ZONE_BREAKS = [0.2, 0.4, 0.6, 0.8]
+assert len(RISK_ZONE_BREAKS) == len(RISK_ZONES) - 1, "one break fewer than zones"
+
+
+def risk_zone(score: float) -> str:
+    """Zone name for one landslide score. A score exactly on a break goes to the higher zone."""
+    return RISK_ZONES[sum(score >= b for b in RISK_ZONE_BREAKS)]
