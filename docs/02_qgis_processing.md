@@ -281,7 +281,99 @@ python -m src.check_layers
 | max around 700 | distance ran in pixels, not metres |
 | `aligned: NO` | extent not taken from `dem` |
 
-**Faults** use exactly Parts 2 and 3, with the faults layer as input and `dist_faults.tif` as output. Reproject and clip the faults to the state first.
+---
+
+### Part 8: distance to faults
+
+**Why faults:** rock near a fault is crushed and fractured, so slopes fail more easily there.
+
+Every step below was run on the full state on 13 September 2026. Clip, rasterise and proximity together took under a minute.
+
+**Two traps, both hit during testing:**
+
+1. **Reproject before clipping and it breaks.** The GEM file covers the whole world. Reprojecting all 13,696 faults to UTM zone 44N gave 30 of them infinite coordinates, because a UTM zone cannot represent the far side of the planet. Clip first, while the file is still in latitude and longitude.
+2. **One line is not a fault.** Of the nine lines near Uttarakhand, one is an anticline, a fold in the rock. It comes out in part C.
+
+**Why a 50 km search area, not the state outline:** faults are sparse. Clipping to the state keeps 4 faults; a 50 km margin keeps 9. For eastern Pithoragarh the nearest fault is across the border in Nepal, and measuring only to faults inside India would overstate those distances.
+
+#### A. Make the 50 km search area
+
+1. Drag `data/shapefiles/uttarakhand_boundary.gpkg` into QGIS, if it is not already loaded.
+2. **Vector > Geoprocessing Tools > Buffer**.
+3. **Input layer:** `uttarakhand_boundary`.
+4. **Distance:** `50`, and change the unit dropdown beside it to **Kilometers**.
+5. **Segments:** `5`. Tick **Dissolve result**.
+6. **Buffered:** Save to File > `data/processed/state_buffer_50km.gpkg`. Run.
+
+#### B. Clip the faults, still in latitude and longitude
+
+7. Drag `data/raw/geology/gem_active_faults_harmonized.geojson` into QGIS. It holds 13,696 lines worldwide. **Do not reproject it.**
+8. **Vector > Geoprocessing Tools > Clip**.
+9. **Input layer:** `gem_active_faults_harmonized`. **Overlay layer:** `state_buffer_50km`.
+10. **Clipped:** Save to File > `data/processed/faults_clip.gpkg`. Run.
+    - QGIS may warn that the layers use different CRS. That is expected. It converts the buffer to match the faults, which is the safe direction.
+11. Right-click `faults_clip` > **Open Attribute Table**. Expect **9 rows**.
+
+#### C. Remove the fold
+
+12. **Processing > Toolbox**, search `Extract by expression`.
+13. **Input layer:** `faults_clip`. **Expression:**
+
+    ```
+    "slip_type" <> 'Anticline'
+    ```
+
+14. Save as `data/processed/faults_no_fold.gpkg`. Run. Expect **8 rows**: 4 reverse, 3 normal, 1 dextral, 519 km in total.
+
+#### D. Reproject to metres
+
+15. **Vector > Data Management Tools > Reproject Layer**.
+16. **Input layer:** `faults_no_fold`. **Target CRS:** **EPSG:32644**.
+17. Save as `data/shapefiles/faults.gpkg`. Run.
+
+#### E. Rasterise, same settings as roads
+
+18. **Raster > Conversion > Rasterize (Vector to Raster)**.
+19. **Input layer:** `faults`. **A fixed value to burn:** `1`.
+20. **Output raster size units:** **Georeferenced units**. **Width** `30`, **Height** `30`.
+21. **Output extent:** **Calculate from Layer > dem**. Use the layer backed by `dem.tif`, not `dem.tif.vrt`.
+22. **Assign NoData value:** `0`. **Output data type:** **Byte**. Creation option `COMPRESS=DEFLATE`.
+23. Save as `data/processed/faults_rast.tif`. Run. About 5 seconds, 10,286 fault cells.
+
+#### F. Proximity
+
+24. **Raster > Analysis > Proximity (Raster Distance)**.
+25. **Input layer:** `faults_rast`, band `1`. **Target pixel values:** `1`.
+26. **Distance units:** **Georeferenced coordinates**.
+27. **Output data type:** **Float32**. Creation options `COMPRESS=DEFLATE` and `PREDICTOR=3`.
+28. Save as `data/processed/dist_faults.tif`. Run. About 30 seconds.
+
+#### G. Verify
+
+```
+python -m src.check_layers
+```
+
+Expected for `dist_faults`: **0 to about 275,000 m** across the whole grid, since the corners of the rectangle are far from any fault. Inside the state the median is about 69 km and the maximum about 185 km.
+
+#### What these numbers mean, before you use the factor
+
+Only **4.8 percent** of the state lies within 5 km of a fault, and **61 percent** lies more than 50 km away. The weakened rock around a fault usually extends hundreds of metres to a few kilometres. With 8 lines, this layer mostly says where you are in the state, not whether the rock under you is fractured.
+
+That creates a specific risk: a model can use a smooth regional gradient as a disguised map coordinate. If `dist_faults` ranks near the top of feature importance, treat it as a warning, not a geology finding.
+
+**Recommendation:** build it, since it takes under an hour. Replace it with GSI structural lines if Bhukosh access arrives. Otherwise, if it ranks suspiciously high on real data, drop it through `DROPPED_COLUMNS` and state why.
+
+#### What tends to go wrong with faults
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Clip fails with an invalid geometry or NaN error | faults reprojected before clipping | reload the original geojson and clip it first |
+| Clip result has 0 rows | wrong overlay, or buffer distance in degrees | rebuild the buffer from `uttarakhand_boundary` in kilometres |
+| Still 9 rows after part C | value typed in double quotes | text values take single quotes: `'Anticline'` |
+| `dist_faults` is 0 everywhere | target pixel value left empty | set it to `1` and rerun |
+| Distances are small whole numbers | Distance units on Pixel coordinates | Georeferenced coordinates |
+| `aligned: NO` | extent not taken from `dem` | Calculate from Layer > dem |
 
 ---
 

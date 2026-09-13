@@ -25,9 +25,11 @@ EXPECTED = {
     "aspect": (-1, 360, "compass degrees, -1 on flat ground"),
     "curvature": (-100, 100, "1/100 m. Values near 0.0001 mean the x100 step was skipped"),
     "rainfall": (0, 10000, "mm/year"),
-    "dist_roads": (0, 200000, "metres. Small whole numbers mean proximity ran in pixel units"),
-    "dist_streams": (0, 200000, "metres. Small whole numbers mean proximity ran in pixel units"),
-    "dist_faults": (0, 200000, "metres. Small whole numbers mean proximity ran in pixel units"),
+    # Distances run over the whole rectangular grid, not just the state, and its diagonal is about
+    # 452 km. Sparse layers get large: tested dist_faults reaches 275 km in the grid corners.
+    "dist_roads": (0, 500000, "metres. Small whole numbers mean proximity ran in pixel units"),
+    "dist_streams": (0, 500000, "metres. Small whole numbers mean proximity ran in pixel units"),
+    "dist_faults": (0, 500000, "metres. Small whole numbers mean proximity ran in pixel units"),
     "lulc": (0, 255, "class codes"),
     "soil": (0, 255, "class codes"),
 }
