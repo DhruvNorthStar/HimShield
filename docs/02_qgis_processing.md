@@ -401,11 +401,124 @@ That creates a specific risk: a model can use a smooth regional gradient as a di
 These come straight from Step 1 and only need aligning to `dem.tif`:
 
 - **rainfall.** Load the IMD yearly NetCDF files, total each year's daily rainfall, average across years to get **mean annual rainfall in mm**, then warp to EPSG:32644 at 30 m with **bilinear** (source cells are about 27 km across, so bilinear avoids visible blocks) and clip. With CHIRPS, average the annual GeoTIFFs instead. Save as `rainfall.tif`.
-- **lulc.** ESA WorldCover: merge the 5 tiles, warp to 32644 at 30 m with **nearest neighbour**, clip. Save as `lulc.tif`.
-- **soil.** SoilGrids: warp to 32644 at 30 m with **nearest neighbour**, clip. Save as `soil.tif`.
+- **lulc** and **soil**: see [Land cover and soil rasters](#land-cover-and-soil-rasters) below, tested step by step.
 - **lithology** stays a polygon layer: reproject to 32644 and keep the rock-type attribute. We attach it with a spatial join instead of rasterising, which keeps the class names intact.
 
 **Nearest neighbour for anything categorical.** Bilinear on class codes invents values: halfway between "tree cover" (10) and "cropland" (40) is 25, which means nothing.
+
+---
+
+## Land cover and soil rasters
+
+Both are **class codes**, not measurements, so they follow different rules from the DEM layers: no averaging, ever. Every step below was run on the full state on 14 September 2026, and the numbers quoted come from those runs.
+
+**Why no clip step:** warping with the extent taken from `dem` and a 30 m resolution lands every cell exactly on the `dem.tif` grid, so the result is already aligned. Tested: aligned, with no gaps inside the state.
+
+---
+
+### Land cover (ESA WorldCover, 5 tiles)
+
+#### A. Combine the 5 tiles
+
+1. Drag the 5 `.tif` files from `data/raw/lulc/` into QGIS. Each is 36,000 x 36,000 cells at 10 m, so drawing may be slow; processing is not affected.
+2. **Raster > Miscellaneous > Build Virtual Raster**.
+3. **Input layers:** tick only the 5 `ESA_WorldCover` layers.
+4. **Resolution:** **Average**.
+5. **Untick "Place each input file into a separate band"**. Ticked, it gives 5 separate bands, the warp reads only band 1, and four fifths of the state come out empty.
+6. **Virtual:** Save to File > `data/processed/lulc_merged.vrt`. A VRT is correct here: it is only an input to the next step.
+7. Run. About 3 seconds.
+
+#### B. Warp onto the DEM grid
+
+8. **Raster > Projections > Warp (Reproject)**.
+9. **Input layer:** `lulc_merged`. **Source CRS:** EPSG:4326. **Target CRS:** **EPSG:32644**.
+10. **Resampling method:** **Mode**.
+11. **Nodata value for output bands:** `0`.
+12. **Output file resolution in target georeferenced units:** `30`.
+13. **Georeferenced extents of output file:** click the button beside it, **Calculate from Layer > dem**. **CRS of the target raster extent:** EPSG:32644.
+14. **Output data type:** **Byte**.
+15. Tick **Use multithreaded warping implementation**.
+16. **Advanced parameters:**
+    - **Additional command-line parameters:** `-ovr NONE`
+    - **Additional creation options:** `COMPRESS=DEFLATE`
+17. **Reprojected:** Save to File > `data/processed/lulc.tif`, file type **GeoTIFF**, not VRT.
+18. Run. **44 seconds** for the whole state, 13 MB.
+
+**Why Mode:** each 30 m output cell covers about nine 10 m source cells. Mode takes the most common class among them; nearest neighbour takes whichever one happens to sit in the middle. Tested on Rudraprayag, the two disagree on 3.6 percent of cells and no class share moves by more than 0.4 points, so neither is badly wrong, but Mode is the one you can defend.
+
+**Why `-ovr NONE`:** the tiles carry pre-built 20 m preview copies, and without this flag GDAL reads those instead of the real 10 m cells. It changed 2.2 percent of cells in the test and cost no extra time.
+
+**Never Bilinear or Average** for classes: halfway between tree cover (10) and cropland (40) is 25, which is not a land cover.
+
+**Expected inside Uttarakhand:**
+
+| Code | Class | Share |
+|---|---|---|
+| 10 | Tree cover | 53.8% |
+| 30 | Grassland | 17.3% |
+| 60 | Bare / sparse vegetation | 8.5% |
+| 70 | Snow and ice | 7.8% |
+| 40 | Cropland | 6.8% |
+| 100 | Moss and lichen | 4.0% |
+| 50 | Built-up | 1.1% |
+| 80 | Permanent water | 0.57% |
+| 20 | Shrubland | 0.16% |
+| 90 | Herbaceous wetland | 0.05% |
+
+Code 80 feeds the water mask when sampling stable points.
+
+---
+
+### Soil (SoilGrids WRB)
+
+#### C. Warp onto the DEM grid
+
+19. Drag `data/raw/soil/soilgrids_wrb_mostprobable.tif` into QGIS.
+20. **Raster > Projections > Warp (Reproject)**.
+21. **Input layer:** `soilgrids_wrb_mostprobable`. **Source CRS:** EPSG:4326. **Target CRS:** **EPSG:32644**.
+22. **Resampling method:** **Nearest Neighbour**.
+23. **Nodata value for output bands:** **leave it empty.** See the trap below.
+24. **Output file resolution:** `30`. **Extent:** **Calculate from Layer > dem**, extent CRS EPSG:32644.
+25. **Output data type:** **Use Input Layer Data Type**.
+26. **Additional creation options:** `COMPRESS=DEFLATE`.
+27. **Reprojected:** Save to File > `data/processed/soil.tif`, **GeoTIFF**.
+28. Run. About **9 seconds**.
+
+**Why nearest, not Mode:** the soil cells are 250 m, so each one becomes about 70 output cells. You are copying one value into many cells, not choosing among many, and nearest neighbour copies it without altering the code. Mode is for shrinking a raster, not enlarging one.
+
+#### The soil trap: code 0 is not a soil
+
+In the SoilGrids legend, code 0 means Acrisols. In this file it covers **11.3 percent of the state**, with a **median elevation of 5,224 m**, and 89 percent of those cells sit above 4,500 m, against 6.9 percent of every other cell. Acrisols are warm, humid lowland soils. These cells are glaciers and bare rock, where SoilGrids makes no prediction and writes 0.
+
+**What handles it:** nothing to do in QGIS. When you export the CSV in Step 2g, `src/label_categories.py` labels code 0 as **No soil (rock or ice)**.
+
+**Why not simply mark 0 as NoData:** 11 percent of the state would lose its soil value, and Step 4 would fill the gap with the most common soil, Cambisols, which would call glaciers Cambisols. Rock and ice is real information about the ground, so it stays as a class of its own. **Say this in the viva if asked why your soil classes include "No soil".**
+
+**Expected inside Uttarakhand:** Cambisols 45.4%, Luvisols 21.1%, Leptosols 17.4%, No soil (rock or ice) 11.3%, Fluvisols 2.2%, Cryosols 2.1%, Chernozems 0.3%.
+
+---
+
+### D. Verify
+
+```
+python -m src.check_layers
+```
+
+Both `lulc` and `soil` must show **aligned: yes**. Land cover codes run 10 to 100; soil codes 0 to 29.
+
+### What tends to go wrong with land cover and soil
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `lulc.tif` covers only part of the state | "separate band" ticked when building the VRT | untick it and rebuild |
+| Codes like 25 or 63 appear | Bilinear or Average resampling | Mode for land cover, Nearest for soil |
+| `aligned: NO` | extent not taken from `dem`, or resolution not 30 | set both, rerun |
+| About 11 percent of the state has no soil | 0 entered as the output NoData | leave NoData empty for soil |
+| File on disk is `lulc.tif.vrt` | Save dialog left on VRT | choose GeoTIFF |
+| Warp takes many minutes | multithreading off | tick it; 44 s is normal |
+| QGIS crawls while panning | drawing 36,000 x 36,000 tiles | untick those layers; processing is unaffected |
+
+**Time:** about 10 minutes of clicking, under 2 minutes of processing.
 
 ---
 

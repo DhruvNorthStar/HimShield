@@ -34,11 +34,23 @@ WORLDCOVER_CLASSES = {
 SOIL_LEGEND_PATH = config.RAW_SOIL_DIR / "soilgrids_wrb_legend.json"
 
 
+# SoilGrids writes 0 where it makes no prediction, and 0 is also the legend code for Acrisols.
+# Tested on this project's clip (14 September 2026): code-0 cells cover 11.3 percent of Uttarakhand,
+# with a median elevation of 5,224 m and 89 percent of them above 4,500 m, against 6.9 percent of all
+# other cells. Acrisols are warm, humid lowland soils, so these cells are glaciers and bare rock.
+# Labelling them Acrisols would plant a fake soil class that only exists high in the mountains, and
+# treating them as missing would let Step 4 fill them with the most common soil. Both are wrong.
+SOIL_FILL_CODE = 0
+SOIL_FILL_LABEL = "No soil (rock or ice)"
+
+
 def load_soil_legend() -> dict[int, str]:
     if not SOIL_LEGEND_PATH.exists():
         return {}
     raw = json.loads(SOIL_LEGEND_PATH.read_text(encoding="utf-8"))
-    return {int(k): v for k, v in raw.items() if k.lstrip("-").isdigit()}
+    legend = {int(k): v for k, v in raw.items() if k.lstrip("-").isdigit()}
+    legend[SOIL_FILL_CODE] = SOIL_FILL_LABEL
+    return legend
 
 
 def normalise_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
