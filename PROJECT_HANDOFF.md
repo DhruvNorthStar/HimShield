@@ -135,6 +135,7 @@ No LICENSE file. The user was told the repo is "all rights reserved" without one
 | `docs/02_qgis_processing.md` | Step 2: every QGIS sub-step click by click, rehearsed on real data, with expected numbers and error tables |
 | `docs/data_sources_log.md` | Provenance table: source, file, resolution, date, licence and caveats for each factor |
 | `docs/PROJECT_STATUS.md` | Living status document |
+| `docs/literature_review.md` | Primary reference Chauhan, Gupta and Dixit (2025), read in full text; side-by-side comparison and this project's defensible contribution; method references; unread papers kept separate |
 | `notebooks/01_eda.ipynb` | Thin notebook calling `src/eda.py` |
 | `environment.yml` | Conda spec with minor-version pins |
 | `environment.lock.yml` | Exact resolved versions; install from this |
@@ -417,6 +418,7 @@ git status -sb                       # clean, main...origin/main
 3. **Done 14 September. Claude: Step 8 dashboard**, `dashboard/app.py`, three pages (four were built) (Overview; Model Comparison with metrics and the ROC figure; Predict with sliders using `prepare_for_prediction()` and both models). Must run with `streamlit run dashboard/app.py`. Function over polish. Builds on synthetic models now.
 4. **Done 14 September (`src/demo_map.py`). Claude: Step 9 groundwork**: a script that predicts RF susceptibility over the Rudraprayag grid from the aligned rasters, classifies into the 5 risk zones, renders folium to `outputs/demo_map_rudraprayag.html`, and reports pixel count, time taken and the projected time for the whole state. It can be built and timed now; the real result needs real models.
 5. **Day 10, about 25 September: inventory decision** (GSI, or hand-digitised Rudraprayag).
+5a. **User decision: add TWI to the schema?** Recommended on measured evidence (whole state: VIF 1.64, rank correlation with slope -0.51); TRI not (rank correlation 0.993 with slope, VIF 21.2). Rehearsed whole-state outputs (`state_twi.tif`, `state_tri.tif`) were left in the session scratchpad only. Steps are in `docs/02_qgis_processing.md` under "TWI and TRI rasters". If yes, Claude updates config, check_layers, make_synthetic, demo_map, dashboard and the 2f table, then reruns Steps 3 to 7 on synthetic data.
 6. **User: 2d to 2g** (landslide points, stable points, extraction, export), then `python -m src.label_categories`.
 7. Drop any column that cannot be produced (`lithology`, possibly `dist_faults`) through `DROPPED_COLUMNS`, and record why.
 8. Set `DEFAULT_DATA_SOURCE = 'real'`, rerun Steps 3 to 7, then Step 9 on real models.

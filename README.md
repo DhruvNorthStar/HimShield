@@ -95,6 +95,7 @@ Always run from the repo root with the environment active.
 | Check derived rasters against dem.tif | `python -m src.check_layers` | ready |
 | QGIS processing guide | [docs/02_qgis_processing.md](docs/02_qgis_processing.md) | ready |
 | Where the project stands | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | living document |
+| Literature review and how this project differs | [docs/literature_review.md](docs/literature_review.md) | started; primary reference Chauhan et al. (2025) |
 | QGIS export to dataset.csv | `python -m src.label_categories data/processed/dataset_raw.csv` | ready |
 | EDA | `python -m src.eda` or `notebooks/01_eda.ipynb` | ready |
 | Preprocessing | `python -m src.preprocess` | ready |

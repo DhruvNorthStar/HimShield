@@ -607,6 +607,92 @@ Both `lulc` and `soil` must show **aligned: yes**. Land cover codes run 10 to 10
 
 ---
 
+## TWI and TRI rasters (optional, from dem.tif)
+
+**Status: not in the schema yet.** Chauhan et al. (2025) use both factors; see [literature_review.md](literature_review.md). Building them does not add them to the models: that needs a change to `src/config.py` and the files that follow from it. Measured recommendation: **build TWI, skip TRI**. Why is at the end of this section.
+
+**What the layers are:**
+
+- **TWI, topographic wetness index**, ln(a / tan β). Here a is the area draining into a cell per metre of contour, and β is its slope. High values are flat ground that collects water, such as valley floors and hollows. Low values are steep ground that sheds it. Wet ground loses strength, which is why TWI is a landslide factor. It is not the same as distance to streams: a hollow high on a slope can be wet and far from any mapped channel.
+- **TRI, terrain ruggedness index** (Riley et al. 1999). The square root of the summed squared height differences between a cell and its 8 neighbours, in metres. Flat ground is 0; broken, rugged ground is high.
+
+**Why these tools:**
+
+- **TWI comes from GRASS `r.watershed`**, the same tool as the streams in Step 2c. Its "Topographic index" output is TWI, so no formula has to be typed by hand. GRASS also has `r.topidx`. Tested on Rudraprayag, it took twice as long (27 s against 12 s), and `r.watershed` handles flats and depressions better, so use `r.watershed`.
+- **TRI comes from GDAL, not GRASS.** QGIS 3.44 ships no GRASS TRI tool (`r.tri` is an add-on that is not installed). QGIS's built-in **Terrain Ruggedness Index (TRI)** runs `gdaldem TRI`. Tested: its output is identical to `gdaldem -alg Riley`, so it is Riley's formula. The Wilson variant averages absolute differences instead and gives values about three times smaller. QGIS's native "Ruggedness index" tool gives the same numbers as the GDAL tool with edges on.
+- **Chauhan et al. used SAGA 9.3.2.** SAGA is not bundled with QGIS 3.44, and adding it means installing a separate plugin and the SAGA program. The tools above need nothing extra.
+
+Every step below was run on `dem_rudraprayag.tif` and on the whole-state `dem.tif` on 14 September 2026.
+
+### A. TWI with r.watershed
+
+**Rehearse first** with `dem_rudraprayag` as the elevation: about 12 seconds.
+
+1. **Processing > Toolbox**, search `r.watershed`, open it (GRASS group).
+2. **Elevation:** `dem`.
+3. **Minimum size of exterior watershed basin:** leave **empty**. It only controls streams and basins, which this run does not produce.
+4. **Convergence factor for MFD:** leave at **5**.
+5. Leave **Enable Single Flow Direction (D8) flow** **unticked**. This is the opposite of Step 2c, on purpose: wetness needs flow spread over all downhill neighbours (multiple flow direction). Single flow direction was right for drawing one-cell-wide streams, not for wetness.
+6. Leave **Use positive flow accumulation even for likely underestimates** unticked. Tested with and without: identical TWI.
+7. Tick **Enable disk swap memory option (-m)**. Set **Maximum memory to be used with -m flag (in MB)** to `3000`, for the same reason as in Step 2c. Not needed for the Rudraprayag rehearsal.
+8. **Outputs.** Set only **Topographic index ln(a / tan(b))** > `data/processed/twi.tif`, GeoTIFF. For every other output (accumulation, drainage, basins, streams, half-basins, LS factor, S factor, SPI), click **...** and choose **Skip output**.
+9. **Advanced parameters:**
+   - **GRASS GIS region cellsize** `30`, and set the region extent from `dem`.
+   - **Output Rasters format options (createopt):** `COMPRESS=DEFLATE`. GRASS writes TWI as 64-bit decimals, and uncompressed that is about 900 MB for the state.
+10. Run. Rudraprayag: 12 seconds. Whole state with disk swap: **about 9 minutes** (tested: 527 s), writing a 450 MB file.
+
+The log shows `ERROR 6: ... SetColorTable() only supported for Byte or UInt16 bands`. This is the same harmless message as in Step 2c; the file is written correctly.
+
+**Expected on Rudraprayag:** values from 1.6 to 30.2, mean 5.8, median 5.3. 99 percent of cells fall between 3.2 and 13.6; the long upper tail is flat ground where a lot of water drains in. The one-cell rim along the edge of the data comes out as NoData: about 10,000 cells, 0.5 percent of the district.
+
+**Expected for the state:** values from 1.3 to 32.6, mean 6.3, median 5.6, with 99 percent below 19.2. Inside the state, 0.12 percent of cells are NoData, all on the border rim. A landslide point there gets an empty TWI, and Step 4 fills it with the median.
+
+### B. TRI with GDAL
+
+1. **Raster > Analysis > Terrain Ruggedness Index (TRI)**.
+2. **Input layer:** `dem`. **Band number:** `1`.
+3. Tick **Compute edges**. Without it, every cell next to NoData becomes NoData: a one-cell rim along the whole state border, which in the Rudraprayag rehearsal was about 10,000 cells.
+4. **Advanced parameters > Additional creation options:** `COMPRESS=DEFLATE|PREDICTOR=3`. (In the options table these are two rows: `COMPRESS` = `DEFLATE` and `PREDICTOR` = `3`.)
+5. **Terrain Ruggedness Index:** save to `data/processed/tri.tif`, GeoTIFF.
+6. Run. Rudraprayag: 5 seconds. Whole state: **22 seconds**.
+
+**Expected on Rudraprayag:** 0 to 261 m, mean 46 m, median 45 m. **Whole state:** 0 to 403 m, mean 38 m, median 37 m, a 187 MB file, and no NoData inside the state. A maximum under about 90 means the Wilson formula was used instead of Riley. A maximum under 1 means the input was a latitude and longitude raster.
+
+### C. Should they go into the models? Measured, not assumed
+
+Measured against the Step 2 layers. Rudraprayag used 300,000 cells. The whole state used one cell in every 10 by 10 block, 592,371 cells inside the state:
+
+| | Rank correlation with slope: Rudraprayag / state | VIF if added: Rudraprayag / state |
+|---|---|---|
+| TWI | -0.39 / **-0.51** (state: with curvature -0.42, with distance to streams -0.27) | 1.65 / **1.64**: new information |
+| TRI | 0.989 / **0.993** | 16.4 / **21.2**, and slope rises to 21.5 |
+
+**TRI is almost a copy of slope at 30 m.** Both measure how much height changes between neighbouring cells. Step 4 drops any factor with a VIF above 10, so adding TRI would only remove it, or remove slope, again.
+
+**TWI passes easily and describes something no current layer does.** Recommendation: build TWI and add `twi` to the schema; leave TRI out and write this table into the report as the reason.
+
+**Adding a factor to the schema touches these files:**
+
+- `src/config.py`: `SCHEMA_COLUMNS`, `NUMERIC_FEATURES`, `FEATURE_UNITS`.
+- `src/check_layers.py`: expected range.
+- `src/make_synthetic.py`: a simulated column, then retrain Steps 3 to 7.
+- `src/demo_map.py` and `dashboard/app.py`: raster and label.
+- Step 2f prefix table and the README schema.
+
+### What tends to go wrong with TWI and TRI
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| TWI looks like a stream map: thin lines, everything else nearly equal | single flow direction ticked | untick it; wetness needs multiple flow direction |
+| TWI minimum around -10, or values of infinity | TWI computed by hand as ln(accumulation / tan(slope)) without handling flat cells | use the `r.watershed` Topographic index output instead |
+| `twi.tif` about 900 MB | createopt left empty; GRASS writes Float64 | rerun with `COMPRESS=DEFLATE`, or translate to Float32 with DEFLATE |
+| TRI maximum under about 90 | Wilson formula (mean absolute difference) | use the QGIS TRI tool, which uses Riley |
+| Thin NoData rim along the state border | Compute edges left off | tick it and rerun |
+| `r.watershed` runs for hours | whole state without disk swap, or reading a .vrt | tick disk swap, memory 3000, input `dem.tif` |
+| `aligned: NO` for twi | region extent not taken from `dem` | set the region extent from `dem` and cellsize 30 |
+
+---
+
 ## 2d. Landslide points
 
 1. Load the GSI inventory, set its CRS if QGIS asks, and reproject to EPSG:32644.
