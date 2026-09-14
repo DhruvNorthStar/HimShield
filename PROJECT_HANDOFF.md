@@ -37,7 +37,11 @@ Phase 2 is due **25 working days from 13 September 2026: Monday 19 October 2026*
 | 6 Random Forest | done (synthetic) |
 | 7 Evaluation | done (synthetic) |
 | 8 Dashboard | **done** (synthetic): `streamlit run dashboard/app.py`, four pages, browser-tested 14 September |
-| 9 Rudraprayag demo map | **groundwork done** (synthetic): `python -m src.demo_map`, timed; real result needs real models. RF: 2,145,236 cells in 9 to 14 s across runs (148,000 to 229,000 cells/s), state projected 4 to 7 min of scoring. SVM: 444 s (4,827 cells/s), state projected about 204 min. Full state must be tiled (about 14 GB in one pass). The synthetic SVM scored all of Rudraprayag 0.000: tested and traced to `dist_faults` alone (real 56 to 127 km, 13 to 30 sd beyond synthetic training); RF unaffected. `demo_map` now warns when a factor is more than half out of range |
+| 9 Rudraprayag demo map | **groundwork done** (synthetic): `python -m src.demo_map`, timed; real result needs real models. RF: 2,145,236 cells in 9 to 14 s across runs (148,000 to 229,000 cells/s), state projected 4 to 7 min of scoring. Full state must be tiled (about 14 GB in one pass). **Both maps rebuilt on the current 29-feature models on 14 September:**
+  - **RF**: 13.8 s scoring, 19.5 s end to end. Zones: Very Low 61.9%, Low 29.9%, Moderate 7.1%, High 1.0%, Very High 0.0%.
+  - **SVM** (`--model svm`): 305.8 s scoring (7,016 cells/s), 311.6 s end to end, state projected about 141 min. Scores now vary (median 0.076, 5th to 95th percentile 0.000 to 0.436). Zones: Very Low 77.8%, Low 15.8%, Moderate 5.0%, High 1.3%, Very High 0.1%.
+  - History: before `dist_faults` was dropped, the synthetic SVM scored every Rudraprayag cell 0.000. That was tested and traced to `dist_faults` alone (real 56 to 127 km, 13 to 30 sd beyond synthetic training), and the result disappeared once the column was dropped.
+  - `demo_map` warns when a factor is more than half out of range |
 
 **Naming mismatch to be aware of:** the user calls the land cover and soil work "Step 2d". In `docs/02_qgis_processing.md`, section **2d is "Landslide points"**, and land cover and soil live under **"Land cover and soil rasters"**. Rainfall lives under **"Rainfall raster (CHIRPS)"**. Use the user's wording in conversation, and the document's headings when pointing to the file.
 
