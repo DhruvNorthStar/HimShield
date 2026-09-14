@@ -1,6 +1,6 @@
 # Working with this repository
 
-HimShield is built by one person, so the workflow is deliberately simple: **commit on `main`, push after every commit.** GitHub then always holds the latest working state, and a lost laptop costs nothing but time.
+Landslide Susceptibility Mapping for Uttarakhand is built by one person, so the workflow is deliberately simple: **commit on `main`, push after every commit.** GitHub then always holds the latest working state, and a lost laptop costs nothing but time.
 
 Repository: https://github.com/DhruvNorthStar/HimShield. It is **public**, so anything committed, including the author name and email on every commit, can be read by anyone.
 

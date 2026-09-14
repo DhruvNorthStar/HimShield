@@ -1,4 +1,4 @@
-# PROJECT HANDOFF: HimShield
+# PROJECT HANDOFF: Landslide Susceptibility Mapping for Uttarakhand
 
 Written 14 September 2026 at the end of a working session, so a fresh Claude Code session can continue without losing context. Updated later on 14 September: rainfall raster built and verified, deadline confirmed as 19 October. Read this whole file before doing anything. `docs/PROJECT_STATUS.md` is the living status document; this file is the complete briefing.
 
@@ -6,7 +6,7 @@ Written 14 September 2026 at the end of a working session, so a fresh Claude Cod
 
 ## 1. What the project is
 
-**HimShield**: landslide susceptibility mapping for Uttarakhand, India, comparing **Support Vector Machine** and **Random Forest**. BCA final-year PBL project, built by **one person** (GitHub user DhruvNorthStar). Faculty requirement: SVM and RF are mandatory, and their comparison is the core deliverable.
+**Landslide Susceptibility Mapping for Uttarakhand** (India), comparing **Support Vector Machine** and **Random Forest**. BCA final-year PBL project, built by **one person** (GitHub user DhruvNorthStar). Faculty requirement: SVM and RF are mandatory, and their comparison is the core deliverable.
 
 Binary classification: given terrain conditioning factors at a location, predict whether it is landslide-prone. Positives are historical landslide locations; negatives are points sampled from stable terrain.
 
@@ -81,7 +81,7 @@ echo '{"inputs": {"INPUT": "...", "OUTPUT": "..."}}' | ./qgis_process-qgis-ltr.b
 
 | Item | Value |
 |---|---|
-| GitHub | https://github.com/DhruvNorthStar/HimShield (**public**) |
+| GitHub | https://github.com/DhruvNorthStar/HimShield (**public**). The repository keeps its original name; the project title is "Landslide Susceptibility Mapping for Uttarakhand" (changed 14 September at the user's request) |
 | Branch | `main`, tracking `origin/main` |
 | State at handoff | clean, local `main` equals `origin/main` |
 | Commit author | `DhruvNorthStar <pandeydhruv92@gmail.com>`; the user explicitly chose this over the GitHub noreply address, knowing the repo is public |

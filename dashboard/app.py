@@ -1,5 +1,5 @@
 """
-Step 8: the HimShield dashboard.
+Step 8: the dashboard for Landslide Susceptibility Mapping for Uttarakhand.
 
     streamlit run dashboard/app.py
 
@@ -30,6 +30,23 @@ import streamlit as st
 
 from src import config
 from src.preprocess import EXCLUDED_LULC, prepare_for_prediction
+
+PROJECT_NAME = "Landslide Susceptibility Mapping for Uttarakhand"
+
+# Shown on every page while the pipeline runs on the simulated dataset. Faint, fixed behind the
+# content and ignoring clicks, so it marks screenshots without getting in the way of reading.
+WATERMARK_HTML = """
+<style>
+.lsm-synthetic-watermark {
+  position: fixed; top: 55%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-24deg);
+  font: 800 clamp(3rem, 9vw, 7rem)/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.06em; color: rgba(213, 94, 0, 0.08);
+  white-space: nowrap; pointer-events: none; user-select: none; z-index: 999;
+}
+</style>
+<div class="lsm-synthetic-watermark" aria-hidden="true">SYNTHETIC DATA</div>
+"""
 
 # Display only. Processing detail and licences live in docs/data_sources_log.md.
 FACTORS = {
@@ -118,6 +135,20 @@ def evaluation_section() -> dict:
     return ev
 
 
+def synthetic_banner() -> None:
+    """The first thing an examiner sees on the homepage: these results test the pipeline, they are not findings."""
+    st.markdown(
+        '<div style="border:2px solid #D55E00;border-left-width:8px;border-radius:6px;padding:14px 18px;'
+        'margin:0 0 1.2rem;background:rgba(213,94,0,0.06)">'
+        '<div style="font-weight:800;font-size:1.2rem;letter-spacing:0.05em;color:#0b0b0b">'
+        'SYNTHETIC DATA: RESULTS ARE NOT FINAL</div>'
+        '<div style="margin-top:6px;color:#1a1a1a">Every number, chart, prediction and map in this dashboard '
+        'comes from a simulated dataset built to test the pipeline end to end. The real GSI landslide '
+        'inventory has not been processed yet, so none of these results describe Uttarakhand. Both models '
+        'will be retrained on real data before any result is reported.</div></div>',
+        unsafe_allow_html=True)
+
+
 def show_figure(name: str, caption: str | None = None) -> None:
     path = config.FIGURES_DIR / f"{name}.png"
     if path.exists():
@@ -133,12 +164,14 @@ def page_overview() -> None:
     meta, df = metadata(), dataset()
     prep, ev = meta.get("preprocessing", {}), meta.get("evaluation", {})
 
-    st.title("HimShield")
+    st.title(PROJECT_NAME)
+    if config.IS_SYNTHETIC:
+        synthetic_banner()
     st.markdown(
-        "Landslide susceptibility mapping for **Uttarakhand, India**, comparing a "
-        "**Support Vector Machine** with a **Random Forest**. Both models look at the terrain "
-        "conditions at a location (slope, rainfall, rock, land cover, distance to roads and "
-        "streams, and more) and score how likely that ground is to be landslide-prone.")
+        "A comparison of a **Support Vector Machine** and a **Random Forest** for **Uttarakhand, India**. "
+        "Both models look at the terrain conditions at a location (slope, rainfall, rock, land cover, "
+        "wetness, distance to roads and streams, and more) and score how likely that ground is to be "
+        "landslide-prone.")
 
     positives = int((df[config.TARGET] == 1).sum())
     cols = st.columns(5)
@@ -509,7 +542,7 @@ def page_map() -> None:
 
 # ---------------------------------------------------------------------------
 def main() -> None:
-    st.set_page_config(page_title="HimShield", page_icon="⛰️", layout="wide")
+    st.set_page_config(page_title=PROJECT_NAME, page_icon="⛰️", layout="wide")
 
     pages = st.navigation([
         st.Page(page_overview, title="Overview", icon=":material/landscape:", url_path="overview", default=True),
@@ -521,9 +554,11 @@ def main() -> None:
     meta = metadata()
     trained_on = meta.get("data_source")
     if config.IS_SYNTHETIC:
-        st.warning(f"**{config.SYNTHETIC_LABEL}.** Every number, figure and prediction on these pages comes "
-                   "from a simulated dataset built to test the pipeline. None of it describes Uttarakhand.",
-                   icon=":material/science:")
+        st.markdown(WATERMARK_HTML, unsafe_allow_html=True)
+        if pages.title != "Overview":  # the Overview page carries the full banner instead
+            st.warning(f"**{config.SYNTHETIC_LABEL}.** Every number, figure and prediction on these pages comes "
+                       "from a simulated dataset built to test the pipeline. None of it describes Uttarakhand.",
+                       icon=":material/science:")
     elif trained_on and trained_on != config.DATA_SOURCE:
         st.error(f"The saved models were trained on **{trained_on}** data, but the project is set to "
                  f"**{config.DATA_SOURCE}**. Rerun Steps 4 to 7 before trusting anything here.")

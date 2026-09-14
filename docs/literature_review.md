@@ -62,11 +62,11 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 
 ---
 
-## 2. How HimShield differs from Chauhan et al. (2025)
+## 2. How Landslide Susceptibility Mapping for Uttarakhand differs from Chauhan et al. (2025)
 
 ### 2.1 Side by side
 
-| | Chauhan et al. (2025) | HimShield |
+| | Chauhan et al. (2025) | Landslide Susceptibility Mapping for Uttarakhand |
 |---|---|---|
 | Question | Which of five approaches maps the state best | A controlled head-to-head of SVM against Random Forest, the comparison the faculty brief requires |
 | Models | Shannon entropy, fuzzy-AHP, logistic regression, RF, XGBoost; **no SVM** | SVM with an RBF kernel (plus a linear kernel to test whether non-linearity helps) and Random Forest |
@@ -90,7 +90,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 
 1. **A statistically tested SVM versus Random Forest comparison for Uttarakhand.**
    - Chauhan et al. did not test SVM, and they compared models without an interval or test.
-   - HimShield runs both models under one protocol (same split, scaler, SMOTE-in-fold, grid search) and reports whether the gap is larger than test-set noise.
+   - Landslide Susceptibility Mapping for Uttarakhand runs both models under one protocol (same split, scaler, SMOTE-in-fold, grid search) and reports whether the gap is larger than test-set noise.
    - It also checks, rather than assumes, that the RBF kernel beats a linear one.
 2. **A documented, leakage-controlled evaluation.** The steps that move an AUC most are all written down and justified:
    - how non-landslide points are drawn;
