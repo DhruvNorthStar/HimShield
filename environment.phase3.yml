@@ -1,0 +1,22 @@
+# Phase 3 additions to the landslide environment (phase3-preparation branch).
+#
+# environment.yml and environment.lock.yml stay the Phase 2 definition and are not changed.
+# Apply this file on top of an environment built from environment.lock.yml:
+#
+#     conda env update -n landslide -f environment.phase3.yml
+#
+# Why only these six packages: shap (SHAP explanations for the Random Forest, src/explain_shap.py) and
+# the five packages it pulls in. A conda dry run on 14 September 2026 showed all six as new installs:
+# nothing already in the environment was upgraded or downgraded. After installing, numpy 2.2.6,
+# scikit-learn 1.7.2, pandas 2.3.3 and scipy 1.15.2 were confirmed unchanged, so the saved Phase 2
+# models still load. Versions and builds below are exactly what was installed and tested.
+name: landslide
+channels:
+  - conda-forge
+dependencies:
+  - shap=0.51.0=cpu_py311h727da4d_0
+  - numba=0.67.0=py311h5dfdfe8_1
+  - llvmlite=0.49.0=py311h6456a58_3
+  - cloudpickle=3.1.2=pyhcf101f3_1
+  - slicer=0.0.8=pyhd8ed1ab_0
+  - tqdm=4.70.1=pyh6be1c34_0
