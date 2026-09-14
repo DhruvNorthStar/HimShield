@@ -15,7 +15,7 @@ Last updated: 14 September 2026, second session. Update this file whenever a dec
 | QGIS | 3.44.12 LTR, GRASS provider enabled |
 | Data source in use | **synthetic**, until the real CSV exists |
 | Built | Steps 0, 0.5, 1, 3, 4, 5, 6, 7, **8 (dashboard)**, **9 groundwork (Rudraprayag map script)** |
-| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil, rainfall: **all 10 rasters** |
+| Done in QGIS | 2a, 2b, 2c (roads, streams, faults), land cover, soil, rainfall: **all 10 rasters**, plus `twi.tif` (11 layers, all aligned) |
 | Pending | lithology, landslide points, stable points, extraction; Step 9 on real models |
 | Team | one person |
 
@@ -35,9 +35,9 @@ Last updated: 14 September 2026, second session. Update this file whenever a dec
 | Deadline | ✅ confirmed: Monday 19 October 2026 |
 | Bhukosh | ⏳ user registering today, and the project guide's letter to GSI goes out today |
 | Literature review | ✅ started: [literature_review.md](literature_review.md), primary reference Chauhan, Gupta and Dixit (2025), *Geoenvironmental Disasters* 12:2, read in full text. Verified there: 7,182 GSI points from Bhukosh, 16 factors at 30 m, stratified random 70/30 split, RF AUC 90.94% (XGBoost 91.36%). Not reported there: how non-landslide points were drawn, class balancing, SVM. Tables still to check in the PDF |
-| TWI and TRI | ✅ rehearsed on Rudraprayag and the whole state (TWI 527 s, TRI 22 s), steps in `02_qgis_processing.md`. Whole state: TWI rank correlation with slope -0.51, VIF 1.64 (adds information); TRI rank correlation with slope **0.993**, VIF 21.2 (duplicates slope). Rudraprayag agrees (-0.39 and 1.65; 0.989 and 16.4). Recommendation: build TWI and add it to the schema, skip TRI. **Decision pending with the user** |
+| TWI and TRI | ✅ rehearsed on Rudraprayag and the whole state (TWI 527 s, TRI 22 s), steps in `02_qgis_processing.md`. Whole state: TWI rank correlation with slope -0.51, VIF 1.64 (adds information); TRI rank correlation with slope **0.993**, VIF 21.2 (duplicates slope). Rudraprayag agrees (-0.39 and 1.65; 0.989 and 16.4). **TWI added to the schema on 14 September** (the rehearsed whole-state `twi.tif` copied into `data/processed/`); TRI left out. Synthetic Steps 3 to 7 and the Rudraprayag RF map rerun with 30 features |
 | Step 8 dashboard | ✅ `streamlit run dashboard/app.py`: Overview, Model Comparison, Predict, Rudraprayag Map. Every page loaded and the Predict controls tested in a browser, no server errors |
-| Step 9 groundwork | ✅ `python -m src.demo_map`: Random Forest scored 2,145,236 cells (6,105 water cells skipped) in 13.6 s, 19.8 s end to end; whole state projected at about 6 to 7 min of scoring, 9 to 10 min end to end, but only in tiles (a single pass needs about 14 GB). `--model svm`: 444 s for the same cells (4,827 cells per second, 31 times slower than RF), about 204 min projected for the state. **The synthetic SVM scored every cell 0.000 (all Very Low) while RF spread normally (median 0.247).** Tested: swapping only `dist_faults` for a typical training value restores SVM scores (median 0.117), and keeping only the real `dist_faults` drives them to 0. Real distances there (56 to 127 km) sit 13 to 30 standard deviations beyond the synthetic training data; an RBF kernel decays towards its intercept, trees saturate. A synthetic-data artefact, but `demo_map` now warns when most of the district is out of range |
+| Step 9 groundwork | ✅ `python -m src.demo_map`: Random Forest scored 2,145,236 cells (6,105 water cells skipped) in 13.6 s, 19.8 s end to end (after retraining with TWI: 9.4 s and 16.5 s); whole state projected at about 4 to 7 min of scoring, 8 to 10 min end to end, but only in tiles (a single pass needs about 14 GB). `--model svm`: 444 s for the same cells (4,827 cells per second, 31 times slower than RF), about 204 min projected for the state. **The synthetic SVM scored every cell 0.000 (all Very Low) while RF spread normally (median 0.247).** Tested: swapping only `dist_faults` for a typical training value restores SVM scores (median 0.117), and keeping only the real `dist_faults` drives them to 0. Real distances there (56 to 127 km) sit 13 to 30 standard deviations beyond the synthetic training data; an RBF kernel decays towards its intercept, trees saturate. A synthetic-data artefact, but `demo_map` now warns when most of the district is out of range |
 
 Also found and fixed today:
 
@@ -55,6 +55,7 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 | slope | 0 to 80.16° | |
 | aspect | -1 to 360 | 4,107,242 flat cells |
 | curvature | -6.61 to 6.74 | profile curvature × 100 |
+| twi | 1.30 to 32.63 | r.watershed topographic index, multiple flow direction; added 14 September |
 | dist_roads | 0 to 100,360 m | 27,312 OSM segments, 10 km border margin |
 | dist_streams | 0 to 111,522 m | r.watershed threshold 1,000 cells |
 | dist_faults | 0 to 275,434 m | 8 GEM faults; weak factor |
@@ -66,13 +67,13 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
-| Best parameters | C=10, gamma=0.01 | depth 10, 300 trees, min split 2 |
-| CV AUC | 0.8602 | 0.8896 |
-| **Test AUC** | 0.8304 | **0.8682** |
-| Recall at 0.5 | 0.732 | 0.793 |
-| Landslides missed | 96 of 358 | 74 of 358 |
+| Best parameters | C=10, gamma=0.01 | depth 10, 200 trees, min split 2 |
+| CV AUC | 0.8653 | 0.8956 |
+| **Test AUC** | 0.8554 | **0.8827** |
+| Recall at 0.5 | 0.755 | 0.794 |
+| Landslides missed | 88 of 359 | 74 of 359 |
 
-RF wins by 0.0379 AUC (bootstrap 95% interval +0.0234 to +0.0529). RBF beats linear SVM by only +0.0090.
+Retrained 14 September with 30 features (TWI added). RF wins by 0.0271 AUC (bootstrap 95% interval +0.0137 to +0.0416). RBF beats linear SVM by +0.0145. twi ranks 6th of 30 in RF impurity importance, 9th by permutation. Before TWI: SVM 0.8304, RF 0.8682.
 
 ## 5. Data status
 
@@ -86,7 +87,12 @@ RF wins by 0.0379 AUC (bootstrap 95% interval +0.0234 to +0.0529). RBF beats lin
 
 - GSI inventory blocking; decision on day 10 (Friday 25 September): GSI data, or hand-digitised Rudraprayag scars.
 - Lithology may have to be dropped through `DROPPED_COLUMNS`.
-- Schema decision: add `twi` (recommended, measured) and leave out `tri`. Adding a column means updating config, the checker, the synthetic generator, the map script, the dashboard and the Step 2f table, then retraining Steps 3 to 7 on synthetic data.
+- **VIF on the full real feature set** (whole-state grid sample of 588,997 cells, 14 September; lithology not included). All values below are VIF:
+  - **TWI 1.73.**
+  - **Elevation 14.5**, above 10, because it tracks `dist_faults`: rank correlation **0.90**. Without `dist_faults`, elevation falls to 7.8.
+  - `lulc_Tree cover` 10.1 is an encoding effect. With the most common class as the reference instead of the first alphabetically, it falls well below 10.
+  - **Step 4's rule would drop elevation, the wrong column.** Decide before the real run: drop `dist_faults` through `DROPPED_COLUMNS` (weak GEM layer, a regional trend), or get GSI fault lines. Optionally make Step 4 use the most common class as the reference.
+  - Caveat: Step 4 computes VIF on sample points, not grid cells, so real Step 4 values will differ.
 - `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data. **Measured 14 September: inside Rudraprayag the nearest GEM fault is 55.7 to 127.1 km away (median 96.3 km)**, although the Main Central Thrust crosses the district; GEM lists active faults only. In the demo district the layer is a regional gradient, not a fault proximity. GSI structural lines from Bhukosh would fix this; otherwise drop it through `DROPPED_COLUMNS`.
 - `data/processed/` holds about 3.8 GB, much of it intermediates; cleanup needs the user's go-ahead.
 

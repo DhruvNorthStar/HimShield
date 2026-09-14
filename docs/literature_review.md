@@ -58,7 +58,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 - **It matches our grid decisions.** They also used 30 m, UTM zone 44N (our EPSG:32644).
 - **Their Random Forest AUC of 90.94% is a reference point, not a target.** AUCs from different inventories, different non-landslide sampling and different splits cannot be ranked against each other. Our current numbers come from synthetic data and cannot be compared with anything.
 - **Both studies split at random.** Nearby points land in both training and test sets, so both sets of scores are likely optimistic for unseen areas. This is a shared limitation, not a weakness of one study.
-- **Their table points to five factors we do not have:** geomorphons, soil moisture, NDVI, TWI and TRI. Section 2.3 explains which of these are worth adding.
+- **Their table pointed to five factors we did not have:** geomorphons, soil moisture, NDVI, TWI and TRI. Section 2.3 measures which were worth adding. TWI has since been added; TRI was rejected.
 
 ---
 
@@ -81,7 +81,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 | Metrics | AUC; sensitivity, specificity, accuracy, precision, F1 at one threshold | AUC as headline, average precision, all metrics at 0.5 and at the Youden threshold |
 | Susceptibility zones | Natural breaks, recomputed per model | Fixed breaks at 0.2, 0.4, 0.6, 0.8, identical for both models, so zone areas compare directly |
 | Map extent | Whole state | Rudraprayag district for Phase 2, with measured prediction time and a projection for the state (whole-state mapping is Phase 3) |
-| Factors | 16 | 11 in the schema: 10 built, lithology pending. Not included: geomorphons, soil moisture, NDVI, TWI, TRI |
+| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. Not included: geomorphons, soil moisture, NDVI, TRI (TRI measured and rejected) |
 | Data | IMD rainfall, Esri land cover, GSI geology and soil; ArcGIS Pro, SAGA, R | Copernicus GLO-30 DEM, CHIRPS 2009 to 2024, ESA WorldCover, SoilGrids, OpenStreetMap, GEM faults; QGIS and Python |
 | Reproducibility | No data or code released | Public repository, every step scripted or documented click by click, locked environment, seed 42 |
 | Data checks reported | None | SRTM voids of 766 km2 (switched to Copernicus); a 42.7% step change in CHIRPS before 2009; SoilGrids code 0 is rock and ice, not a soil; GEM faults miss the Main Central Thrust in Rudraprayag; per-map report of inputs outside the training range |
@@ -115,7 +115,7 @@ Measured on 14 September 2026 with the Step 2 rasters and the TWI and TRI rehear
 
 | Factor | Rank correlation with slope: Rudraprayag / state | VIF if added: Rudraprayag / state | Recommendation |
 |---|---|---|---|
-| TWI (`r.watershed` topographic index) | -0.39 / -0.51 | 1.65 / 1.64 | **Add.** It carries information none of our layers holds |
+| TWI (`r.watershed` topographic index) | -0.39 / -0.51 | 1.65 / 1.64 | **Added 14 September 2026.** It carries information none of our layers holds; VIF 1.73 on the full real feature set |
 | TRI (Riley) | **0.989 / 0.993** | **16.4 / 21.2** | **Do not add.** At 30 m it is almost a copy of slope, and our VIF step would drop one of the two anyway |
 | Geomorphons | not measured | not measured | Optional. `r.geomorphon` is in GRASS; categorical with 10 classes. Worth a test only if time allows |
 | NDVI | not measured | not measured | Optional. Overlaps with WorldCover land cover; needs Sentinel-2 processing |

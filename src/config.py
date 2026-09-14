@@ -74,12 +74,15 @@ def data_source_banner() -> str:
 # ---------------------------------------------------------------------------
 TARGET = "landslide"  # 1 = GSI landslide location, 0 = sampled stable terrain
 
+# twi added 14 September 2026. Measured on the real rasters before adding it: whole-state rank
+# correlation with slope -0.51 and VIF 1.64, so it carries new information. TRI was measured and
+# left out: rank correlation with slope 0.993, VIF 21.2. See docs/literature_review.md, section 2.3.
 SCHEMA_COLUMNS = [
-    "landslide", "slope", "aspect", "elevation", "curvature", "rainfall",
+    "landslide", "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
     "soil_type", "lithology", "lulc", "dist_roads", "dist_streams", "dist_faults",
 ]
 NUMERIC_FEATURES = [
-    "slope", "aspect", "elevation", "curvature", "rainfall",
+    "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
     "dist_roads", "dist_streams", "dist_faults",
 ]
 CATEGORICAL_FEATURES = ["soil_type", "lithology", "lulc"]
@@ -89,6 +92,7 @@ FEATURE_UNITS = {
     "aspect": "degrees from north (-1 = flat)",
     "elevation": "m above sea level",
     "curvature": "1/100 m (negative = concave)",
+    "twi": "ln(a / tan slope), higher = wetter",
     "rainfall": "mm/year (mean annual)",
     "dist_roads": "m",
     "dist_streams": "m",

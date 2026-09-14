@@ -2,7 +2,7 @@
 
 A comparative study of Support Vector Machine and Random Forest for predicting landslide-prone terrain in Uttarakhand, India. BCA final-year PBL project.
 
-Given terrain conditioning factors at a location (slope, aspect, elevation, curvature, rainfall, soil, lithology, land cover, and distance to roads, streams and faults), the models predict whether the location is landslide-prone. Positive samples are historical landslides from the GSI inventory. Negative samples are points sampled from stable terrain.
+Given terrain conditioning factors at a location (slope, aspect, elevation, curvature, topographic wetness, rainfall, soil, lithology, land cover, and distance to roads, streams and faults), the models predict whether the location is landslide-prone. Positive samples are historical landslides from the GSI inventory. Negative samples are points sampled from stable terrain.
 
 > **Data status: SYNTHETIC.** Until the real QGIS extraction is finished, the pipeline runs on `data/processed/dataset_synthetic.csv`, a simulated dataset with the same schema. Every script prints a banner and every figure is watermarked while this is the case. No result from it is a finding about Uttarakhand. See [Switching to real data](#switching-to-real-data).
 
@@ -116,6 +116,7 @@ Always run from the repo root with the environment active.
 | `aspect` | slope direction from DEM, -1 where flat | degrees from north |
 | `elevation` | elevation (Copernicus GLO-30 DEM) | m |
 | `curvature` | surface curvature from DEM | negative = concave |
+| `twi` | topographic wetness index from the DEM (GRASS r.watershed) | ln(a / tan slope), higher = wetter |
 | `rainfall` | mean annual rainfall 2009 to 2024 (CHIRPS) | mm/year |
 | `soil_type` | soil class (SoilGrids WRB) | category name |
 | `lithology` | rock type (GSI) | category name |

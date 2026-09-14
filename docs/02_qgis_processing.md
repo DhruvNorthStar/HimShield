@@ -609,7 +609,11 @@ Both `lulc` and `soil` must show **aligned: yes**. Land cover codes run 10 to 10
 
 ## TWI and TRI rasters (optional, from dem.tif)
 
-**Status: not in the schema yet.** Chauhan et al. (2025) use both factors; see [literature_review.md](literature_review.md). Building them does not add them to the models: that needs a change to `src/config.py` and the files that follow from it. Measured recommendation: **build TWI, skip TRI**. Why is at the end of this section.
+**Status:**
+- **TWI is in the schema** as the `twi` column, since 14 September 2026. `data/processed/twi.tif` exists: it is the whole-state rehearsal output below, copied in unchanged.
+- **TRI is not in the schema.** It was measured and left out; section C explains why.
+
+Chauhan et al. (2025) use both factors; see [literature_review.md](literature_review.md).
 
 **What the layers are:**
 
@@ -671,7 +675,7 @@ Measured against the Step 2 layers. Rudraprayag used 300,000 cells. The whole st
 
 **TWI passes easily and describes something no current layer does.** Recommendation: build TWI and add `twi` to the schema; leave TRI out and write this table into the report as the reason.
 
-**Adding a factor to the schema touches these files:**
+**Adding TWI to the schema changed these files** (done 14 September 2026; any future factor needs the same list):
 
 - `src/config.py`: `SCHEMA_COLUMNS`, `NUMERIC_FEATURES`, `FEATURE_UNITS`.
 - `src/check_layers.py`: expected range.
@@ -740,6 +744,7 @@ Also state plainly what sampling cannot fix: "stable" here means "no landslide h
    | `aspect.tif` | `aspect` |
    | `dem.tif` | `elevation` |
    | `curvature.tif` | `curvature` |
+   | `twi.tif` | `twi` |
    | `rainfall.tif` | `rainfall` |
    | `dist_roads.tif` | `dist_roads` |
    | `dist_streams.tif` | `dist_streams` |

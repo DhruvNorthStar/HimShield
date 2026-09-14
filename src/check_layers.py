@@ -24,6 +24,8 @@ EXPECTED = {
     "slope": (0, 90, "degrees. A maximum near 0.5 means the slope was computed on a lat/long grid"),
     "aspect": (-1, 360, "compass degrees, -1 on flat ground"),
     "curvature": (-100, 100, "1/100 m. Values near 0.0001 mean the x100 step was skipped"),
+    "twi": (0, 50, "ln(a / tan slope). Negative or infinite values mean it was computed by hand "
+                   "without handling flat cells; use the r.watershed Topographic index output"),
     "rainfall": (0, 10000, "mm/year"),
     # Distances run over the whole rectangular grid, not just the state, and its diagonal is about
     # 452 km. Sparse layers get large: tested dist_faults reaches 275 km in the grid corners.

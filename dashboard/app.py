@@ -37,6 +37,7 @@ FACTORS = {
     "aspect": ("Aspect", "Copernicus GLO-30 DEM, GRASS r.slope.aspect"),
     "elevation": ("Elevation", "Copernicus GLO-30 DEM, 30 m"),
     "curvature": ("Curvature", "Copernicus GLO-30 DEM, profile curvature"),
+    "twi": ("Topographic wetness index", "Copernicus GLO-30 DEM, GRASS r.watershed (multiple flow direction)"),
     "rainfall": ("Rainfall", "CHIRPS v2.0, mean of 2009 to 2024"),
     "soil_type": ("Soil type", "SoilGrids WRB, most probable class"),
     "lithology": ("Lithology", "GSI, awaiting Bhukosh access"),
@@ -45,11 +46,11 @@ FACTORS = {
     "dist_streams": ("Distance to streams", "stream network derived from the DEM"),
     "dist_faults": ("Distance to faults", "GEM Global Active Faults"),
 }
-SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "rainfall": 10.0,
+SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "twi": 0.1, "rainfall": 10.0,
                 "dist_roads": 10.0, "dist_streams": 10.0, "dist_faults": 50.0}
 INPUT_GROUPS = {
     "Terrain": ["slope", "elevation", "curvature", "aspect"],
-    "Water and access": ["rainfall", "dist_streams", "dist_roads", "dist_faults"],
+    "Water and access": ["rainfall", "twi", "dist_streams", "dist_roads", "dist_faults"],
     "Ground": ["soil_type", "lithology", "lulc"],
 }
 

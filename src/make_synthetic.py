@@ -47,7 +47,7 @@ N_RAIN_CELLS = 70     # roughly the number of 0.25 degree IMD cells over Uttarak
 # Difficulty knobs. Tuned so test AUC lands in the range published landslide
 # studies report (about 0.80-0.95): easy enough to show the pipeline works,
 # hard enough that the models do not look magically perfect.
-# Quick baseline at these settings (70/30 split, no grid search):
+# Quick baseline at these settings (70/30 split, no grid search), measured before TWI was added:
 #   linear SVM 0.84, RBF SVM 0.86, RF 0.90 test AUC.
 # Do not tune these to favour one model; that would make the comparison dishonest.
 SIGNAL_SCALE = 1.0    # multiplies every terrain effect in the hidden log-odds
@@ -96,7 +96,8 @@ LULC_EFFECT = {"Barren": 0.7, "Scrub": 0.5, "Agriculture": 0.4, "Builtup": 0.3, 
 SOIL_EFFECT = {"Regosols": 0.3, "Leptosols": 0.2, "Luvisols": 0.1, "Cambisols": 0.0,
                "Fluvisols": -0.3, "Glacier": -0.8}
 
-MISSING_RATES = {"rainfall": 0.005, "soil_type": 0.015, "lithology": 0.010}
+MISSING_RATES = {"rainfall": 0.005, "soil_type": 0.015, "lithology": 0.010,
+                 "twi": 0.002}  # the real layer is NoData on a one-cell rim along the state border
 
 
 def _pick(rng: np.random.Generator, options: dict[str, float], n: int) -> np.ndarray:
@@ -140,6 +141,15 @@ def build_terrain_pool(rng: np.random.Generator) -> pd.DataFrame:
     pool["dist_roads"] = pool["dist_roads"].clip(0, 25_000)
     # Streams run in concave hollows: more concave means closer to a stream.
     pool["dist_streams"] = (rng.exponential(450, size=len(pool)) * np.exp(0.2 * pool["curvature"])).clip(0, 5_000)
+
+    # Topographic wetness index, ln(a / tan slope). It has its own random generator, so adding it
+    # (14 September 2026) left every column above exactly as it was. Wetter where ground is gentle,
+    # concave and close to a stream, matching the directions measured on the real layer (whole
+    # state: rank correlation with slope -0.51, curvature -0.42, distance to streams -0.27).
+    twi_rng = np.random.default_rng(config.RANDOM_STATE + 1)
+    log_area = (4.5 + 1.5 * np.exp(-pool["dist_streams"] / 200) - 0.35 * pool["curvature"]
+                + twi_rng.normal(0, 1.0, size=len(pool)))
+    pool["twi"] = (log_area - np.log(np.tan(np.radians(pool["slope"].clip(lower=0.5))))).clip(1.3, 32)
     return pool
 
 
@@ -151,6 +161,7 @@ def hidden_log_odds(pool: pd.DataFrame, rng: np.random.Generator) -> np.ndarray:
         + 1.0 * (rain - 1600) / 500
         + 1.6 * np.exp(-pool["dist_roads"] / 300)        # road cuts undercut slopes
         + 1.0 * np.exp(-pool["dist_streams"] / 250)      # toe erosion by streams
+        + 0.35 * ((pool["twi"] - 6) / 3).clip(-1, 2)     # wet ground loses strength, a modest effect
         + 0.9 * np.exp(-pool["dist_faults"] / 1500)      # sheared rock near faults
         - 0.25 * pool["curvature"]                       # concave slopes collect water
         + 0.15 * np.cos(np.radians(pool["aspect"] - 180))
@@ -212,6 +223,7 @@ def tidy(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["slope", "aspect", "dist_roads", "dist_streams", "dist_faults"]:
         df[col] = df[col].round(2)
     df["curvature"] = df["curvature"].round(3)
+    df["twi"] = df["twi"].round(3)
     return df[config.SCHEMA_COLUMNS]
 
 
