@@ -58,7 +58,7 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 | twi | 1.30 to 32.63 | r.watershed topographic index, multiple flow direction; added 14 September |
 | dist_roads | 0 to 100,360 m | 27,312 OSM segments, 10 km border margin |
 | dist_streams | 0 to 111,522 m | r.watershed threshold 1,000 cells |
-| dist_faults | 0 to 275,434 m | 8 GEM faults; weak factor |
+| dist_faults | 0 to 275,434 m | 8 GEM faults; weak factor; **dropped from the models 14 September** (raster kept) |
 | lulc | codes 10 to 100 | Mode resampling |
 | soil | codes 0 to 29 | nearest neighbour; code 0 = no soil |
 | rainfall | 390 to 2,520 mm over the grid, 506 to 2,519 inside the state | CHIRPS mean 2009 to 2024, bilinear |
@@ -67,13 +67,13 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
-| Best parameters | C=10, gamma=0.01 | depth 10, 200 trees, min split 2 |
-| CV AUC | 0.8653 | 0.8956 |
-| **Test AUC** | 0.8554 | **0.8827** |
-| Recall at 0.5 | 0.755 | 0.794 |
-| Landslides missed | 88 of 359 | 74 of 359 |
+| Best parameters | C=10, gamma=0.01 | depth 10, 200 trees, min split 5 |
+| CV AUC | 0.8673 | 0.8928 |
+| **Test AUC** | 0.8577 | **0.8862** |
+| Recall at 0.5 | 0.760 | 0.783 |
+| Landslides missed | 86 of 359 | 78 of 359 |
 
-Retrained 14 September with 30 features (TWI added). RF wins by 0.0271 AUC (bootstrap 95% interval +0.0137 to +0.0416). RBF beats linear SVM by +0.0145. twi ranks 6th of 30 in RF impurity importance, 9th by permutation. Before TWI: SVM 0.8304, RF 0.8682.
+Retrained 14 September with 29 features (TWI added, dist_faults dropped). RF wins by 0.0284 AUC (bootstrap 95% interval +0.0140 to +0.0430). RBF beats linear SVM by +0.0161. twi ranks 6th of 29 in RF impurity importance, 9th by permutation. Earlier today: original SVM 0.8304, RF 0.8682; with TWI added, SVM 0.8554, RF 0.8827.
 
 ## 5. Data status
 
@@ -90,8 +90,8 @@ Retrained 14 September with 30 features (TWI added). RF wins by 0.0271 AUC (boot
 - **VIF on the full real feature set** (whole-state grid sample of 588,997 cells, 14 September; lithology not included). All values below are VIF:
   - **TWI 1.73.**
   - **Elevation 14.5**, above 10, because it tracks `dist_faults`: rank correlation **0.90**. Without `dist_faults`, elevation falls to 7.8.
-  - `lulc_Tree cover` 10.1 is an encoding effect. With the most common class as the reference instead of the first alphabetically, it falls well below 10.
-  - **Step 4's rule would drop elevation, the wrong column.** Decide before the real run: drop `dist_faults` through `DROPPED_COLUMNS` (weak GEM layer, a regional trend), or get GSI fault lines. Optionally make Step 4 use the most common class as the reference.
+  - `lulc_Tree cover` 10.1 is an encoding effect. With the most common class (Tree cover) as the reference instead of the first alphabetically, that column disappears and no land-cover column goes above 4.7.
+  - **Step 4's rule would have dropped elevation, the wrong column.** Resolved on 14 September at the user's request: `dist_faults` is in `DROPPED_COLUMNS`; restore it if GSI fault lines arrive.
   - Caveat: Step 4 computes VIF on sample points, not grid cells, so real Step 4 values will differ.
 - `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data. **Measured 14 September: inside Rudraprayag the nearest GEM fault is 55.7 to 127.1 km away (median 96.3 km)**, although the Main Central Thrust crosses the district; GEM lists active faults only. In the demo district the layer is a regional gradient, not a fault proximity. GSI structural lines from Bhukosh would fix this; otherwise drop it through `DROPPED_COLUMNS`.
 - `data/processed/` holds about 3.8 GB, much of it intermediates; cleanup needs the user's go-ahead.

@@ -198,7 +198,7 @@ Grid: **11,123 × 10,135 cells, 30 m, EPSG:32644, extent 170670 to 504360 E, 317
 
 ### Models, `models\` (trained on synthetic data)
 
-`svm_model.pkl` (373 KB), `rf_model.pkl` (8.8 MB), `scaler.pkl`, `feature_names.json` (30 features, including `twi` since 14 September), `metadata.json` (every section written by Steps 4 to 7, including `data_source: synthetic`).
+`svm_model.pkl` (373 KB), `rf_model.pkl` (8.8 MB), `scaler.pkl`, `feature_names.json` (29 features: `twi` added and `dist_faults` dropped on 14 September), `metadata.json` (every section written by Steps 4 to 7, including `data_source: synthetic`).
 
 ---
 
@@ -300,6 +300,7 @@ If there is still no GSI data, **digitise landslide scars for Rudraprayag by han
 | Synthetic data until the real CSV | Steps 3 to 7 finished and tested early; switching is one line |
 | Seed 42 everywhere | reproducibility |
 | TWI added to the schema, TRI left out (14 September, user's decision on measured evidence) | whole state: TWI rank correlation with slope -0.51, VIF 1.64; TRI rank correlation with slope 0.993, VIF 21.2. Both used by Chauhan et al. (2025) |
+| `dist_faults` dropped from the models (14 September, user's decision) | GEM holds 8 faults within 50 km and misses the Main Central Thrust (Rudraprayag cells 56 to 127 km from a mapped fault); on a whole-state grid sample it tracks elevation (rank correlation 0.90, elevation VIF 14.5), so Step 4 would have dropped elevation instead. Raster and CSV column still produced; restore if GSI fault lines arrive |
 | Risk zones at fixed breaks 0.2, 0.4, 0.6, 0.8 | natural breaks and quantiles are recomputed per map, so a zone would mean different scores on different runs and models; quantiles force 20 percent into every zone |
 | Zone colours: one vermillion hue, light to dark | ordered classes need a sequential ramp, not green to red (fails colour-blind readers); matches the landslide colour in every figure; validated as an ordinal ramp (light end 2.19:1 on the basemap) |
 | Water cells skipped on the map | models never saw water (Step 2e and Step 4), so any score there would be invented |
@@ -311,25 +312,31 @@ If there is still no GSI data, **digitise landslide scars for Rudraprayag by han
 
 ### Preprocessing
 
-Retrained 14 September after adding TWI. 3,600 rows in, 5 water rows dropped, 3,595 used. Missing filled: twi 8 and rainfall 17 (median), soil_type 64, lithology 39 (most frequent). 3 categorical columns to 20 dummies; **30 features**; **no VIF drops** (highest lithology_Phyllite 5.86). Split: train 2,516 (836 landslide), test 1,079 (359 landslide). SMOTE on training: 1,680 / 836 to 1,680 / 1,680. Test untouched: 720 / 359.
+Retrained 14 September after adding TWI and dropping dist_faults. 3,600 rows in, 5 water rows dropped, 3,595 used. Missing filled: twi 8 and rainfall 17 (median), soil_type 64, lithology 39 (most frequent). 3 categorical columns to 20 dummies; **29 features** (twi in, dist_faults out); **no VIF drops** (highest lithology_Phyllite 5.65). Split: train 2,516 (836 landslide), test 1,079 (359 landslide). SMOTE on training: 1,680 / 836 to 1,680 / 1,680. Test untouched: 720 / 359.
 
 ### Models
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
-| Best parameters | C=10, gamma=0.01 | max_depth 10, n_estimators 200, min_samples_split 2 |
-| CV AUC | 0.8653 | 0.8956 |
-| **Test AUC** | 0.8554 | **0.8827** |
-| Average precision | 0.7235 | 0.7814 |
-| Accuracy / precision / recall / F1 at 0.5 | 0.769 / 0.627 / 0.755 / 0.685 | 0.789 / 0.649 / 0.794 / 0.714 |
-| Landslides missed | 88 of 359 | 74 of 359 |
-| Youden threshold | 0.34 (recall 0.866) | 0.46 (recall 0.847) |
+| Best parameters | C=10, gamma=0.01 | max_depth 10, n_estimators 200, min_samples_split 5 |
+| CV AUC | 0.8673 | 0.8928 |
+| **Test AUC** | 0.8577 | **0.8862** |
+| Average precision | 0.7286 | 0.7936 |
+| Accuracy / precision / recall / F1 at 0.5 | 0.767 / 0.622 / 0.760 / 0.684 | 0.783 / 0.643 / 0.783 / 0.706 |
+| Landslides missed | 86 of 359 | 78 of 359 |
+| Youden threshold | 0.38 (recall 0.852) | 0.38 (recall 0.891) |
 
-Linear SVM test AUC 0.8409, so RBF beats linear by **+0.0145**, just past the 0.01 the verdict treats as meaningful (before TWI it was +0.0090). RF minus SVM AUC: **+0.0271**, bootstrap 95 percent interval **+0.0137 to +0.0416** (separable).
+Linear SVM test AUC 0.8416 (C=100), so RBF beats linear by **+0.0161**. RF minus SVM AUC: **+0.0284**, bootstrap 95 percent interval **+0.0140 to +0.0430** (separable).
 
-RF top features (impurity / permutation): slope 0.2478 / 0.1236, rainfall 0.1699 / 0.0584, elevation 0.1310 / 0.0197, dist_roads 0.0677 / 0.0123, curvature 0.0610 / 0.0079. twi ranks 6th of 30 by impurity (0.0493) and 9th by permutation (0.0020). In the synthetic data twi barely separates the classes (point-biserial r 0.03): the simulated wetness effect is small next to slope, so this says nothing about real data.
+RF top features (impurity / permutation): slope 0.2531 / 0.1236, rainfall 0.1788 / 0.0598, elevation 0.1332 / 0.0201, dist_roads 0.0713 / 0.0120, curvature 0.0648 / 0.0079. twi ranks 6th of 29 by impurity and 9th by permutation. In the synthetic data twi barely separates the classes (point-biserial r 0.03): the simulated wetness effect is small next to slope, so this says nothing about real data.
 
-Before TWI (29 features, for the record): SVM test 0.8304, RF 0.8682, gap +0.0379 (+0.0234 to +0.0529).
+How the synthetic results moved on 14 September (seed 42 throughout; adding twi regenerated the synthetic CSV, the later runs reuse it):
+
+| Run | Features | SVM test AUC | RF test AUC | RF minus SVM (95% interval) |
+|---|---|---|---|---|
+| Original | 29 | 0.8304 | 0.8682 | +0.0379 (+0.0234 to +0.0529) |
+| twi added | 30 | 0.8554 | 0.8827 | +0.0271 (+0.0137 to +0.0416) |
+| twi added, dist_faults dropped | 29 | 0.8577 | 0.8862 | +0.0284 (+0.0140 to +0.0430) |
 
 ---
 
@@ -362,8 +369,8 @@ Before TWI (29 features, for the record): SVM test 0.8304, RF 0.8682, gap +0.037
 - **Lithology** missing, needs Bhukosh.
 - **`dist_faults` is weak**: only 4.8 percent of the state within 5 km of a fault, 61 percent beyond 50 km. It behaves like a regional gradient and could act as a disguised location. Replace with GSI structural lines if possible; if it ranks suspiciously high on real data, drop it via `DROPPED_COLUMNS`. Measured 14 September: every cell in Rudraprayag is 55.7 to 127.1 km from the nearest GEM fault (median 96.3 km), even though the Main Central Thrust crosses the district, because GEM holds active faults only. **Full real-feature VIF on a whole-state grid sample (14 September):**
   - Elevation is 14.5, above the threshold, because it tracks `dist_faults` (rank correlation 0.90). Without `dist_faults` elevation falls to 7.8.
-  - Step 4's rule would drop elevation, the wrong column. Decide before the real run whether to drop `dist_faults` through `DROPPED_COLUMNS`.
-  - `lulc_Tree cover` (10.1) is only high because Step 4 uses the first class alphabetically as the reference; with the most common class as the reference it falls well below 10.
+  - Step 4's rule would have dropped elevation, the wrong column. **Resolved 14 September: `dist_faults` is in `DROPPED_COLUMNS`.**
+  - `lulc_Tree cover` (10.1) is only high because Step 4 uses the first class alphabetically as the reference; with the most common class (Tree cover) as the reference, that column disappears and no land-cover column goes above 4.7.
   - TWI is 1.73.
 - **Random train/test split** ignores spatial autocorrelation, so scores are likely optimistic; stated in the evaluation report.
 - **Stable points mean "no recorded landslide"**, not "cannot fail"; stated in the evaluation report.
@@ -383,7 +390,7 @@ PROJECT_CRS = 'EPSG:32644'            GEOGRAPHIC_CRS = 'EPSG:4326'    DEM_RESOLU
 N_JOBS = -1                           PRIMARY_CV_METRIC = 'roc_auc'
 DEMO_DISTRICT = 'Rudraprayag'         RISK_ZONES = ['Very Low', 'Low', 'Moderate', 'High', 'Very High']
 RISK_ZONE_BREAKS = [0.2, 0.4, 0.6, 0.8]   # fixed equal breaks; config.risk_zone(score) names the zone
-DROPPED_COLUMNS = {}
+DROPPED_COLUMNS = {'dist_faults': 'GEM layer misses the Main Central Thrust; tracks elevation (rank r 0.90); dropped 14 Sep'}
 SVM_RBF_PARAM_GRID = {'C': [0.1, 1, 10, 100], 'gamma': [1, 0.1, 0.01, 0.001]}
 SVM_LINEAR_PARAM_GRID = {'C': [0.1, 1, 10, 100]}
 RF_PARAM_GRID = {'n_estimators': [100, 200, 300], 'max_depth': [None, 10, 20], 'min_samples_split': [2, 5, 10]}
@@ -406,10 +413,10 @@ python -m src.check_dem              # 14 tiles, 14 Copernicus, all checks passe
 python -m src.check_layers           # 11 layers aligned (twi included), nothing missing; exit 0
 python -m src.make_synthetic         # 3,600 rows, 1,200 landslide, 2,400 stable
 python -m src.eda                    # 5 figures + outputs/eda_report.txt
-python -m src.preprocess             # 30 features, SMOTE 1,680/1,680, test 720/359
-python -m src.train_svm              # RBF CV 0.8653, test 0.8554
-python -m src.train_rf               # CV 0.8956, test 0.8827
-python -m src.evaluate               # RF wins, interval +0.0137 to +0.0416
+python -m src.preprocess             # 29 features, SMOTE 1,680/1,680, test 720/359
+python -m src.train_svm              # RBF CV 0.8673, test 0.8577
+python -m src.train_rf               # CV 0.8928, test 0.8862
+python -m src.evaluate               # RF wins, interval +0.0140 to +0.0430
 python -m src.demo_map               # 2,145,236 cells scored, about 20 s, map in outputs/
 streamlit run dashboard/app.py       # four pages at http://localhost:8501
 git status -sb                       # clean, main...origin/main
@@ -428,7 +435,7 @@ git status -sb                       # clean, main...origin/main
 5. **Day 10, about 25 September: inventory decision** (GSI, or hand-digitised Rudraprayag).
 5a. **Done 14 September: TWI added to the schema at the user's request.** Recommended on measured evidence (whole state: VIF 1.64, rank correlation with slope -0.51); TRI not (rank correlation 0.993 with slope, VIF 21.2). The whole-state TWI rehearsal output was copied unchanged to `data/processed/twi.tif`; `state_tri.tif` stayed in the session scratchpad. Steps are in `docs/02_qgis_processing.md` under "TWI and TRI rasters". Updated: config, check_layers, eda, make_synthetic, demo_map, dashboard, the 2f table, README and the data log; Steps 3 to 7 and the Rudraprayag RF map rerun on synthetic data.
 6. **User: 2d to 2g** (landslide points, stable points, extraction, export), then `python -m src.label_categories`.
-7. Drop any column that cannot be produced (`lithology`, possibly `dist_faults`) through `DROPPED_COLUMNS`, and record why.
+7. Drop any column that cannot be produced (`lithology`, if Bhukosh never delivers) through `DROPPED_COLUMNS`, and record why. `dist_faults` was dropped on 14 September; restore it if GSI fault lines arrive.
 8. Set `DEFAULT_DATA_SOURCE = 'real'`, rerun Steps 3 to 7, then Step 9 on real models.
 9. Report and viva preparation; keep `docs/PROJECT_STATUS.md` current.
 

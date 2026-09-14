@@ -5,47 +5,47 @@ HELD-OUT TEST SET: 1,079 rows
 --- SVM (RBF) (threshold 0.5) ---
               precision    recall  f1-score   support
 
-      stable      0.864     0.776     0.818       720
-   landslide      0.627     0.755     0.685       359
+      stable      0.866     0.769     0.815       720
+   landslide      0.622     0.760     0.684       359
 
-    accuracy                          0.769      1079
-   macro avg      0.746     0.766     0.752      1079
-weighted avg      0.785     0.769     0.774      1079
+    accuracy                          0.766      1079
+   macro avg      0.744     0.765     0.749      1079
+weighted avg      0.785     0.766     0.771      1079
 
 --- Random Forest (threshold 0.5) ---
               precision    recall  f1-score   support
 
-      stable      0.884     0.786     0.832       720
-   landslide      0.649     0.794     0.714       359
+      stable      0.879     0.783     0.828       720
+   landslide      0.643     0.783     0.706       359
 
-    accuracy                          0.789      1079
-   macro avg      0.767     0.790     0.773      1079
-weighted avg      0.806     0.789     0.793      1079
+    accuracy                          0.783      1079
+   macro avg      0.761     0.783     0.767      1079
+weighted avg      0.800     0.783     0.788      1079
 
 
 SUMMARY
                    SVM (RBF)  Random Forest
-AUC                   0.8554         0.8827
-average precision     0.7235         0.7814
-accuracy              0.7692         0.7887
-precision             0.6273         0.6492
-recall                0.7549         0.7939
-f1                    0.6852         0.7143
-specificity           0.7764         0.7861
+AUC                   0.8577         0.8862
+average precision     0.7286         0.7936
+accuracy              0.7665         0.7831
+precision             0.6219         0.6430
+recall                0.7604         0.7827
+f1                    0.6842         0.7060
+specificity           0.7694         0.7833
 
 VERDICT
 Random Forest is the better model on this data.
 
-On AUC, the metric that does not depend on a threshold, Random Forest scores 0.8827 against 0.8554, a gap of 0.0273.
-Resampling the test set 1,000 times puts that gap between +0.0137 and +0.0416, which excludes zero. The difference is larger than the noise in a test set this size.
+On AUC, the metric that does not depend on a threshold, Random Forest scores 0.8862 against 0.8577, a gap of 0.0285.
+Resampling the test set 1,000 times puts that gap between +0.0140 and +0.0430, which excludes zero. The difference is larger than the noise in a test set this size.
 
-SVM (RBF): at the usual 0.5 cut-off it catches 75% of real landslides (271 of 359), and 63% of the places it flags are real. It misses 88 landslides and raises 161 false alarms.
-Random Forest: at the usual 0.5 cut-off it catches 79% of real landslides (285 of 359), and 65% of the places it flags are real. It misses 74 landslides and raises 154 false alarms.
+SVM (RBF): at the usual 0.5 cut-off it catches 76% of real landslides (273 of 359), and 62% of the places it flags are real. It misses 86 landslides and raises 166 false alarms.
+Random Forest: at the usual 0.5 cut-off it catches 78% of real landslides (281 of 359), and 64% of the places it flags are real. It misses 78 landslides and raises 156 false alarms.
 
 Why the ranking comes out this way:
 - Random Forest splits on thresholds, which is the shape terrain failure actually takes: risk changes sharply around a slope angle rather than sliding smoothly.
 - It also handles the one-hot rock and land-cover columns without needing them to be comparable in scale, and it models interactions between factors for free.
-- Inside the SVM, the RBF kernel beats a linear one by +0.0145 AUC, so the terrain relationships genuinely are not straight lines.
+- Inside the SVM, the RBF kernel beats a linear one by +0.0161 AUC, so the terrain relationships genuinely are not straight lines.
 
 Limitations to state alongside these numbers:
 - The stable points are places with no recorded landslide, which is not the same as places where none can happen. Some of them are risky ground that has never been mapped, which caps how high any score here can go.

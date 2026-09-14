@@ -81,7 +81,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 | Metrics | AUC; sensitivity, specificity, accuracy, precision, F1 at one threshold | AUC as headline, average precision, all metrics at 0.5 and at the Youden threshold |
 | Susceptibility zones | Natural breaks, recomputed per model | Fixed breaks at 0.2, 0.4, 0.6, 0.8, identical for both models, so zone areas compare directly |
 | Map extent | Whole state | Rudraprayag district for Phase 2, with measured prediction time and a projection for the state (whole-state mapping is Phase 3) |
-| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. Not included: geomorphons, soil moisture, NDVI, TRI (TRI measured and rejected) |
+| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. Not included: geomorphons, soil moisture, NDVI, TRI (TRI measured and rejected). Distance to faults is built but dropped from the models: the only open fault layer (GEM) misses the Main Central Thrust |
 | Data | IMD rainfall, Esri land cover, GSI geology and soil; ArcGIS Pro, SAGA, R | Copernicus GLO-30 DEM, CHIRPS 2009 to 2024, ESA WorldCover, SoilGrids, OpenStreetMap, GEM faults; QGIS and Python |
 | Reproducibility | No data or code released | Public repository, every step scripted or documented click by click, locked environment, seed 42 |
 | Data checks reported | None | SRTM voids of 766 km2 (switched to Copernicus); a 42.7% step change in CHIRPS before 2009; SoilGrids code 0 is rock and ice, not a soil; GEM faults miss the Main Central Thrust in Rudraprayag; per-map report of inputs outside the training range |

@@ -131,7 +131,9 @@ All column names, paths, the random seed (42) and hyperparameter grids live in [
 
 If a column cannot be produced from real data, it is added to `DROPPED_COLUMNS` in `src/config.py` with the reason, and listed here. Every script reads that setting, so the drop applies everywhere at once.
 
-None so far.
+| Column | Dropped | Reason |
+|---|---|---|
+| `dist_faults` | 14 September 2026 | The only open fault layer, GEM Global Active Faults, holds 8 faults within 50 km of the state and misses the Main Central Thrust: every cell in Rudraprayag is 56 to 127 km from a mapped fault. On a whole-state grid sample it tracks elevation (rank correlation 0.90) and pushes elevation's VIF to 14.5. Restore it if GSI structural lines arrive from Bhukosh. The raster and the CSV column are still produced; the models ignore them |
 
 ## Switching to real data
 

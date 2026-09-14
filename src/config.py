@@ -107,7 +107,15 @@ FEATURE_UNITS = {
 # this dict, so the drop is applied consistently in EDA, training, the
 # dashboard and the map. Never delete a column in one script only.
 #   Example: DROPPED_COLUMNS = {"soil_type": "No soil map at usable resolution"}
-DROPPED_COLUMNS: dict[str, str] = {}
+DROPPED_COLUMNS: dict[str, str] = {
+    "dist_faults": (
+        "GEM Global Active Faults holds only 8 faults within 50 km of Uttarakhand and misses the Main "
+        "Central Thrust, so every cell in Rudraprayag is 56 to 127 km from a mapped fault. On a "
+        "whole-state grid sample it tracks elevation (rank correlation 0.90) and pushed elevation's VIF "
+        "to 14.5, so Step 4 would have dropped elevation instead. Dropped 14 September 2026; restore it "
+        "if GSI structural lines arrive from Bhukosh."
+    ),
+}
 
 assert set(SCHEMA_COLUMNS) == {TARGET, *NUMERIC_FEATURES, *CATEGORICAL_FEATURES}, "schema lists out of sync"
 assert set(DROPPED_COLUMNS) <= set(NUMERIC_FEATURES + CATEGORICAL_FEATURES), "can only drop feature columns"
