@@ -67,13 +67,16 @@ All on one grid: 11,123 × 10,135 cells, 30 m, EPSG:32644.
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
-| Best parameters | C=10, gamma=0.01 | depth 10, 200 trees, min split 5 |
-| CV AUC | 0.8673 | 0.8928 |
-| **Test AUC** | 0.8577 | **0.8862** |
-| Recall at 0.5 | 0.760 | 0.783 |
-| Landslides missed | 86 of 359 | 78 of 359 |
+| Best parameters | C=10, gamma=0.01 | unlimited depth, 300 trees, min split 10 |
+| CV AUC | 0.8678 | 0.8916 |
+| **Test AUC** | 0.8541 | **0.8767** |
+| Recall at 0.5 | 0.752 | 0.730 |
+| Landslides missed | 89 of 359 | 97 of 359 |
 
-Retrained 14 September with 29 features (TWI added, dist_faults dropped). RF wins by 0.0284 AUC (bootstrap 95% interval +0.0140 to +0.0430). RBF beats linear SVM by +0.0161. twi ranks 6th of 29 in RF impurity importance, 9th by permutation. Earlier today: original SVM 0.8304, RF 0.8682; with TWI added, SVM 0.8554, RF 0.8827.
+Retrained 14 September with 29 features (TWI added, dist_faults dropped) and the most frequent class of each categorical factor as the one-hot reference (Cambisols, Phyllite, Forest). Highest VIF is now 3.29, down from 5.65.
+- RF wins by 0.0224 AUC (bootstrap 95% interval +0.0082 to +0.0386), but at the 0.5 threshold SVM misses fewer landslides. At each model's Youden threshold RF catches more (90.5% against 84.4%).
+- RBF beats linear SVM by +0.0126. twi ranks 6th of 29 in RF impurity importance, 7th by permutation.
+- Earlier today: original SVM 0.8304 and RF 0.8682; with TWI, SVM 0.8554 and RF 0.8827; after dropping dist_faults, SVM 0.8577 and RF 0.8862. The last change moved RF by less than one standard error (about 0.012), so read it as noise.
 
 ## 5. Data status
 
@@ -90,7 +93,7 @@ Retrained 14 September with 29 features (TWI added, dist_faults dropped). RF win
 - **VIF on the full real feature set** (whole-state grid sample of 588,997 cells, 14 September; lithology not included). All values below are VIF:
   - **TWI 1.73.**
   - **Elevation 14.5**, above 10, because it tracks `dist_faults`: rank correlation **0.90**. Without `dist_faults`, elevation falls to 7.8.
-  - `lulc_Tree cover` 10.1 is an encoding effect. With the most common class (Tree cover) as the reference instead of the first alphabetically, that column disappears and no land-cover column goes above 4.7.
+  - `lulc_Tree cover` 10.1 is an encoding effect. With the most common class (Tree cover) as the reference instead of the first alphabetically, that column disappears and no land-cover column goes above 4.7. **Resolved 14 September at the user's request: Step 4 now leaves out the most frequent class of each categorical factor.**
   - **Step 4's rule would have dropped elevation, the wrong column.** Resolved on 14 September at the user's request: `dist_faults` is in `DROPPED_COLUMNS`; restore it if GSI fault lines arrive.
   - Caveat: Step 4 computes VIF on sample points, not grid cells, so real Step 4 values will differ.
 - `dist_faults` is weak (4.8% of the state within 5 km of a fault, 61% beyond 50 km) and could act as a disguised location; review its importance on real data. **Measured 14 September: inside Rudraprayag the nearest GEM fault is 55.7 to 127.1 km away (median 96.3 km)**, although the Main Central Thrust crosses the district; GEM lists active faults only. In the demo district the layer is a regional gradient, not a fault proximity. GSI structural lines from Bhukosh would fix this; otherwise drop it through `DROPPED_COLUMNS`.

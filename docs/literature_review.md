@@ -74,7 +74,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 | Landslide inventory | 7,182 GSI points | GSI inventory requested through Bhukosh; NASA Global Landslide Catalog as a provisional stand-in (205 points, 85 located to within 5 km) |
 | Non-landslide sampling | Not described | 2 per landslide, at least 500 m from any landslide, never on water; set in `src/config.py` |
 | Class imbalance | Not described | SMOTE on training data only, inside each cross-validation fold. Resampling before cross-validation was measured here at CV 0.92 against test 0.69 |
-| Categorical factors | Integer codes (class 1 to 12), which gives classes an order they do not have | One-hot columns, first level dropped |
+| Categorical factors | Integer codes (class 1 to 12), which gives classes an order they do not have | One-hot columns, with the most frequent class of each factor left out as the reference |
 | Scaling | Min-max to 0 to 1; whether before or after the split is not stated | StandardScaler fitted on training rows only |
 | Multicollinearity | VIF computed, all factors kept | VIF, dropping the worst factor above 10 one at a time |
 | Tuning | RF: repeated tenfold CV with random search | Grid search, 5-fold CV on AUC, identical protocol for both models |

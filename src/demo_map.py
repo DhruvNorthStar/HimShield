@@ -144,11 +144,16 @@ def category_lookups() -> dict[str, np.ndarray]:
 
 def training_profile(dataset: pd.DataFrame, feature_names: list[str]) -> dict:
     """What the models saw: numeric ranges, the classes they know, and a stand-in for missing layers."""
+    from src.preprocess import reference_levels
+
+    # Step 4 leaves out the most frequent class of each feature (after dropping water rows); that
+    # class is scored as all zeros, so it counts as known even though it has no column.
+    trained_rows = dataset[~dataset["lulc"].isin(EXCLUDED_LULC)] if "lulc" in dataset.columns else dataset
+    references = reference_levels(trained_rows)
     known = {}
     for col in config.active_categorical_features():
         levels = set(dataset[col].dropna().astype(str))
-        known[col] = {lvl for lvl in levels if f"{col}_{lvl}" in feature_names} | \
-                     {sorted(levels)[0]}  # the first level became the all-zero reference in Step 4
+        known[col] = {lvl for lvl in levels if f"{col}_{lvl}" in feature_names} | {references[col]}
     ranges = {col: (float(dataset[col].min()), float(dataset[col].max()))
               for col in config.active_numeric_features()}
     return {"known_classes": known, "ranges": ranges}

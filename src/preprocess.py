@@ -103,17 +103,47 @@ def engineer_aspect(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """Step 2. One dummy column per class, minus one per feature.
+def reference_levels(df: pd.DataFrame) -> dict[str, str]:
+    """The class each categorical feature is measured against: its most frequent class.
 
-    drop_first matters here: keeping every level makes the dummies add up to 1, which is perfect
+    Ties go to the alphabetically first name, so the choice is identical on every run.
+    """
+    references = {}
+    for col in config.active_categorical_features():
+        if col not in df.columns:
+            continue
+        counts = df[col].dropna().astype(str).value_counts()
+        references[col] = sorted(counts.index, key=lambda name: (-counts[name], name))[0]
+    return references
+
+
+def encode_categoricals(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    """Step 2. One dummy column per class, minus the most frequent class of each feature.
+
+    Leaving one class out matters: keeping every class makes the dummies add up to 1, which is perfect
     collinearity, and the VIF in the next step would come back as infinity.
+
+    Which class is left out matters too. Every dummy is measured against it, in the VIF step and in how
+    a model reads the column. pandas' drop_first leaves out the alphabetically first class, which for
+    ESA WorldCover is "Bare/sparse vegetation", 8.5 percent of the state. Measured on a whole-state grid
+    sample (14 September 2026): against that reference, lulc_Tree cover (54 percent of cells) had a VIF
+    of 10.1, above the threshold. With Tree cover as the reference, no land-cover column went above 4.7.
+    The most frequent class is the natural baseline, so it is the one left out.
+
+    Counting classes before the split looks at the whole dataset, like the median fill in step 1. It only
+    decides which column is left out, never a value a model is trained on.
     """
     present = [c for c in config.active_categorical_features() if c in df.columns]
-    out = pd.get_dummies(df, columns=present, drop_first=True, dtype=float)
+    references = reference_levels(df)
+    frame = df.copy()
+    frame[present] = frame[present].astype(str)
+    out = pd.get_dummies(frame, columns=present, dtype=float)
+    out = out.drop(columns=[f"{col}_{references[col]}" for col in present])
     added = [c for c in out.columns if c not in df.columns]
     print(f"  {len(present)} categorical column(s) became {len(added)} dummy columns")
-    return out
+    for col in present:
+        print(f"    {col}: reference class {references[col]!r} (most frequent), all zeros in the dummy columns")
+    return out, references
 
 
 def vif_prune(X: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
@@ -157,7 +187,7 @@ def main() -> int:
 
     print("[2] Encoding")
     df = engineer_aspect(df)
-    encoded = encode_categoricals(df)
+    encoded, references = encode_categoricals(df)
     y = encoded[config.TARGET].astype(int)
     X = encoded.drop(columns=[config.TARGET])
 
@@ -221,7 +251,8 @@ def main() -> int:
         "sampling_artefacts_removed": artefact_note,
         "missing_values_filled": filled,
         "aspect_encoding": "sine and cosine; flat ground (-1) becomes (0, 0)",
-        "categorical_encoding": "one-hot, first level dropped",
+        "categorical_encoding": "one-hot, most frequent class of each feature left out as the reference",
+        "categorical_reference_levels": references,
         "vif_threshold": config.VIF_THRESHOLD,
         "vif_dropped": dropped,
         "vif_kept": [row for row in vif_log if row["kept"]],

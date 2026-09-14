@@ -301,6 +301,7 @@ If there is still no GSI data, **digitise landslide scars for Rudraprayag by han
 | Seed 42 everywhere | reproducibility |
 | TWI added to the schema, TRI left out (14 September, user's decision on measured evidence) | whole state: TWI rank correlation with slope -0.51, VIF 1.64; TRI rank correlation with slope 0.993, VIF 21.2. Both used by Chauhan et al. (2025) |
 | `dist_faults` dropped from the models (14 September, user's decision) | GEM holds 8 faults within 50 km and misses the Main Central Thrust (Rudraprayag cells 56 to 127 km from a mapped fault); on a whole-state grid sample it tracks elevation (rank correlation 0.90, elevation VIF 14.5), so Step 4 would have dropped elevation instead. Raster and CSV column still produced; restore if GSI fault lines arrive |
+| One-hot reference = most frequent class of each categorical factor (14 September, user's request) | pandas `drop_first` left out the alphabetically first class ("Bare/sparse vegetation", 8.5 percent of the state), which pushed `lulc_Tree cover` to VIF 10.1 on a whole-state grid sample; with Tree cover as the reference no land-cover column exceeds 4.7. References are recorded in `metadata.json` under `preprocessing.categorical_reference_levels`; prediction needs no change because `prepare_for_prediction` aligns columns by name |
 | Risk zones at fixed breaks 0.2, 0.4, 0.6, 0.8 | natural breaks and quantiles are recomputed per map, so a zone would mean different scores on different runs and models; quantiles force 20 percent into every zone |
 | Zone colours: one vermillion hue, light to dark | ordered classes need a sequential ramp, not green to red (fails colour-blind readers); matches the landslide colour in every figure; validated as an ordinal ramp (light end 2.19:1 on the basemap) |
 | Water cells skipped on the map | models never saw water (Step 2e and Step 4), so any score there would be invented |
@@ -312,23 +313,23 @@ If there is still no GSI data, **digitise landslide scars for Rudraprayag by han
 
 ### Preprocessing
 
-Retrained 14 September after adding TWI and dropping dist_faults. 3,600 rows in, 5 water rows dropped, 3,595 used. Missing filled: twi 8 and rainfall 17 (median), soil_type 64, lithology 39 (most frequent). 3 categorical columns to 20 dummies; **29 features** (twi in, dist_faults out); **no VIF drops** (highest lithology_Phyllite 5.65). Split: train 2,516 (836 landslide), test 1,079 (359 landslide). SMOTE on training: 1,680 / 836 to 1,680 / 1,680. Test untouched: 720 / 359.
+Retrained 14 September after adding TWI and dropping dist_faults. 3,600 rows in, 5 water rows dropped, 3,595 used. Missing filled: twi 8 and rainfall 17 (median), soil_type 64, lithology 39 (most frequent). 3 categorical columns to 20 dummies, each leaving out its most frequent class (soil Cambisols, lithology Phyllite, land cover Forest); **29 features** (twi in, dist_faults out); **no VIF drops** (highest elevation 3.29, then lithology_Alluvium 2.85 and twi 2.13). Split: train 2,516 (836 landslide), test 1,079 (359 landslide). SMOTE on training: 1,680 / 836 to 1,680 / 1,680. Test untouched: 720 / 359.
 
 ### Models
 
 | | SVM (RBF) | Random Forest |
 |---|---|---|
-| Best parameters | C=10, gamma=0.01 | max_depth 10, n_estimators 200, min_samples_split 5 |
-| CV AUC | 0.8673 | 0.8928 |
-| **Test AUC** | 0.8577 | **0.8862** |
-| Average precision | 0.7286 | 0.7936 |
-| Accuracy / precision / recall / F1 at 0.5 | 0.767 / 0.622 / 0.760 / 0.684 | 0.783 / 0.643 / 0.783 / 0.706 |
-| Landslides missed | 86 of 359 | 78 of 359 |
-| Youden threshold | 0.38 (recall 0.852) | 0.38 (recall 0.891) |
+| Best parameters | C=10, gamma=0.01 | max_depth None, n_estimators 300, min_samples_split 10 |
+| CV AUC | 0.8678 | 0.8916 |
+| **Test AUC** | 0.8541 | **0.8767** |
+| Average precision | 0.7182 | 0.7704 |
+| Accuracy / precision / recall / F1 at 0.5 | 0.767 / 0.625 / 0.752 / 0.683 | 0.789 / 0.667 / 0.730 / 0.697 |
+| Landslides missed | 89 of 359 | 97 of 359 |
+| Youden threshold | 0.38 (recall 0.844) | 0.32 (recall 0.905) |
 
-Linear SVM test AUC 0.8416 (C=100), so RBF beats linear by **+0.0161**. RF minus SVM AUC: **+0.0284**, bootstrap 95 percent interval **+0.0140 to +0.0430** (separable).
+Linear SVM test AUC 0.8414 (C=1), so RBF beats linear by **+0.0126**. RF minus SVM AUC: **+0.0224**, bootstrap 95 percent interval **+0.0082 to +0.0386** (separable). A split decision at 0.5: RF ranks better overall, but SVM misses fewer landslides at that threshold; at each model's Youden threshold RF catches more (90.5 against 84.4 percent). The verdict in `outputs/evaluation_report.txt` says so.
 
-RF top features (impurity / permutation): slope 0.2531 / 0.1236, rainfall 0.1788 / 0.0598, elevation 0.1332 / 0.0201, dist_roads 0.0713 / 0.0120, curvature 0.0648 / 0.0079. twi ranks 6th of 29 by impurity and 9th by permutation. In the synthetic data twi barely separates the classes (point-biserial r 0.03): the simulated wetness effect is small next to slope, so this says nothing about real data.
+RF top features (impurity / permutation): slope 0.2400 / 0.1180, rainfall 0.1605 / 0.0551, elevation 0.1298 / 0.0224, dist_roads 0.0767 / 0.0120, curvature 0.0703 / 0.0098. twi ranks 6th of 29 by impurity and 7th by permutation. In the synthetic data twi barely separates the classes (point-biserial r 0.03): the simulated wetness effect is small next to slope, so this says nothing about real data.
 
 How the synthetic results moved on 14 September (seed 42 throughout; adding twi regenerated the synthetic CSV, the later runs reuse it):
 
@@ -337,6 +338,9 @@ How the synthetic results moved on 14 September (seed 42 throughout; adding twi 
 | Original | 29 | 0.8304 | 0.8682 | +0.0379 (+0.0234 to +0.0529) |
 | twi added | 30 | 0.8554 | 0.8827 | +0.0271 (+0.0137 to +0.0416) |
 | twi added, dist_faults dropped | 29 | 0.8577 | 0.8862 | +0.0284 (+0.0140 to +0.0430) |
+| as above, most frequent class as one-hot reference | 29 | 0.8541 | 0.8767 | +0.0224 (+0.0082 to +0.0386) |
+
+The last change moved RF by -0.0095. That is smaller than one standard error of AUC on this test set (about 0.012 by the Hanley-McNeil formula for 359 landslides and 720 stable points). The grid search also picked different RF settings (unlimited depth, 300 trees, min split 10, against depth 10, 200 trees, min split 5). Read it as noise, not as the encoding making RF worse.
 
 ---
 
@@ -370,7 +374,7 @@ How the synthetic results moved on 14 September (seed 42 throughout; adding twi 
 - **`dist_faults` is weak**: only 4.8 percent of the state within 5 km of a fault, 61 percent beyond 50 km. It behaves like a regional gradient and could act as a disguised location. Replace with GSI structural lines if possible; if it ranks suspiciously high on real data, drop it via `DROPPED_COLUMNS`. Measured 14 September: every cell in Rudraprayag is 55.7 to 127.1 km from the nearest GEM fault (median 96.3 km), even though the Main Central Thrust crosses the district, because GEM holds active faults only. **Full real-feature VIF on a whole-state grid sample (14 September):**
   - Elevation is 14.5, above the threshold, because it tracks `dist_faults` (rank correlation 0.90). Without `dist_faults` elevation falls to 7.8.
   - Step 4's rule would have dropped elevation, the wrong column. **Resolved 14 September: `dist_faults` is in `DROPPED_COLUMNS`.**
-  - `lulc_Tree cover` (10.1) is only high because Step 4 uses the first class alphabetically as the reference; with the most common class (Tree cover) as the reference, that column disappears and no land-cover column goes above 4.7.
+  - `lulc_Tree cover` (10.1) is only high because Step 4 uses the first class alphabetically as the reference; with the most common class (Tree cover) as the reference, that column disappears and no land-cover column goes above 4.7. **Resolved 14 September: Step 4 now leaves out the most frequent class of each categorical factor.**
   - TWI is 1.73.
 - **Random train/test split** ignores spatial autocorrelation, so scores are likely optimistic; stated in the evaluation report.
 - **Stable points mean "no recorded landslide"**, not "cannot fail"; stated in the evaluation report.
@@ -414,9 +418,9 @@ python -m src.check_layers           # 11 layers aligned (twi included), nothing
 python -m src.make_synthetic         # 3,600 rows, 1,200 landslide, 2,400 stable
 python -m src.eda                    # 5 figures + outputs/eda_report.txt
 python -m src.preprocess             # 29 features, SMOTE 1,680/1,680, test 720/359
-python -m src.train_svm              # RBF CV 0.8673, test 0.8577
-python -m src.train_rf               # CV 0.8928, test 0.8862
-python -m src.evaluate               # RF wins, interval +0.0140 to +0.0430
+python -m src.train_svm              # RBF CV 0.8678, test 0.8541
+python -m src.train_rf               # CV 0.8916, test 0.8767
+python -m src.evaluate               # RF wins, interval +0.0082 to +0.0386
 python -m src.demo_map               # 2,145,236 cells scored, about 20 s, map in outputs/
 streamlit run dashboard/app.py       # four pages at http://localhost:8501
 git status -sb                       # clean, main...origin/main
