@@ -75,27 +75,29 @@ INPUT_GROUPS = {
 # ---------------------------------------------------------------------------
 # Loading. Each loader takes the file's modification time, so retraining while the
 # dashboard is open shows the new results on the next rerun instead of a stale cache.
+# The argument must not start with an underscore: Streamlit leaves such arguments out of
+# the cache key, which is exactly what made the cache ignore retraining before.
 # ---------------------------------------------------------------------------
 def mtime(path: Path) -> float:
     return path.stat().st_mtime if path.exists() else 0.0
 
 
 @st.cache_data
-def load_metadata(_stamp: float) -> dict:
+def load_metadata(stamp: float) -> dict:
     if not config.METADATA_PATH.exists():
         return {}
     return json.loads(config.METADATA_PATH.read_text(encoding="utf-8"))
 
 
 @st.cache_data
-def load_dataset(_stamp: float) -> pd.DataFrame | None:
+def load_dataset(stamp: float) -> pd.DataFrame | None:
     if not config.DATASET_CSV.exists():
         return None
     return pd.read_csv(config.DATASET_CSV)
 
 
 @st.cache_resource
-def load_models(_stamp: float) -> dict:
+def load_models(stamp: float) -> dict:
     return {
         "SVM (RBF)": joblib.load(config.SVM_MODEL_PATH),
         "Random Forest": joblib.load(config.RF_MODEL_PATH),
