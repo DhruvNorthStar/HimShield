@@ -10,8 +10,9 @@ Rules, decided 16 September 2026 after inspecting the file (reasons in docs/deci
    - every attribute identical apart from the ids -> the same landslide entered twice, keep one;
    - attributes differ -> different landslides placed at one shared coordinate. That point cannot be
      where all of them are (the largest group holds 19 slides from 4 toposheets), so drop them all.
-3. Longitude written with 0 or 1 decimal places (about 100 km or 10 km precision): drop. At a 30 m grid
-   such a point samples the wrong slope. Two decimals (about 1 km) are kept and reported as a limitation.
+3. Longitude or latitude written with 0 or 1 decimal places (about 100 km or 10 km precision): drop. At a
+   30 m grid such a point samples the wrong slope. Two decimals (about 1 km) are kept and reported as a
+   limitation.
 Only an id and landslide = 1 are written: the inventory's other fields (GEOLOGY, LANDUSE_LA, ...) exist
 at landslide points only and would leak the class.
 """
@@ -27,7 +28,7 @@ from src import config
 GSI_ZIP = config.RAW_LANDSLIDE_DIR / "GSI_Landslide_Inventory.shp.zip"
 GSI_LAYER = "GSI_Landslide_Inventory.shp"
 OUTPUT = config.SHAPEFILE_DIR / "landslides.gpkg"
-MIN_LONGITUDE_DECIMALS = 2
+MIN_DECIMALS = 2
 ID_FIELDS = ["OBJECTID", "SLIDE_NO"]
 GRID_ORIGIN = (170670, 3481770)  # top-left corner of the dem.tif grid, for the shared-cell count
 
@@ -81,19 +82,23 @@ def main() -> None:
     print(f"\n2. Same landslide entered twice: {same_slide} groups, {same_rows} extra rows removed (one kept each)")
     print(f"   Different landslides at one coordinate: {shared_location} groups, all {shared_rows} rows removed")
 
-    # 3. Coordinate precision
-    lon_dec = sel["_lon"].map(decimals)
-    coarse = lon_dec < MIN_LONGITUDE_DECIMALS
-    print(f"\n3. Longitude with 0 or 1 decimals: {coarse.sum()} in the state, "
-          f"{(coarse & keep).sum()} of them not already removed in step 2"
-          f" (0 decimals: {(coarse & keep & (lon_dec == 0)).sum()}, 1 decimal: {(coarse & keep & (lon_dec == 1)).sum()})")
-    keep &= ~coarse
+    # 3. Coordinate precision, longitude first, then latitude
+    lon_dec, lat_dec = sel["_lon"].map(decimals), sel["_lat"].map(decimals)
+    coarse_lon = lon_dec < MIN_DECIMALS
+    print(f"\n3. Longitude with 0 or 1 decimals: {coarse_lon.sum()} in the state, "
+          f"{(coarse_lon & keep).sum()} of them not already removed in step 2"
+          f" (0 decimals: {(coarse_lon & keep & (lon_dec == 0)).sum()}, 1 decimal: {(coarse_lon & keep & (lon_dec == 1)).sum()})")
+    keep &= ~coarse_lon
+    coarse_lat = lat_dec < MIN_DECIMALS
+    print(f"4. Latitude with 0 or 1 decimals: {coarse_lat.sum()} in the state, "
+          f"{(coarse_lat & keep).sum()} of them not already removed above"
+          f" (0 decimals: {(coarse_lat & keep & (lat_dec == 0)).sum()}, 1 decimal: {(coarse_lat & keep & (lat_dec == 1)).sum()})")
+    keep &= ~coarse_lat
     clean = sel[keep]
 
-    two_dec = int((lon_dec[keep] == 2).sum())
-    lat_coarse = int((clean["_lat"].map(decimals) < MIN_LONGITUDE_DECIMALS).sum())
-    print(f"   Kept with 2-decimal longitude (about 1 km, limitation): {two_dec}")
-    print(f"   Kept with latitude at 0 or 1 decimals (not a removal rule, for information): {lat_coarse}")
+    print(f"   Kept with a 2-decimal longitude (about 1 km, limitation): {int((lon_dec[keep] == 2).sum())}")
+    print(f"   Kept with a 2-decimal latitude (about 1 km, limitation): {int((lat_dec[keep] == 2).sum())}")
+    print(f"   Kept with either at 2 decimals: {int(((lon_dec[keep] == 2) | (lat_dec[keep] == 2)).sum())}")
 
     cells = ((clean.geometry.x - GRID_ORIGIN[0]) // config.DEM_RESOLUTION_M).astype(int).astype(str) + "_" + \
             ((GRID_ORIGIN[1] - clean.geometry.y) // config.DEM_RESOLUTION_M).astype(int).astype(str)
