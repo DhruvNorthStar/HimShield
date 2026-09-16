@@ -2,7 +2,7 @@
 
 A comparative study of Support Vector Machine and Random Forest for predicting landslide-prone terrain in Uttarakhand, India. BCA final-year PBL project.
 
-Given terrain conditioning factors at a location (slope, aspect, elevation, curvature, topographic wetness, rainfall, soil, lithology, land cover, and distance to roads, streams and faults), the models predict whether the location is landslide-prone. Positive samples are historical landslides from the GSI inventory. Negative samples are points sampled from stable terrain.
+Given terrain conditioning factors at a location (slope, aspect, elevation, curvature, topographic wetness, rainfall, vegetation (NDVI), soil, lithology, land cover, and distance to roads, streams and faults), the models predict whether the location is landslide-prone. Positive samples are historical landslides from the GSI inventory. Negative samples are points sampled from stable terrain.
 
 > **Data status: SYNTHETIC.** Until the real QGIS extraction is finished, the pipeline runs on `data/processed/dataset_synthetic.csv`, a simulated dataset with the same schema. Every script prints a banner and every figure is watermarked while this is the case. No result from it is a finding about Uttarakhand. See [Switching to real data](#switching-to-real-data).
 
@@ -118,6 +118,7 @@ Always run from the repo root with the environment active.
 | `curvature` | surface curvature from DEM | negative = concave |
 | `twi` | topographic wetness index from the DEM (GRASS r.watershed) | ln(a / tan slope), higher = wetter |
 | `rainfall` | mean annual rainfall 2009 to 2024 (CHIRPS) | mm/year |
+| `ndvi` | vegetation index, Sentinel-2 L2A median of 1 October to 30 November 2023 (Google Earth Engine) | unitless, -1 to 1 |
 | `soil_type` | soil class (SoilGrids WRB) | category name |
 | `lithology` | rock type (GSI) | category name |
 | `lulc` | land use / land cover (ESA WorldCover 2021) | category name |
@@ -134,6 +135,7 @@ If a column cannot be produced from real data, it is added to `DROPPED_COLUMNS` 
 | Column | Dropped | Reason |
 |---|---|---|
 | `dist_faults` | 14 September 2026 | The only open fault layer, GEM Global Active Faults, holds 8 faults within 50 km of the state and misses the Main Central Thrust: every cell in Rudraprayag is 56 to 127 km from a mapped fault. On a whole-state grid sample it tracks elevation (rank correlation 0.90) and pushes elevation's VIF to 14.5. Restore it if GSI structural lines arrive from Bhukosh. The raster and the CSV column are still produced; the models ignore them |
+| `lithology` | 16 September 2026 | No state-wide geology raster available. The GSI geology layer requires Bhukosh access, which is unavailable. Chauhan et al. (2025) used GSI geology via Bhukosh; this study could not access it within the project timeline. See docs/decisions.md |
 
 ## Switching to real data
 

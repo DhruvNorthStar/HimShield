@@ -68,3 +68,31 @@ Limitation to state in the report: the GSI points lie mostly along valley road c
 high Himalaya or in Udham Singh Nagar, while stable points cover the whole state. Part of what the models
 learn will be "where GSI surveyed" (close to roads, middle elevations), not only "where slopes fail", and
 test AUC will be higher for it. Stable here means "no recorded landslide".
+
+## 16 September 2026: NDVI added to the schema
+
+Source: Sentinel-2 L2A (`COPERNICUS/S2_SR_HARMONIZED`) in Google Earth Engine, median of scenes from
+2023-10-01 to 2023-11-30 with `CLOUDY_PIXEL_PERCENTAGE` < 15, NDVI = (B8 - B4) / (B8 + B4), exported at 30 m.
+Warped bilinear onto the dem.tif grid as `data/processed/ndvi.tif`.
+
+Measured on the first export before deciding (same design as Step 4: water rows dropped, aspect as sine and
+cosine, most frequent class as reference):
+
+| | Whole-state 1-in-100 grid (586,681 cells) | Training points (15,134 usable of 15,189) |
+|---|---|---|
+| NDVI VIF | 7.40 | **5.11** |
+| Elevation VIF without / with NDVI | 7.85 / 8.36 | 6.27 / 6.49 |
+| NDVI explained by land cover alone (R2) | 0.84 | 0.79 |
+| Median NDVI, landslide / stable | | 0.615 / 0.646 |
+
+Decision: **added**, because the VIF at the training points (5.11) is under the threshold of 10.
+Limitation to state in the report: NDVI largely repeats WorldCover land cover (R2 about 0.8), and it separates
+landslide from stable points only weakly on its own.
+
+The first export stopped at 28.85 N and missed 230.8 km2 of the state (215 km2 of Udham Singh Nagar; 39 stable
+points), so it was **not installed**. `data/processed/ndvi.tif` will be built from a re-export whose region is
+the state boundary buffered by 1 km.
+
+Synthetic data: `src/make_synthetic.py` adds an `ndvi` column from its own random generator, so every other
+column and every label is unchanged (checked against the previous CSV). NDVI is not in the hidden landslide
+rule. Its noise (0.15) was set so synthetic NDVI overlaps land cover as the real points do (R2 0.78, VIF 5.04).

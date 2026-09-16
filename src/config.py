@@ -77,12 +77,18 @@ TARGET = "landslide"  # 1 = GSI landslide location, 0 = sampled stable terrain
 # twi added 14 September 2026. Measured on the real rasters before adding it: whole-state rank
 # correlation with slope -0.51 and VIF 1.64, so it carries new information. TRI was measured and
 # left out: rank correlation with slope 0.993, VIF 21.2. See docs/literature_review.md, section 2.3.
+#
+# ndvi added 16 September 2026. Source: Sentinel-2 L2A (COPERNICUS/S2_SR_HARMONIZED) in Google Earth
+# Engine, median of scenes 2023-10-01 to 2023-11-30 with CLOUDY_PIXEL_PERCENTAGE < 15, exported at 30 m,
+# bilinear to the dem.tif grid. Measured before adding it: VIF 5.11 on the 15,189 training points and 7.40
+# on a whole-state grid sample, both under VIF_THRESHOLD. It overlaps land cover (R2 0.79 at the points,
+# 0.84 on the grid), which the report states as a limitation. See docs/decisions.md.
 SCHEMA_COLUMNS = [
-    "landslide", "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
+    "landslide", "slope", "aspect", "elevation", "curvature", "twi", "rainfall", "ndvi",
     "soil_type", "lithology", "lulc", "dist_roads", "dist_streams", "dist_faults",
 ]
 NUMERIC_FEATURES = [
-    "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
+    "slope", "aspect", "elevation", "curvature", "twi", "rainfall", "ndvi",
     "dist_roads", "dist_streams", "dist_faults",
 ]
 CATEGORICAL_FEATURES = ["soil_type", "lithology", "lulc"]
@@ -94,6 +100,7 @@ FEATURE_UNITS = {
     "curvature": "1/100 m (negative = concave)",
     "twi": "ln(a / tan slope), higher = wetter",
     "rainfall": "mm/year (mean annual)",
+    "ndvi": "unitless (-1 to 1)",
     "dist_roads": "m",
     "dist_streams": "m",
     "dist_faults": "m",

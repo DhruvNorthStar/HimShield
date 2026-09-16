@@ -56,6 +56,7 @@ FACTORS = {
     "curvature": ("Curvature", "Copernicus GLO-30 DEM, profile curvature"),
     "twi": ("Topographic wetness index", "Copernicus GLO-30 DEM, GRASS r.watershed (multiple flow direction)"),
     "rainfall": ("Rainfall", "CHIRPS v2.0, mean of 2009 to 2024"),
+    "ndvi": ("Vegetation index (NDVI)", "Sentinel-2 L2A, median of Oct to Nov 2023 (Google Earth Engine)"),
     "soil_type": ("Soil type", "SoilGrids WRB, most probable class"),
     "lithology": ("Lithology", "GSI, awaiting Bhukosh access"),
     "lulc": ("Land cover", "ESA WorldCover 2021"),
@@ -63,12 +64,12 @@ FACTORS = {
     "dist_streams": ("Distance to streams", "stream network derived from the DEM"),
     "dist_faults": ("Distance to faults", "GEM Global Active Faults"),
 }
-SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "twi": 0.1, "rainfall": 10.0,
+SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "twi": 0.1, "rainfall": 10.0, "ndvi": 0.01,
                 "dist_roads": 10.0, "dist_streams": 10.0, "dist_faults": 50.0}
 INPUT_GROUPS = {
     "Terrain": ["slope", "elevation", "curvature", "aspect"],
     "Water and access": ["rainfall", "twi", "dist_streams", "dist_roads", "dist_faults"],
-    "Ground": ["soil_type", "lithology", "lulc"],
+    "Ground": ["soil_type", "lithology", "lulc", "ndvi"],
 }
 
 

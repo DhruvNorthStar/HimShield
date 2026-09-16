@@ -40,7 +40,7 @@ from src.preprocess import EXCLUDED_LULC, prepare_for_prediction
 # Feature column -> raster name in data/processed/. Lithology has no raster yet (it needs Bhukosh).
 RASTERS = {
     "elevation": "dem", "slope": "slope", "aspect": "aspect", "curvature": "curvature", "twi": "twi",
-    "rainfall": "rainfall", "dist_roads": "dist_roads", "dist_streams": "dist_streams",
+    "rainfall": "rainfall", "ndvi": "ndvi", "dist_roads": "dist_roads", "dist_streams": "dist_streams",
     "dist_faults": "dist_faults", "lulc": "lulc", "soil_type": "soil",
 }
 WATER_CODE = 80        # WorldCover "Permanent water bodies"

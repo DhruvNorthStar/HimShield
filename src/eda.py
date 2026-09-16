@@ -32,6 +32,7 @@ PHYSICAL_RANGES = {         # what the real world allows; anything outside is an
     "elevation": (0, 9000),
     "twi": (0, 50),
     "rainfall": (0, 10000),
+    "ndvi": (-1, 1),
     "dist_roads": (0, None),
     "dist_streams": (0, None),
     "dist_faults": (0, None),

@@ -81,7 +81,7 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 | Metrics | AUC; sensitivity, specificity, accuracy, precision, F1 at one threshold | AUC as headline, average precision, all metrics at 0.5 and at the Youden threshold |
 | Susceptibility zones | Natural breaks, recomputed per model | Fixed breaks at 0.2, 0.4, 0.6, 0.8, identical for both models, so zone areas compare directly |
 | Map extent | Whole state | Rudraprayag district for Phase 2, with measured prediction time and a projection for the state (whole-state mapping is Phase 3) |
-| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. Not included: geomorphons, soil moisture, NDVI, TRI (TRI measured and rejected). Distance to faults is built but dropped from the models: the only open fault layer (GEM) misses the Main Central Thrust |
+| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. NDVI added 16 September 2026. Not included: geomorphons, soil moisture, TRI (TRI measured and rejected). Distance to faults is built but dropped from the models: the only open fault layer (GEM) misses the Main Central Thrust |
 | Data | IMD rainfall, Esri land cover, GSI geology and soil; ArcGIS Pro, SAGA, R | Copernicus GLO-30 DEM, CHIRPS 2009 to 2024, ESA WorldCover, SoilGrids, OpenStreetMap, GEM faults; QGIS and Python |
 | Reproducibility | No data or code released | Public repository, every step scripted or documented click by click, locked environment, seed 42 |
 | Data checks reported | None | SRTM voids of 766 km2 (switched to Copernicus); a 42.7% step change in CHIRPS before 2009; SoilGrids code 0 is rock and ice, not a soil; GEM faults miss the Main Central Thrust in Rudraprayag; per-map report of inputs outside the training range |
@@ -118,7 +118,7 @@ Measured on 14 September 2026 with the Step 2 rasters and the TWI and TRI rehear
 | TWI (`r.watershed` topographic index) | -0.39 / -0.51 | 1.65 / 1.64 | **Added 14 September 2026.** It carries information none of our layers holds; VIF 1.73 on the full real feature set |
 | TRI (Riley) | **0.989 / 0.993** | **16.4 / 21.2** | **Do not add.** At 30 m it is almost a copy of slope, and our VIF step would drop one of the two anyway |
 | Geomorphons | not measured | not measured | Optional. `r.geomorphon` is in GRASS; categorical with 10 classes. Worth a test only if time allows |
-| NDVI | not measured | not measured | Optional. Overlaps with WorldCover land cover; needs Sentinel-2 processing |
+| NDVI (Sentinel-2, Oct to Nov 2023) | state: elevation -0.50, rainfall 0.42, slope -0.05 | 7.40 on the state grid; 5.11 at the training points | **Added 16 September 2026.** Under the VIF threshold, but land cover alone explains R2 0.84 (grid) / 0.79 (points) of it: report the overlap |
 | Soil moisture (SMAP) | not measured | not measured | Skip for Phase 2. About 9 km resolution, so like rainfall it describes an area, not a slope |
 
 Chauhan et al. report a highest VIF of 3.66 with both TRI and slope included. That does not match the near-perfect TRI to slope correlation measured here, so check their Table 2. The difference may come from SAGA's TRI, from how their slope was derived, or from computing VIF on sample points rather than on the grid.
