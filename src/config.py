@@ -48,7 +48,7 @@ DISTRICT_BOUNDARIES = SHAPEFILE_DIR / "uttarakhand_districts.gpkg"
 #
 # To override for a single run without editing this file (PowerShell):
 #     $env:LSM_DATA_SOURCE = "real"
-DEFAULT_DATA_SOURCE = "synthetic"
+DEFAULT_DATA_SOURCE = "real"
 DATA_SOURCE = os.environ.get("LSM_DATA_SOURCE", DEFAULT_DATA_SOURCE).strip().lower()
 if DATA_SOURCE not in ("synthetic", "real"):
     raise ValueError(f"LSM_DATA_SOURCE must be 'synthetic' or 'real', got {DATA_SOURCE!r}")
@@ -164,6 +164,11 @@ RANDOM_STATE = 42              # used everywhere: split, SMOTE, CV shuffling, RF
 TEST_SIZE = 0.30               # stratified 70/30 split
 CV_FOLDS = 5                   # StratifiedKFold inside GridSearchCV
 VIF_THRESHOLD = 10.0           # drop the worst feature above this, one at a time
+# Categorical classes with fewer rows than this are merged into RARE_CLASS_LABEL before one-hot encoding.
+# A dummy column holding 3 rows is noise, and in 5-fold CV some folds would see none of them. The rule
+# counts rows only, never landslides, so it cannot pick classes by their outcome. Decided 17 Sep 2026.
+RARE_CLASS_MIN_ROWS = 50
+RARE_CLASS_LABEL = "Other"
 SMOTE_SAMPLING_STRATEGY = 1.0  # after SMOTE, minority count = majority count (training set only)
 SMOTE_K_NEIGHBORS = 5
 

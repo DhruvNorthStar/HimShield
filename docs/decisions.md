@@ -126,3 +126,17 @@ Findings to carry into the report:
 - **Rare classes:** Herbaceous wetland 7, Shrubland 20, Podzols 3, Regosols 5, Vertisols 7, Chernozems 31.
 - **Water buffer asymmetry:** 136 landslide points lie within 50 m of water without being on it; stable points
   were kept 50 m clear by rule, so none do. Small (2.7% of landslides), stated as a limitation.
+
+## 17 September 2026: rare classes merged, pipeline switched to real data
+
+`RARE_CLASS_MIN_ROWS = 50` in `src/config.py`; `merge_rare_classes` in `src/preprocess.py` runs before one-hot
+encoding. The rule counts rows only, never landslides. Merged into "Other": soil Chernozems (31), Podzols (3),
+Regosols (5), Vertisols (7), 46 rows; land cover Herbaceous wetland (7), Shrubland (20), 27 rows. Classes with
+many rows but few or no landslides (Cropland 732, Moss and lichen 401, Cryosols 233, Fluvisols 256, Snow and ice
+856, No soil 1,195) keep their own columns: merging them for having few landslides would choose features by the
+label. The merged names are saved in `metadata.json` and applied again in `prepare_for_prediction`.
+
+`DEFAULT_DATA_SOURCE = "real"`. `python -m src.preprocess` on `dataset.csv`: 15,189 rows in, 20 water rows
+dropped, 2 rows median-filled, 15,169 used. VIF dropped nothing (highest elevation 6.47, NDVI 5.08): 23 features.
+Train 10,618 (3,530 landslide), SMOTE to 7,088 / 7,088; test 4,551 (1,513 landslide), never resampled.
+Synthetic models and metadata kept locally in `models/synthetic_baseline_2026-09-14/` for the comparison.
