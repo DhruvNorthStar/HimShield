@@ -1,13 +1,13 @@
 # Project status
 
-Last updated: 17 September 2026, after commit `6378064` (README rewrite). Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
+Last updated: 17 September 2026, after commit `6d525e0` (evaluation verdict fix), with the literature review update and `PROJECT_HANDOFF_V4.md`. Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
 
 ## 1. Snapshot
 
 | | |
 |---|---|
 | Project | Landslide Susceptibility Mapping for Uttarakhand: SVM vs Random Forest |
-| Phase | **2 of 3: complete on real data.** Pipeline, evaluation, dashboard and both Rudraprayag maps run on the GSI inventory. Remaining Phase 2 work is documentation and the report (section 7) |
+| Phase | **2 of 3: complete on real data.** Pipeline, evaluation, dashboard and both Rudraprayag maps run on the GSI inventory. Phase 2 documentation is complete; the report document remains (section 7) |
 | Deadline | Final submission mid-October 2026 |
 | Repo | https://github.com/DhruvNorthStar/HimShield (public; the repository keeps its original name), pushed after every commit |
 | Local copy | `C:\Projects\landslide-uttarakhand` |
@@ -67,6 +67,10 @@ Last updated: 17 September 2026, after commit `6378064` (README rewrite). Update
 | README | ✅ | rewritten with real results (`6378064`) |
 | Decisions log | ✅ | [decisions.md](decisions.md), every step since 16 September |
 | Data sources log | ✅ | GSI and NDVI rows complete |
+| Evaluation report | ✅ | verdict states measured results only, with near-road AUCs (`6d525e0`) |
+| Dashboard method text | ✅ | "How the pipeline works" follows the real order (`6d525e0`) |
+| Literature review | ✅ | real results side by side with Chauhan et al. (2025), agreed wording, 11 factors / 23 inputs |
+| Handoff | ✅ | `PROJECT_HANDOFF_V4.md` replaces V3 |
 
 ## 4. Dropped and merged
 
@@ -100,10 +104,6 @@ The pipeline was built and tested on a synthetic dataset first (3,600 rows, 29 f
 
 | Item | Status |
 |---|---|
-| `outputs/evaluation_report.txt`: replace the fixed "why RF wins" text (mentions rock columns) with measured results and near-road AUCs; rerun `evaluate` | in progress (item 3) |
-| Dashboard "How the pipeline works": says "Split first", but the split happens after missing values, encoding and VIF | in progress (item 3) |
-| `docs/literature_review.md`: real results in the "ours" column, agreed Chauhan wording | in progress (item 4) |
-| New handoff file replacing `PROJECT_HANDOFF_V3.md` | after items 3 and 4 |
 | Phase 2 report document | not started; format to confirm with the college |
 | Backups of the GSI zip, NDVI v3 and `dataset.csv` outside the laptop | user, manual |
 
