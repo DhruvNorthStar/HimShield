@@ -243,3 +243,12 @@ Class separation (point-biserial r with the label; means landslide / stable):
 Wording for the report when comparing with the primary reference: "AUCs comparable to Chauhan et al. (2025),
 with road-survey bias quantified by a near-road check (RF 0.934 within 1 km of roads)". The setups differ
 (inventory handling, factors, split), so no claim of higher accuracy.
+
+## 17 September 2026: reproducibility checks before submission
+
+- **NDVI warp in the repo.** `python -m src.warp_ndvi` is the script that installed export v3 (it had been run from a
+  temporary folder). Rerun to a scratch path: grid, NoData and every pixel identical to `data/processed/ndvi.tif`.
+- **Stable points unchanged with NDVI present.** `make_stable_points` now also requires a valid NDVI value at each
+  point. Rerun to a scratch path with seed 42: 10,126 points, coordinates and ids identical to
+  `data/shapefiles/non_landslides.gpkg`, and the same rejection counts (18,940 outside, 1,033 near a landslide,
+  284 near water, 24 NoData, 849 near a stable point). NDVI has no NoData inside the state, so it rejects nothing.
