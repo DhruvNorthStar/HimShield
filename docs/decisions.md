@@ -90,8 +90,12 @@ Limitation to state in the report: NDVI largely repeats WorldCover land cover (R
 landslide from stable points only weakly on its own.
 
 The first export stopped at 28.85 N and missed 230.8 km2 of the state (215 km2 of Udham Singh Nagar; 39 stable
-points), so it was **not installed**. `data/processed/ndvi.tif` will be built from a re-export whose region is
-the state boundary buffered by 1 km.
+points), and v2 stopped at 31.30 N (258.0 km2 of Uttarkashi; 56 stable points). Neither was installed.
+**v3 was installed** on 16 September 2026: region [77.56, 28.71, 81.06, 31.47] (state boundary plus 1 km),
+0 km2 of the state uncovered, all 15,189 points with a value, `ndvi.tif` aligned with no NoData inside the
+state. Re-measured on v3: NDVI VIF 5.11 at the training points (elevation 6.27 to 6.49) and 7.37 on the state
+grid (elevation 7.86 to 8.37); land cover alone explains R2 0.78 (points) and 0.84 (grid). Median NDVI
+landslide 0.615, stable 0.647. The decision stands.
 
 Synthetic data: `src/make_synthetic.py` adds an `ndvi` column from its own random generator, so every other
 column and every label is unchanged (checked against the previous CSV). NDVI is not in the hidden landslide

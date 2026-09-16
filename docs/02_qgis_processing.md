@@ -699,13 +699,13 @@ Measured against the Step 2 layers. Rudraprayag used 300,000 cells. The whole st
 
 ## NDVI raster (Google Earth Engine)
 
-**Status:** `ndvi` is in the schema since 16 September 2026. The first export stopped at 28.85 N and missed 230.8 km2 of the state (215 km2 of Udham Singh Nagar), so it was not installed; `data/processed/ndvi.tif` is built from the re-export.
+**Status:** `ndvi` is in the schema since 16 September 2026, and `data/processed/ndvi.tif` is built from the third export (v3), which covers the whole state. The first export stopped at 28.85 N (230.8 km2 of Udham Singh Nagar missing) and the second at 31.30 N (258.0 km2 of Uttarkashi missing): check the file's edges against the state before warping.
 
 **Source settings:** `COPERNICUS/S2_SR_HARMONIZED`, scenes from 2023-10-01 to 2023-11-30 with `CLOUDY_PIXEL_PERCENTAGE` below 15, median composite, NDVI = (B8 - B4) / (B8 + B4), exported as Float32 GeoTIFF in EPSG:4326 at scale 30 m. Export region: the bounding box of the state boundary buffered by 1 km. The scene filter drops cloudy scenes; it is not a per-pixel cloud mask.
 
 **On the dem grid:** warp to `data/processed/ndvi.tif` with the extent, 30 m cell size and EPSG:32644 taken from `dem.tif`, **bilinear** (a continuous value exported at the same 30 m), Float32, NoData -9999, DEFLATE. In QGIS: Raster > Projections > Warp, target CRS EPSG:32644, resampling Bilinear, NoData -9999, output resolution 30, georeferenced extent from layer `dem`. Then `python -m src.check_layers` must show `ndvi ... aligned yes`, a range inside -1 to 1, and no NoData inside the state.
 
-**Measured before adding it** (first export, warped as above): whole-state 1-in-100 grid sample NDVI VIF 7.40, elevation 7.85 to 8.36; at the 15,189 Step 2d/2e points NDVI VIF **5.11**, elevation 6.27 to 6.49. Land cover alone explains NDVI with R2 0.84 (grid) and 0.79 (points): state this overlap in the report. Median NDVI by WorldCover class: Tree cover 0.78, Shrubland 0.69, Grassland 0.50, Cropland 0.48, Built-up 0.30, Bare/sparse 0.04, Snow and ice -0.03.
+**Measured** (v3, warped as above): whole-state 1-in-100 grid sample NDVI VIF 7.37, elevation 7.86 to 8.37; at the 15,189 Step 2d/2e points NDVI VIF **5.11**, elevation 6.27 to 6.49. The first export gave the same values. Land cover alone explains NDVI with R2 0.84 (grid) and 0.79 (points): state this overlap in the report. Median NDVI by WorldCover class: Tree cover 0.78, Shrubland 0.69, Grassland 0.50, Cropland 0.48, Built-up 0.30, Bare/sparse 0.04, Snow and ice -0.03.
 
 | Symptom | Cause | Fix |
 |---|---|---|
