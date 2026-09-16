@@ -209,3 +209,37 @@ Projected state scoring: RF about 11 min end to end, SVM about 5 hours.
 Fix: the "classes the model has no column for" diagnostic in `src/demo_map.py` listed Podzols (3,317 cells), a
 class merged into Other in Step 4. Scoring was already correct (a Podzols row and an Other row produce identical
 model input); the diagnostic now counts merged classes as known.
+
+## 17 September 2026: EDA on the real data
+
+`python -m src.eda` on `dataset.csv` (15,189 rows). Report `outputs/eda_report.txt`, five `outputs/figures/eda_*.png`.
+
+Class separation (point-biserial r with the label; means landslide / stable):
+
+| Factor | Landslide mean | Stable mean | r |
+|---|---|---|---|
+| dist_roads | 213 m | 3,632 m | -0.34 |
+| elevation | 1,383 m | 2,301 m | -0.29 |
+| slope | 32.8 deg | 24.6 deg | +0.29 |
+| dist_streams | 332 m | 492 m | -0.21 |
+| rainfall | 1,536 mm | 1,427 mm | +0.19 |
+| twi | 5.69 | 6.31 | -0.12 |
+| ndvi | 0.589 | 0.525 | +0.11 |
+| curvature | -0.080 | -0.009 | -0.09 |
+| aspect | 180 | 182 | -0.01 |
+
+- Slope: landslides peak at 30 to 40 degrees; stable points have a spike at 0 to 3 degrees (plains, valley floors).
+- Elevation: landslides sit mostly at 500 to 2,000 m; stable points spread up to about 6,000 m (high Himalaya).
+- NDVI: the stable mean is lower only because of snow and bare ground near 0; among vegetated points
+  landslides sit at 0.4 to 0.7 and stable points at 0.8 and above (forest), so the median is higher for stable
+  (0.647 against 0.615).
+- No numeric pair correlates above 0.8.
+- The EDA leak check flags classes that occur in one class only (Snow and ice 856, Fluvisols 256, Cryosols 233,
+  the rare classes, and water 20). It runs on the dataset before Step 4: water rows are dropped and rare classes
+  merged there; Snow and ice, Fluvisols and Cryosols are kept by decision and reported as limitations.
+- **Duplicates:** 20 extra rows (19 groups, all landslide) have identical values, GSI points sharing a 30 m cell.
+  8 groups have copies in both train and test: a small leak, at most 8 of 4,551 test rows. Stated as a limitation.
+
+Wording for the report when comparing with the primary reference: "AUCs comparable to Chauhan et al. (2025),
+with road-survey bias quantified by a near-road check (RF 0.934 within 1 km of roads)". The setups differ
+(inventory handling, factors, split), so no claim of higher accuracy.
