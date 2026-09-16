@@ -43,3 +43,28 @@ GSI geology layer is on Bhukosh, which was not accessible within the project tim
 (2025) used GSI geology via Bhukosh (12 classes, among the highest-weighted factors in their fuzzy-AHP),
 so this is a real difference from the reference study and is reported as a limitation. The GEOLOGY text
 in the GSI inventory is not a substitute: it exists only at landslide points, so it would reveal the class.
+
+## 16 September 2026: stable points (Step 2e)
+
+Script: `python -m src.make_stable_points`. Output: `data/shapefiles/non_landslides.gpkg`, **10,126 points**
+(2 x 5,063), EPSG:32644, columns `stable_id`, `landslide` = 0. Seed 42; two runs gave identical coordinates.
+
+Rules, following `docs/02_qgis_processing.md` section 2e:
+- Uniformly random inside the state boundary.
+- At least 500 m from **every** GSI inventory point near the state (6,144), not only the 5,063 training
+  points: a record dropped for a vague coordinate still says a landslide happened near there.
+- Not within 50 m of a WorldCover permanent-water cell (code 80).
+- At least 500 m from every other stable point.
+- Every active factor raster has a value at the point, so no stable row is lost in Step 2f.
+
+Of 40,000 draws: 18,940 outside the state, 1,033 near a landslide, 284 near water, 24 on NoData,
+849 near another stable point. Verified on the final file: minimum distance to any GSI point 500.3 m;
+0 points on or within 50 m of water; nearest other stable point 500 m minimum, 1,146 m median.
+
+Spread: 17.9 to 20.6 stable points per 100 km2 in every district, so each district's share tracks its area.
+On 100 whole 20 km squares the variance/mean ratio is 1.26 (random) against 47.0 for the landslide points.
+
+Limitation to state in the report: the GSI points lie mostly along valley road corridors, with none in the
+high Himalaya or in Udham Singh Nagar, while stable points cover the whole state. Part of what the models
+learn will be "where GSI surveyed" (close to roads, middle elevations), not only "where slopes fail", and
+test AUC will be higher for it. Stable here means "no recorded landslide".
