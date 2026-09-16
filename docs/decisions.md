@@ -185,3 +185,27 @@ Limitations to state with these numbers:
 - Random train/test split: spatially close points fall on both sides, so scores are likely optimistic.
 - The "why the ranking comes out this way" paragraph in outputs/evaluation_report.txt is fixed explanatory text
   in src/evaluate.py, not a measurement.
+
+## 17 September 2026: Rudraprayag maps on the real models (Step 9)
+
+`python -m src.demo_map` and `python -m src.demo_map --model svm`. 2,145,236 cells scored (1,936 km2), 6,105 water
+cells skipped, 0 NoData cells, 0% of any numeric layer outside the training range. Fixed breaks 0.2 / 0.4 / 0.6 / 0.8.
+
+| Zone | Random Forest | SVM (RBF) |
+|---|---|---|
+| Very Low | 69.1% (1,334.8 km2) | 65.8% (1,269.6 km2) |
+| Low | 15.6% (301.4 km2) | 10.0% (193.2 km2) |
+| Moderate | 7.7% (149.6 km2) | 9.3% (179.4 km2) |
+| High | 4.3% (82.9 km2) | 9.6% (186.0 km2) |
+| Very High | 3.2% (62.0 km2) | 5.3% (102.5 km2) |
+| Median score | 0.087 | 0.035 |
+| Scoring time | 20 s (107,085 cells/s) | 657 s (3,266 cells/s) |
+
+SVM puts 14.9% of the district in High or Very High against 7.5% for RF: its scores are more spread out, a
+difference in calibration as much as in ranking, so compare the maps by pattern as well as by zone share. In both,
+the higher zones follow the valley and road network of the southern half, as the dist_roads importance predicts.
+Projected state scoring: RF about 11 min end to end, SVM about 5 hours.
+
+Fix: the "classes the model has no column for" diagnostic in `src/demo_map.py` listed Podzols (3,317 cells), a
+class merged into Other in Step 4. Scoring was already correct (a Podzols row and an Other row produce identical
+model input); the diagnostic now counts merged classes as known.

@@ -144,16 +144,20 @@ def category_lookups() -> dict[str, np.ndarray]:
 
 def training_profile(dataset: pd.DataFrame, feature_names: list[str]) -> dict:
     """What the models saw: numeric ranges, the classes they know, and a stand-in for missing layers."""
-    from src.preprocess import reference_levels
+    from src.preprocess import apply_class_merge, reference_levels, saved_class_merge
 
     # Step 4 leaves out the most frequent class of each feature (after dropping water rows); that
     # class is scored as all zeros, so it counts as known even though it has no column.
     trained_rows = dataset[~dataset["lulc"].isin(EXCLUDED_LULC)] if "lulc" in dataset.columns else dataset
-    references = reference_levels(trained_rows)
+    merged = saved_class_merge()
+    references = reference_levels(apply_class_merge(trained_rows, merged))
     known = {}
     for col in config.active_categorical_features():
         levels = set(dataset[col].dropna().astype(str))
         known[col] = {lvl for lvl in levels if f"{col}_{lvl}" in feature_names} | {references[col]}
+        # Rare classes merged in Step 4 are scored through the merged column, the same way as in training.
+        if f"{col}_{config.RARE_CLASS_LABEL}" in feature_names or references[col] == config.RARE_CLASS_LABEL:
+            known[col] |= set(merged.get(col, []))
     ranges = {col: (float(dataset[col].min()), float(dataset[col].max()))
               for col in config.active_numeric_features()}
     return {"known_classes": known, "ranges": ranges}
