@@ -58,7 +58,7 @@ FACTORS = {
     "rainfall": ("Rainfall", "CHIRPS v2.0, mean of 2009 to 2024"),
     "ndvi": ("Vegetation index (NDVI)", "Sentinel-2 L2A, median of Oct to Nov 2023 (Google Earth Engine)"),
     "soil_type": ("Soil type", "SoilGrids WRB, most probable class"),
-    "lithology": ("Lithology", "GSI, awaiting Bhukosh access"),
+    "lithology": ("Lithology", "Dropped: Bhukosh unavailable"),
     "lulc": ("Land cover", "ESA WorldCover 2021"),
     "dist_roads": ("Distance to roads", "OpenStreetMap roads"),
     "dist_streams": ("Distance to streams", "stream network derived from the DEM"),
@@ -172,7 +172,7 @@ def page_overview() -> None:
         synthetic_banner()
     st.markdown(
         "A comparison of a **Support Vector Machine** and a **Random Forest** for **Uttarakhand, India**. "
-        "Both models look at the terrain conditions at a location (slope, rainfall, rock, land cover, "
+        "Both models look at the terrain conditions at a location (slope, rainfall, soil, land cover, vegetation, "
         "wetness, distance to roads and streams, and more) and score how likely that ground is to be "
         "landslide-prone.")
 
@@ -232,14 +232,31 @@ def page_overview() -> None:
                 show_figure(name)
 
     with st.expander("Limitations to keep in mind"):
-        st.markdown(
+        items = [
             "- **Stable means \"no recorded landslide\"**, not \"cannot fail\". Some stable points are "
-            "risky ground nobody has mapped, which caps how high any score can go.\n"
+            "risky ground nobody has mapped, which caps how high any score can go.",
             "- **The train/test split is random**, so nearby points can fall on both sides. Terrain is "
-            "spatially correlated, so scores are likely somewhat optimistic for an unseen region.\n"
+            "spatially correlated, so scores are likely somewhat optimistic for an unseen region.",
             "- **Rainfall is a 16-year annual mean** at about 5.5 km resolution. It describes the climate "
-            "of an area, not the short bursts of rain that trigger individual landslides.\n"
-            "- **The landslide inventory and lithology are still pending** from GSI.")
+            "of an area, not the short bursts of rain that trigger individual landslides.",
+        ]
+        if "lithology" in config.DROPPED_COLUMNS:
+            items.append(
+                "- **Lithology was excluded.** GSI geology data requires Bhukosh portal access, which was "
+                "unavailable. Chauhan et al. (2025) used GSI geology via Bhukosh; this study could not access it.")
+        if not config.IS_SYNTHETIC and "dist_roads" in df.columns:
+            r = df[config.TARGET].corr(df["dist_roads"])
+            road = f"- **Road-survey bias.** Distance to roads is the strongest single predictor (r = {r:.2f})"
+            near = meta.get("near_road_check", {}).get("subsets", {})
+            within = next((v for k, v in near.items() if k.startswith("within")), None)
+            if within:
+                road += (f". Within {meta['near_road_check']['split_m'] / 1000:g} km of a road, "
+                         f"RF AUC = {within['Random Forest']['auc']:.3f} and SVM AUC = {within['SVM (RBF)']['auc']:.3f}. "
+                         "AUCs are comparable to Chauhan et al. (2025), with this bias quantified.")
+            else:
+                road += ". Run `python -m src.near_road_check` to measure its effect on AUC."
+            items.append(road)
+        st.markdown("\n".join(items))
 
 
 # ---------------------------------------------------------------------------
@@ -527,13 +544,15 @@ def page_map() -> None:
 
     demo = metadata().get("demo_map", {})
     if demo:
-        cols = st.columns(4)
-        cols[0].metric("Model", demo.get("model", "-"))
-        cols[1].metric("Cells scored", f"{demo.get('cells_scored', 0):,}", help="30 m cells, water excluded")
-        cols[2].metric("Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
+        # Four metrics in one row truncated the values ("Rando...", "2,145,..."), so the model name is a
+        # line of text and the numbers get three wider columns.
+        st.markdown(f"**Model:** {demo.get('model', '-')}")
+        cols = st.columns(3)
+        cols[0].metric("Cells scored", f"{demo.get('cells_scored', 0):,}", help="30 m cells, water excluded")
+        cols[1].metric("Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
         projected = demo.get("projection_full_state", {}).get("predict_minutes")
         if projected is not None:
-            cols[3].metric("Whole state, projected", f"{projected:.0f} min",
+            cols[2].metric("Whole state, projected", f"{projected:.0f} min",
                            help="Linear projection from this run. Full-state mapping is Phase 3.")
         zones = demo.get("zones")
         if zones:
@@ -570,7 +589,7 @@ def main() -> None:
         st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
         written = meta.get("written", {}).get("evaluation")
         if written:
-            st.caption(f"Evaluation written {written[:10]}")
+            st.caption(f"Evaluation written {written[:10]} (date shown in UTC)")
 
     pages.run()
 
