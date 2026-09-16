@@ -754,6 +754,8 @@ Also state plainly what sampling cannot fix: "stable" here means "no landslide h
 
 ## 2f. Extract raster values to the points
 
+**Done by script on 16 September 2026:** `python -m src.extract_points` does steps 1 and 2 below (cell value under each point, NoData made empty) and writes `data/shapefiles/all_points.gpkg` and `data/processed/dataset_raw.csv`: 15,189 rows, 22 problem rows, all landslides (20 on water, 2 on the border rim). Lithology is dropped, so step 3 is skipped. The QGIS steps stay here as the manual equivalent.
+
 1. **`native:mergevectorlayers`**: `landslides.gpkg` plus `non_landslides.gpkg`, both in EPSG:32644, into `all_points.gpkg`. Check that the count equals positives plus negatives and that `landslide` holds only 1 and 0.
 2. **`native:rastersampling`** ("Sample raster values"), once per raster, feeding each output back in as the next input. Use these column prefixes exactly:
 

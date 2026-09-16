@@ -100,3 +100,29 @@ landslide 0.615, stable 0.647. The decision stands.
 Synthetic data: `src/make_synthetic.py` adds an `ndvi` column from its own random generator, so every other
 column and every label is unchanged (checked against the previous CSV). NDVI is not in the hidden landslide
 rule. Its noise (0.15) was set so synthetic NDVI overlaps land cover as the real points do (R2 0.78, VIF 5.04).
+
+## 16 September 2026: raster extraction and dataset.csv (Steps 2f and 2g)
+
+Scripts: `python -m src.extract_points` (cell value under each point, each raster's NoData made empty), then
+`python -m src.label_categories data/processed/dataset_raw.csv`. Outputs: `data/shapefiles/all_points.gpkg`,
+`data/processed/dataset_raw.csv` (with `point_id`, `x`, `y`), `data/processed/dataset.csv` (schema columns only).
+
+**15,189 rows: 5,063 landslide, 10,126 stable (1:2).** 12 rasters sampled; `dist_faults` is kept in
+`dataset_raw.csv` and left out of `dataset.csv`. Every value is inside the check_layers range
+(slope 0 to 68.7, NDVI -0.42 to 0.90, elevation 190 to 7,695 m).
+
+22 problem rows, all landslide points, none stable:
+- 20 on a WorldCover water cell (code 80), in river valleys of Uttarkashi, Pithoragarh, Chamoli, Bageshwar,
+  Rudraprayag and Dehradun. `src/preprocess.py` drops water rows (a water row could only be a landslide).
+- 2 in Dehradun, 36 m and 54 m inside the state edge (GSI-3492, GSI-3465): slope, aspect, curvature and TWI are
+  NoData on the border rim. `src/preprocess.py` fills them with the median.
+
+Findings to carry into the report:
+- **Road-corridor survey bias, measured:** median distance to a road is 30 m at landslide points and 1,154 m at
+  stable points. Half the inventory lies within about one cell of a road.
+- **Classes that occur at stable points only, or almost:** Snow and ice 856 / 0, Moss and lichen 399 / 2,
+  No soil (rock or ice) 1,194 / 1, Cryosols 233 / 0, Fluvisols 256 / 0, Cropland 706 / 26. These are places
+  GSI did not survey as much as places that cannot fail, and they make the classes easy to separate.
+- **Rare classes:** Herbaceous wetland 7, Shrubland 20, Podzols 3, Regosols 5, Vertisols 7, Chernozems 31.
+- **Water buffer asymmetry:** 136 landslide points lie within 50 m of water without being on it; stable points
+  were kept 50 m clear by rule, so none do. Small (2.7% of landslides), stated as a limitation.
