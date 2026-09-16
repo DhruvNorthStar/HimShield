@@ -1,55 +1,54 @@
-*** SYNTHETIC DATA - NOT REAL *** (dataset_synthetic.csv) Results are for pipeline testing only.
+Data source: REAL (dataset.csv)
 
-HELD-OUT TEST SET: 1,079 rows
+HELD-OUT TEST SET: 4,551 rows
 
 --- SVM (RBF) (threshold 0.5) ---
               precision    recall  f1-score   support
 
-      stable      0.862     0.775     0.816       720
-   landslide      0.625     0.752     0.683       359
+      stable      0.943     0.858     0.899      3038
+   landslide      0.759     0.896     0.822      1513
 
-    accuracy                          0.767      1079
-   macro avg      0.744     0.764     0.750      1079
-weighted avg      0.783     0.767     0.772      1079
+    accuracy                          0.871      4551
+   macro avg      0.851     0.877     0.860      4551
+weighted avg      0.882     0.871     0.873      4551
 
 --- Random Forest (threshold 0.5) ---
               precision    recall  f1-score   support
 
-      stable      0.859     0.818     0.838       720
-   landslide      0.667     0.730     0.697       359
+      stable      0.941     0.910     0.926      3038
+   landslide      0.831     0.886     0.858      1513
 
-    accuracy                          0.789      1079
-   macro avg      0.763     0.774     0.767      1079
-weighted avg      0.795     0.789     0.791      1079
+    accuracy                          0.902      4551
+   macro avg      0.886     0.898     0.892      4551
+weighted avg      0.905     0.902     0.903      4551
 
 
 SUMMARY
                    SVM (RBF)  Random Forest
-AUC                   0.8541         0.8767
-average precision     0.7182         0.7704
-accuracy              0.7674         0.7887
-precision             0.6250         0.6667
-recall                0.7521         0.7298
-f1                    0.6827         0.6968
-specificity           0.7750         0.8181
+AUC                   0.9404         0.9604
+average precision     0.8814         0.9143
+accuracy              0.8708         0.9024
+precision             0.7591         0.8314
+recall                0.8956         0.8863
+f1                    0.8217         0.8580
+specificity           0.8585         0.9105
 
 VERDICT
 Random Forest is the better model on this data.
 
-On AUC, the metric that does not depend on a threshold, Random Forest scores 0.8767 against 0.8541, a gap of 0.0226.
-Resampling the test set 1,000 times puts that gap between +0.0082 and +0.0386, which excludes zero. The difference is larger than the noise in a test set this size.
+On AUC, the metric that does not depend on a threshold, Random Forest scores 0.9604 against 0.9404, a gap of 0.0200.
+Resampling the test set 1,000 times puts that gap between +0.0157 and +0.0242, which excludes zero. The difference is larger than the noise in a test set this size.
 
-SVM (RBF): at the usual 0.5 cut-off it catches 75% of real landslides (270 of 359), and 62% of the places it flags are real. It misses 89 landslides and raises 162 false alarms.
-Random Forest: at the usual 0.5 cut-off it catches 73% of real landslides (262 of 359), and 67% of the places it flags are real. It misses 97 landslides and raises 131 false alarms.
+SVM (RBF): at the usual 0.5 cut-off it catches 90% of real landslides (1355 of 1513), and 76% of the places it flags are real. It misses 158 landslides and raises 430 false alarms.
+Random Forest: at the usual 0.5 cut-off it catches 89% of real landslides (1341 of 1513), and 83% of the places it flags are real. It misses 172 landslides and raises 272 false alarms.
 
 Note the split decision: Random Forest ranks better overall, but SVM (RBF) catches more landslides at the default threshold. For a hazard map, missing a real landslide is worse than sending someone to check a safe slope, so that matters.
 
 Why the ranking comes out this way:
 - Random Forest splits on thresholds, which is the shape terrain failure actually takes: risk changes sharply around a slope angle rather than sliding smoothly.
 - It also handles the one-hot rock and land-cover columns without needing them to be comparable in scale, and it models interactions between factors for free.
-- Inside the SVM, the RBF kernel beats a linear one by +0.0126 AUC, so the terrain relationships genuinely are not straight lines.
+- Inside the SVM, the RBF kernel beats a linear one by +0.0139 AUC, so the terrain relationships genuinely are not straight lines.
 
 Limitations to state alongside these numbers:
 - The stable points are places with no recorded landslide, which is not the same as places where none can happen. Some of them are risky ground that has never been mapped, which caps how high any score here can go.
 - Train and test rows were split at random, so points near each other in the landscape can land on both sides. Terrain is spatially correlated, so these scores are likely a little optimistic compared with predicting a region never seen.
-- SYNTHETIC DATA - NOT REAL: every number above comes from simulated data and describes nothing about Uttarakhand.

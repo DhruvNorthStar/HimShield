@@ -140,3 +140,48 @@ label. The merged names are saved in `metadata.json` and applied again in `prepa
 dropped, 2 rows median-filled, 15,169 used. VIF dropped nothing (highest elevation 6.47, NDVI 5.08): 23 features.
 Train 10,618 (3,530 landslide), SMOTE to 7,088 / 7,088; test 4,551 (1,513 landslide), never resampled.
 Synthetic models and metadata kept locally in `models/synthetic_baseline_2026-09-14/` for the comparison.
+
+## 17 September 2026: real-data results (Steps 5 to 7)
+
+`python -m src.train_svm` (10 min 17 s), `python -m src.train_rf` (4 min 54 s), `python -m src.evaluate`,
+`python -m src.near_road_check`. Full grids, 5-fold stratified CV, SMOTE inside every fold, seed 42.
+Test set 4,551 rows (1,513 landslide), never resampled.
+
+| | SVM (RBF) | Random Forest |
+|---|---|---|
+| Best parameters | C 100, gamma 0.01 | 300 trees, max_depth None, min_samples_split 2 |
+| CV AUC | 0.9427 | 0.9618 |
+| **Test AUC** | **0.9404** | **0.9604** |
+| Average precision | 0.8814 | 0.9143 |
+| Accuracy / precision / recall / F1 at 0.5 | 0.871 / 0.759 / 0.896 / 0.822 | 0.902 / 0.831 / 0.886 / 0.858 |
+| Confusion at 0.5 (TN, FP, FN, TP) | 2,608, 430, 158, 1,355 | 2,766, 272, 172, 1,341 |
+| Youden threshold | 0.52 (recall 0.890) | 0.52 (recall 0.884) |
+
+RF minus SVM AUC +0.0199, 95% bootstrap interval +0.0157 to +0.0242: separable. Linear SVM test AUC 0.9265,
+so the RBF kernel adds +0.0139. Synthetic baseline for comparison: RF 0.8767, SVM 0.8541.
+
+RF importance (impurity / permutation): dist_roads 0.314 / +0.143, elevation 0.160 / +0.051, slope 0.117 /
++0.042, ndvi 0.099 / +0.018, rainfall 0.058 / +0.008.
+
+Near-road check (test set split at 1 km from an OSM road):
+
+| Subset | Rows (landslide) | SVM AUC (95%) | RF AUC (95%) | RF minus SVM (95%) |
+|---|---|---|---|---|
+| All | 4,551 (1,513) | 0.940 (0.934 to 0.947) | 0.960 (0.955 to 0.966) | +0.020 (+0.016 to +0.024) |
+| Within 1 km | 2,855 (1,440) | 0.907 (0.896 to 0.918) | 0.934 (0.925 to 0.943) | +0.027 (+0.020 to +0.035) |
+| Beyond 1 km | 1,696 (73) | 0.833 (0.774 to 0.886) | 0.952 (0.929 to 0.970) | +0.119 (+0.069 to +0.177) |
+
+Within 1 km of a road, where the two classes are nearly balanced and road distance separates them far less,
+AUC falls by about 0.03 for both models and RF stays ahead with an interval that excludes zero. Beyond 1 km only
+73 landslides remain, so those intervals are wide.
+
+Limitations to state with these numbers:
+- dist_roads is the strongest feature by far, largely because GSI surveyed along roads (median 30 m at
+  landslides against 1,154 m at stable points). The headline AUCs include that effect; the within-1 km figures
+  are the fairer measure of terrain ranking, and some road effect remains even inside 1 km.
+- Several best parameters sit on the edge of their grid (SVM C = 100, linear C = 100, RF 300 trees,
+  min_samples_split 2), so the true optimum may lie outside the grid. The grids were not widened after seeing
+  the results.
+- Random train/test split: spatially close points fall on both sides, so scores are likely optimistic.
+- The "why the ranking comes out this way" paragraph in outputs/evaluation_report.txt is fixed explanatory text
+  in src/evaluate.py, not a measurement.
