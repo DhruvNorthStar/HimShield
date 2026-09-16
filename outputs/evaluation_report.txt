@@ -44,11 +44,14 @@ Random Forest: at the usual 0.5 cut-off it catches 89% of real landslides (1341 
 
 Note the split decision: Random Forest ranks better overall, but SVM (RBF) catches more landslides at the default threshold. For a hazard map, missing a real landslide is worse than sending someone to check a safe slope, so that matters.
 
-Why the ranking comes out this way:
-- Random Forest splits on thresholds, which is the shape terrain failure actually takes: risk changes sharply around a slope angle rather than sliding smoothly.
-- It also handles the one-hot rock and land-cover columns without needing them to be comparable in scale, and it models interactions between factors for free.
-- Inside the SVM, the RBF kernel beats a linear one by +0.0139 AUC, so the terrain relationships genuinely are not straight lines.
+What the measurements show:
+- Random Forest's strongest inputs by permutation importance (drop in test AUC when the column is shuffled): dist_roads +0.143, elevation +0.051, slope +0.042, ndvi +0.018, rainfall +0.008.
+- Inside the SVM, the RBF kernel beats a linear one by +0.0139 AUC on the test set: a curved boundary separates these inputs better than a straight one.
+- Test points within 1 km of a road (2,855 rows, 1,440 landslides): SVM AUC 0.907, Random Forest 0.934, RF minus SVM +0.027 (+0.020 to +0.035).
+- Test points beyond 1 km (1,696 rows, 73 landslides): SVM AUC 0.833, Random Forest 0.952, RF minus SVM +0.119 (+0.069 to +0.176). Few landslides, so read these intervals as wide.
+  Within the road corridor, where distance to roads separates the classes far less, both models score lower than on the whole test set. The size of that drop is an estimate of how much of the headline AUC comes from where the inventory was surveyed; some road effect remains even within the corridor.
 
 Limitations to state alongside these numbers:
 - The stable points are places with no recorded landslide, which is not the same as places where none can happen. Some of them are risky ground that has never been mapped, which caps how high any score here can go.
 - Train and test rows were split at random, so points near each other in the landscape can land on both sides. Terrain is spatially correlated, so these scores are likely a little optimistic compared with predicting a region never seen.
+- The GSI inventory follows roads, so part of each headline AUC reflects where landslides were recorded rather than terrain alone; the near-road AUCs above measure how much.
