@@ -115,6 +115,11 @@ DROPPED_COLUMNS: dict[str, str] = {
         "to 14.5, so Step 4 would have dropped elevation instead. Dropped 14 September 2026; restore it "
         "if GSI structural lines arrive from Bhukosh."
     ),
+    "lithology": (
+        "No state-wide geology raster available. GSI geology layer requires Bhukosh access which is "
+        "unavailable. Chauhan et al. (2025) used GSI geology via Bhukosh; this study could not access it "
+        "within the project timeline. Dropped 16 September 2026; see docs/decisions.md."
+    ),
 }
 
 assert set(SCHEMA_COLUMNS) == {TARGET, *NUMERIC_FEATURES, *CATEGORICAL_FEATURES}, "schema lists out of sync"
