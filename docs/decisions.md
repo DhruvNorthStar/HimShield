@@ -252,3 +252,19 @@ with road-survey bias quantified by a near-road check (RF 0.934 within 1 km of r
   point. Rerun to a scratch path with seed 42: 10,126 points, coordinates and ids identical to
   `data/shapefiles/non_landslides.gpkg`, and the same rejection counts (18,940 outside, 1,033 near a landslide,
   284 near water, 24 NoData, 849 near a stable point). NDVI has no NoData inside the state, so it rejects nothing.
+
+## 17 September 2026: full pipeline rerun with `run_phase2.py`
+
+`python run_phase2.py` rebuilt everything from `ndvi.tif` onward (clean_gsi was already current) in **16.4 min**:
+warp 35 s, check_layers 33 s, stable points 49 s, extraction 20 s, dataset 1 s, EDA 7 s, preprocess 8 s,
+SVM 8.6 min, RF 4.2 min, evaluate 9 s, near-road 20 s, evaluate 9 s, RF map 28 s.
+
+Compared with a backup taken just before the run: `dataset.csv`, `dataset_raw.csv`, `prepared.joblib`,
+`scaler.pkl`, `feature_names.json`, `svm_model.pkl`, `rf_model.pkl`, `evaluation_report.txt` and `eda_report.txt`
+are byte-identical; the two GeoPackages have identical attributes and geometry (only their stored write time
+differs); no tracked figure changed. Same results: SVM 0.9404, RF 0.9604, gap +0.0199 (+0.0157 to +0.0242),
+within 1 km of a road SVM 0.907 and RF 0.934, Rudraprayag RF zones unchanged. A dry run afterwards skips every
+step except `check_layers`, which always runs.
+
+The run exited 1 after all 14 steps: the final results printout read a zone key `share %` (the dashboard's column
+label) instead of `share_percent`. Fixed and tested against the real metadata; no pipeline output was affected.

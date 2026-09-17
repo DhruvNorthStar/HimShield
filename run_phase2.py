@@ -254,7 +254,7 @@ def print_results() -> None:
                   f"({subset['landslide']:,} landslides)")
     zones = meta.get("demo_map", {}).get("zones")
     if zones:
-        print("  Rudraprayag (RF): " + ", ".join(f"{z['zone']} {z['share %']}%" for z in zones))
+        print("  Rudraprayag (RF): " + ", ".join(f"{z['zone']} {z['share_percent']}%" for z in zones))
     print("\n  Dashboard:  streamlit run dashboard/app.py")
     print("  SVM map:    python -m src.demo_map --model svm   (about 11 min)")
 
