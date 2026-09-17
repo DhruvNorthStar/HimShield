@@ -70,10 +70,10 @@ SIMPLIFY_M = 100
 # Landslide points: small and semi-transparent, so the susceptibility zones stay readable underneath at state zoom
 # while the road-corridor pattern of the inventory still shows.
 POINT_RADIUS = 4
-POINT_STROKE = "darkred"
-POINT_FILL = "red"
-POINT_OPACITY = 0.8
-POINT_FILL_OPACITY = 0.6
+POINT_STROKE = "white"          # thin white outline, so points stay visible on every zone colour
+POINT_FILL = "#0d1b2a"          # navy: no zone in the scheme 4 ramp uses it, unlike the earlier red on red High
+POINT_OPACITY = 0.9
+POINT_FILL_OPACITY = 0.7
 PAGE_TITLE = "Uttarakhand Landslide Susceptibility Map"
 NASA_LABEL = "Historical landslides (Provisional: NASA GLC, accuracy varies)"
 PENDING_MESSAGE = "Full state map pending: showing Rudraprayag demo only"
@@ -283,7 +283,7 @@ def legend_html(mode: str, zones: dict | None, image: dict | None, landslides: d
 .lsm-row {{ display:flex; align-items:center; gap:8px; margin:3px 0; }}
 .lsm-swatch {{ width:18px; height:14px; flex:none; border:2px solid #fff; outline:1px solid rgba(0,0,0,.15); }}
 .lsm-dot {{ width:8px; height:8px; flex:none; border-radius:50%; background:{POINT_FILL}; opacity:{POINT_FILL_OPACITY};
-  border:1px solid {POINT_STROKE}; margin:0 5px; }}
+  border:1px solid {POINT_STROKE}; outline:1px solid rgba(0,0,0,.25); margin:0 5px; }}
 .lsm-name {{ flex:1; }}
 .lsm-value {{ color:#52514e; font-variant-numeric:tabular-nums; white-space:nowrap; }}
 .lsm-note, .lsm-foot {{ color:#52514e; margin-top:6px; }}

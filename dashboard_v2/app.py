@@ -42,7 +42,13 @@ import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from src import config  # noqa: E402
+from src import viz  # noqa: E402
 from src.demo_map import ZONE_COLOURS  # noqa: E402
+from src.map_generator_full import POINT_FILL  # noqa: E402
+
+# Scheme 4 tokens shared with the figures and maps: text ink, muted label grey.
+INK = "#222222"
+MUTED = "#52514e"
 
 PHASE2_APP = ROOT / "dashboard" / "app.py"
 SHAP_DIR = config.FIGURES_DIR / "shap"
@@ -142,11 +148,11 @@ def static_map_png(zones_path: str, kind: str, focus: str, stamp: float) -> byte
         handles += [Patch(facecolor=c, edgecolor="white", label=f"{n} ({edges[i]:.1f} to {edges[i + 1]:.1f}): {s:.1f}%")
                     for i, (n, c, s) in enumerate(zip(config.RISK_ZONES, ZONE_COLOURS, shares))]
     districts.boundary.plot(ax=ax, color="#3a3a38", linewidth=0.7, zorder=2)
-    state.boundary.plot(ax=ax, color="#0b0b0b", linewidth=1.6, zorder=3)
+    state.boundary.plot(ax=ax, color=INK, linewidth=1.6, zorder=3)
     if landslides["points"] is not None and len(landslides["points"]):
         pts = landslides["points"].to_crs(config.PROJECT_CRS)
-        ax.scatter(pts.geometry.x, pts.geometry.y, s=14, c="#1a1a1a", edgecolors="white", linewidths=0.7, zorder=4)
-        handles.append(Line2D([], [], marker="o", linestyle="", markerfacecolor="#1a1a1a", markeredgecolor="white",
+        ax.scatter(pts.geometry.x, pts.geometry.y, s=14, c=POINT_FILL, edgecolors="white", linewidths=0.7, zorder=4)
+        handles.append(Line2D([], [], marker="o", linestyle="", markerfacecolor=POINT_FILL, markeredgecolor="white",
                               label=f"{landslides['label']}: {len(pts)}"))
 
     if focus == "state":
@@ -161,7 +167,7 @@ def static_map_png(zones_path: str, kind: str, focus: str, stamp: float) -> byte
         x, y = row.geometry.x, row.geometry.y
         if xmin - pad <= x <= xmax + pad and ymin - pad <= y <= ymax + pad:
             ax.text(x, y, row["district"], fontsize=8 if focus == "state" else 10, ha="center", va="center",
-                    color="#0b0b0b", zorder=5, path_effects=[pe.withStroke(linewidth=3, foreground="white")])
+                    color=INK, zorder=5, path_effects=[pe.withStroke(linewidth=3, foreground="white")])
     ax.set_aspect("equal")
     ax.set_axis_off()
     if handles:
@@ -172,10 +178,10 @@ def static_map_png(zones_path: str, kind: str, focus: str, stamp: float) -> byte
     ax.set_title(title, loc="left", fontsize=11, fontweight="semibold")
     footer = "Static offline copy: no basemap. "
     if config.IS_SYNTHETIC:
-        fig.text(0.5, 0.5, config.SYNTHETIC_LABEL, fontsize=30, color="#D55E00", alpha=0.10, ha="center",
+        fig.text(0.5, 0.5, config.SYNTHETIC_LABEL, fontsize=30, color="#e31a1c", alpha=0.10, ha="center",
                  va="center", rotation=24, fontweight="bold")
         footer += f"{config.SYNTHETIC_LABEL}."
-    fig.text(0.01, 0.01, footer, fontsize=7, color="#52514e")
+    fig.text(0.01, 0.01, footer, fontsize=7, color=MUTED)
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", bbox_inches="tight")
     plt.close(fig)
@@ -215,18 +221,24 @@ def probability_chart(scores: dict, thresholds: dict):
         color=alt.Color("zone:N", scale=alt.Scale(domain=config.RISK_ZONES, range=ZONE_COLOURS), legend=None),
         tooltip=[alt.Tooltip("zone:N", title="Risk zone"), alt.Tooltip("start:Q", title="from", format=".1f"),
                  alt.Tooltip("end:Q", title="to", format=".1f")])
-    band_labels = alt.Chart(bands).mark_text(fontSize=11, color="#52514e", baseline="bottom").encode(
+    band_labels = alt.Chart(bands).mark_text(fontSize=11, color=MUTED, baseline="bottom").encode(
         x=alt.X("middle:Q", scale=alt.Scale(domain=[0, 1])), y=alt.value(-6), text="zone:N")
     tooltip = [alt.Tooltip("model:N", title="Model"), alt.Tooltip("score:Q", title="Score", format=".3f"),
                alt.Tooltip("zone:N", title="Zone"), alt.Tooltip("threshold:Q", title="Tuned threshold", format=".2f"),
                alt.Tooltip("decision:N", title="Decision")]
-    bar_layer = alt.Chart(bars).mark_bar(size=26, color="#2b2b29", cornerRadiusEnd=4).encode(x=x, y=y, tooltip=tooltip)
-    value_layer = alt.Chart(bars).mark_text(align="left", dx=6, fontSize=13, fontWeight="bold", color="#0b0b0b").encode(
+    bar_layer = alt.Chart(bars).mark_bar(size=26, cornerRadiusEnd=4).encode(
+        x=x, y=y, tooltip=tooltip,
+        color=alt.Color("model:N", scale=alt.Scale(domain=list(viz.MODEL_COLORS), range=list(viz.MODEL_COLORS.values())),
+                        legend=None))
+    value_layer = alt.Chart(bars).mark_text(align="left", dx=6, fontSize=13, fontWeight="bold", color=INK).encode(
         x="score:Q", y=y, text=alt.Text("score:Q", format=".2f"))
     threshold_layer = alt.Chart(bars).mark_tick(color="#ffffff", thickness=3, size=40).encode(
         x="threshold:Q", y=y, tooltip=[alt.Tooltip("model:N", title="Model"),
                                         alt.Tooltip("threshold:Q", title="Tuned threshold", format=".2f")])
-    return (band_layer + band_labels + bar_layer + threshold_layer + value_layer).properties(
+    # resolve_scale(color="independent"): layers share one colour scale by default, so the bars' model colours
+    # and the bands' zone colours would fight over it and the bars would vanish.
+    return (band_layer + band_labels + bar_layer + threshold_layer + value_layer).resolve_scale(
+        color="independent").properties(
         height=150, padding={"top": 22, "left": 5, "right": 30, "bottom": 5}).configure_view(strokeWidth=0)
 
 
