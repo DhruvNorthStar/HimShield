@@ -7,6 +7,10 @@ landslides. Checked with a palette validator: colour-blind separation dE 21.9
 3:1 contrast on a light page. So the two classes stay apart for colour-blind
 readers and in greyscale printing, which matters for a printed report.
 
+Model colours are separate from class colours (scheme 4, 17 September 2026): Random Forest blue #1565c0 and
+SVM red #dc3545, used wherever the two models are drawn against each other (ROC and precision-recall curves).
+They name models, never classes, so a landslide/stable chart keeps the class colours above.
+
 Correlations use a diverging blue-to-red scale with a neutral midpoint, because
 the value has a natural centre at zero. Never a rainbow scale: it invents
 boundaries where the data has none.
@@ -23,6 +27,13 @@ STABLE = "#0072B2"
 LANDSLIDE = "#D55E00"
 CLASS_COLORS = {0: STABLE, 1: LANDSLIDE}
 CLASS_LABELS = {0: "No landslide", 1: "Landslide"}
+
+# Model colours (scheme 4): kept apart from the class colours on purpose
+RF_COLOR = "#1565c0"
+SVM_COLOR = "#dc3545"
+MODEL_COLORS = {"Random Forest": RF_COLOR, "SVM (RBF)": SVM_COLOR}
+# The two model colours are close in lightness (L* 43 and 50), so line style keeps them apart in black and white.
+MODEL_LINESTYLES = {"Random Forest": "-", "SVM (RBF)": (0, (6, 3))}
 
 # Ink and furniture: text stays in neutral ink, colour belongs to the marks only.
 INK = "#1a1a1a"

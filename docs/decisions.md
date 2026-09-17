@@ -335,3 +335,43 @@ synthetic-era wording. The Explainability caption claimed SHAP runs "in seconds"
 
 **Tidy-up:** `verify_phase2.py` now also parses `dashboard_v2/app.py`, `run_phase2.py` and `run_phase3.py`;
 `run_phase3.py` estimates updated to the real runs (SHAP 60 to 120 s, state raster 9 to 11 min).
+
+## 17 September 2026: scheme 4 clean white theme and zone colours
+
+Zone colors updated to Scheme 4 light-to-dark single ramp. Lightness steps verified ≥10 units. Color-blind
+separation verified ΔE≥19.
+
+The light-to-dark single ramp is retained: the zones are ordered, so their order is carried by lightness and the
+map still reads in black and white. Only the colours changed, from one vermillion hue to a green-to-dark-red ramp
+set in `src/demo_map.py` `ZONE_COLOURS` (imported by the state map, the raster colour tables and dashboard v2):
+
+| Zone | Colour | CIELAB L* | Step to next | Colour difference to next: normal / deuteranopia / protanopia |
+|---|---|---|---|---|
+| Very Low | `#d4edda` | 91.5 | -9.9 | 27.7 / 20.1 / 23.3 |
+| Low | `#a1d99b` | 81.6 | -12.0 | 75.8 / 39.6 / 32.1 |
+| Moderate | `#fd8d3c` | 69.7 | -21.2 | 40.8 / 19.4 / 32.0 |
+| High | `#e31a1c` | 48.5 | -28.8 | 49.8 / 42.6 / 33.2 |
+| Very High | `#67000d` | 19.7 | | |
+
+Colour-blind simulation: Machado et al. (2009), severity 1.0. The first proposal used `#74c476` for Low, which sat
+only 2.9 L* above Moderate (the two would print as the same grey), so Low was lightened to `#a1d99b`.
+
+Other scheme 4 changes:
+- `.streamlit/config.toml`: primary `#1565c0`, background `#ffffff`, secondary background `#f0f4f8`, text
+  `#222222`, sans serif (usage statistics off and minimal toolbar kept).
+- `src/viz.py`: model colours separate from class colours, Random Forest `#1565c0` solid and SVM `#dc3545`
+  dashed. The two are far apart in colour (difference 100 normal, 97 deuteranopia, 68 protanopia) but close in
+  lightness (L* 43 and 50), so the dashed line keeps them apart in black and white. Class colours (stable
+  `#0072B2`, landslide `#D55E00`) are unchanged.
+- State map landslide markers: navy `#0d1b2a` with a thin white outline, because red markers would disappear
+  into the new red High zone.
+
+Two map fixes made with the same change (18 September 2026):
+- **Light basemap:** CartoDB positron now serves tiles stamped "API KEY REQUIRED", so `src/demo_map.py` uses Esri
+  World Light Gray Base instead (no key, same source as the imagery layer). Checked on 17 September by HTTP status
+  only, which returned 200 for a watermarked tile: the error was reading a status code as proof of content.
+- **Zone raster colour tables:** `susceptibility_uk_zones.tif` and `susceptibility_rudraprayag_zones.tif` carried
+  the old ramp in their GeoTIFF colour table (what QGIS shows). Rewritten in place from `ZONE_COLOURS` with
+  `write_colormap`, no rescoring; index 0 stays transparent for NoData. Future `predict_raster_full.py` runs write
+  the new colours themselves.
+- **State map markers:** navy `#0d1b2a` fill at 0.7, white outline at 0.9, radius 4, weight 1.

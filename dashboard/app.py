@@ -41,7 +41,7 @@ WATERMARK_HTML = """
   position: fixed; top: 55%; left: 50%;
   transform: translate(-50%, -50%) rotate(-24deg);
   font: 800 clamp(3rem, 9vw, 7rem)/1 system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.06em; color: rgba(213, 94, 0, 0.08);
+  letter-spacing: 0.06em; color: rgba(227, 26, 28, 0.08);  /* scheme 4 danger #e31a1c, faint */
   white-space: nowrap; pointer-events: none; user-select: none; z-index: 999;
 }
 </style>
@@ -141,11 +141,12 @@ def evaluation_section() -> dict:
 def synthetic_banner() -> None:
     """The first thing an examiner sees on the homepage: these results test the pipeline, they are not findings."""
     st.markdown(
-        '<div style="border:2px solid #D55E00;border-left-width:8px;border-radius:6px;padding:14px 18px;'
-        'margin:0 0 1.2rem;background:rgba(213,94,0,0.06)">'
-        '<div style="font-weight:800;font-size:1.2rem;letter-spacing:0.05em;color:#0b0b0b">'
+        # Scheme 4: danger red #e31a1c on a faint tint, text in the theme's #222222.
+        '<div style="border:2px solid #e31a1c;border-left-width:8px;border-radius:6px;padding:14px 18px;'
+        'margin:0 0 1.2rem;background:rgba(227,26,28,0.06)">'
+        '<div style="font-weight:800;font-size:1.2rem;letter-spacing:0.05em;color:#222222">'
         'SYNTHETIC DATA: RESULTS ARE NOT FINAL</div>'
-        '<div style="margin-top:6px;color:#1a1a1a">Every number, chart, prediction and map in this dashboard '
+        '<div style="margin-top:6px;color:#222222">Every number, chart, prediction and map in this dashboard '
         'comes from a simulated dataset built to test the pipeline end to end. The real GSI landslide '
         'inventory has not been processed yet, so none of these results describe Uttarakhand. Both models '
         'will be retrained on real data before any result is reported.</div></div>',

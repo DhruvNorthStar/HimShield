@@ -112,12 +112,13 @@ def plot_roc(y_true, scored: dict):
     import matplotlib.pyplot as plt
     from sklearn.metrics import roc_auc_score, roc_curve
 
-    colours = {"SVM (RBF)": viz.STABLE, "Random Forest": viz.LANDSLIDE}
+    colours = viz.MODEL_COLORS
     fig, ax = plt.subplots(figsize=(6.4, 6))
     for name, scores in scored.items():
         fpr, tpr, _ = roc_curve(y_true, scores)
         auc = roc_auc_score(y_true, scores)
-        ax.plot(fpr, tpr, color=colours[name], linewidth=2.2, label=f"{name}, AUC {auc:.3f}")
+        ax.plot(fpr, tpr, color=colours[name], linestyle=viz.MODEL_LINESTYLES[name], linewidth=2.2,
+                label=f"{name}, AUC {auc:.3f}")
     ax.plot([0, 1], [0, 1], color=viz.MUTED, linewidth=1, linestyle=(0, (4, 4)),
             label="random guessing, AUC 0.500")
     ax.set_xlabel("False positive rate (stable ground flagged as risky)")
@@ -160,13 +161,14 @@ def plot_precision_recall(y_true, scored: dict):
     import matplotlib.pyplot as plt
     from sklearn.metrics import average_precision_score, precision_recall_curve
 
-    colours = {"SVM (RBF)": viz.STABLE, "Random Forest": viz.LANDSLIDE}
+    colours = viz.MODEL_COLORS
     base = float(np.mean(y_true))
     fig, ax = plt.subplots(figsize=(6.4, 5))
     for name, scores in scored.items():
         precision, recall, _ = precision_recall_curve(y_true, scores)
         ap = average_precision_score(y_true, scores)
-        ax.plot(recall, precision, color=colours[name], linewidth=2.2, label=f"{name}, AP {ap:.3f}")
+        ax.plot(recall, precision, color=colours[name], linestyle=viz.MODEL_LINESTYLES[name], linewidth=2.2,
+                label=f"{name}, AP {ap:.3f}")
     ax.axhline(base, color=viz.MUTED, linewidth=1, linestyle=(0, (4, 4)),
                label=f"always predict landslide, {base:.3f}")
     ax.set_xlabel("Recall (share of real landslides caught)")
