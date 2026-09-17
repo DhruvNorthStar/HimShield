@@ -383,9 +383,10 @@ def page_explainability() -> None:
                      column_config={"Mean |SHAP|": st.column_config.NumberColumn(format="%.4f")})
         st.caption("Two independent ways of ranking factors. Where they agree, the ranking is robust; where they "
                    "differ, remember permutation importance measures lost AUC while SHAP measures score movement.")
-    st.caption(f"Random Forest only: TreeExplainer gives exact values for tree models in seconds, while the RBF SVM "
-               f"would need an approximate method taking hours. SHAP {summary['shap_version']}, "
-               f"{summary['explainer']}.")
+    st.caption(f"Random Forest only: TreeExplainer gives exact SHAP values for tree models "
+               f"({summary['timing_seconds']['explain']:.0f} s for {sample['rows']:,} locations here); the RBF SVM "
+               f"would need an approximate, much slower method, not run in this project. "
+               f"SHAP {summary['shap_version']}, {summary['explainer']}.")
 
 
 # ---------------------------------------------------------------------------

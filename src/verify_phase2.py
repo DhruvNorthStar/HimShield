@@ -409,7 +409,8 @@ def check_phase3_inputs(section: str) -> None:
 # 9. Code
 # ---------------------------------------------------------------------------
 def check_code(section: str) -> None:
-    files = sorted((ROOT / "src").glob("*.py")) + [ROOT / "dashboard" / "app.py"]
+    files = sorted((ROOT / "src").glob("*.py")) + [ROOT / "dashboard" / "app.py", ROOT / "dashboard_v2" / "app.py",
+                                                    ROOT / "run_phase2.py", ROOT / "run_phase3.py"]
     broken = []
     for path in files:
         if not path.exists():
@@ -419,7 +420,7 @@ def check_code(section: str) -> None:
         except SyntaxError as exc:
             broken.append(f"{path.relative_to(ROOT)} line {exc.lineno}: {exc.msg}")
     record(section, f"{len(files)} Python files parse", "FAIL" if broken else "OK",
-           "; ".join(broken) if broken else "src/*.py and dashboard/app.py")
+           "; ".join(broken) if broken else "src/*.py, both dashboards, run_phase2.py, run_phase3.py")
 
     def git(*args):
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout.strip()

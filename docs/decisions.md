@@ -268,3 +268,70 @@ step except `check_layers`, which always runs.
 
 The run exited 1 after all 14 steps: the final results printout read a zone key `share %` (the dashboard's column
 label) instead of `share_percent`. Fixed and tested against the real metadata; no pipeline output was affected.
+
+## 17 September 2026: Phase 3 results on the real models (branch `phase3-preparation`)
+
+`main` was merged into `phase3-preparation` (`c7eeb4e`; `main` unchanged) so the Phase 3 scripts run against the
+real 23-feature models. `python src/verify_phase2.py`: 59 checks, 59 OK, 0 WARN, 0 FAIL.
+
+**Rudraprayag raster** (`python src/predict_raster_full.py --district rudraprayag`): 2,145,236 cells in 23.5 s
+(scoring 18.9 s), peak memory 0.78 GB (planned 0.86). Zones Very Low 69.1, Low 15.6, Moderate 7.7, High 4.3,
+Very High 3.2 %, and every score identical to the Phase 2 RF map (maximum absolute difference 0.0).
+
+**SHAP** (`python src/explain_shap.py`, TreeExplainer on the Random Forest, 500 held-out test points, seed 42):
+**78 s** (100 points took 15.7 s). The synthetic forest took 18.8 s for the same 500 points; the real forest is
+57 MB against 12 MB, with deeper trees, so about 4x slower. Additivity error 1.6e-14. The script caps the sample
+at 500 of the 4,551 test points.
+
+| Rank | Factor | Mean abs SHAP | RF permutation rank |
+|---|---|---|---|
+| 1 | dist_roads | 0.192 | 1 |
+| 2 | elevation | 0.100 | 2 |
+| 3 | slope | 0.091 | 3 |
+| 4 | ndvi | 0.054 | 4 |
+| 5 | dist_streams | 0.035 | 6 |
+| 6 | rainfall | 0.029 | 5 |
+| 7 | lulc_Grassland | 0.014 | 14 |
+| 8 | curvature | 0.012 | 15 |
+
+The top four agree with permutation importance; 5 and 6 swap. SHAP measures how far a factor moves individual
+scores, permutation importance how much AUC is lost when it is shuffled, so small one-hot columns such as
+lulc_Grassland can move scores without changing the ranking much. Directions: distance from roads, elevation,
+dense vegetation (high NDVI) and "No soil (rock or ice)" lower the score; steep slopes and rainfall raise it.
+Reading note: dist_roads is very skewed, so the beeswarm colours almost every point as "low"; use the dependence
+plot for the road effect. Three synthetic dependence figures from 14 September were deleted.
+
+**Full-state raster** (`python src/predict_raster_full.py --state --yes`): 59,353,292 cells inside the state,
+334,365 water skipped, **58,945,876 scored** in **548 s (9.1 min)**, scoring 511.7 s at 115,185 cells/s, peak memory
+**0.80 GB** (planned 0.78). Outputs `susceptibility_uk_probability.tif` 150.7 MB and `susceptibility_uk_zones.tif`
+5.9 MB. At most 0.03% of cells in any layer fall outside the training range.
+
+| Zone | Area | Share of the state |
+|---|---|---|
+| Very Low (0.0 to 0.2) | 37,724 km2 | 71.1% |
+| Low (0.2 to 0.4) | 7,310 km2 | 13.8% |
+| Moderate (0.4 to 0.6) | 3,919 km2 | 7.4% |
+| High (0.6 to 0.8) | 2,477 km2 | 4.7% |
+| Very High (0.8 to 1.0) | 1,622 km2 | 3.1% |
+| **High + Very High** | **4,099 km2** | **7.8%** |
+
+**Why 7.8% and not Chauhan et al.'s 18.47%:** Chauhan et al. (2025) zone their Random Forest map by natural breaks
+recomputed for that map, which spreads cells across the five classes by construction. This project uses fixed
+breaks at 0.2 / 0.4 / 0.6 / 0.8 on the RF score, identical for every map and model, so a zone share reports how
+much ground the model actually scores that high. The two percentages measure different things and are not a
+finding about the terrain. Rudraprayag gives 7.5% under the same rule.
+
+**State web map** (`python src/map_generator_full.py`): `outputs/susceptibility_map_uk.html`, **6.99 MB**, 8 s.
+Zones at about 90 m per display cell, 13 districts and the state outline, all 5,063 GSI points. Fixed after the
+first browser check: markers radius 4, dark red outline 0.8 and red fill 0.6 (the black and white 4.5 px markers
+hid the zones at state zoom); label "GSI landslide inventory (5,063 points)"; popup "GSI record / Slide /
+District" with the district from a spatial join; page title. Checked in the browser: zones, points, layer
+control, district boundaries, legend, satellite basemap (30 of 30 tiles), click lookup, no console errors.
+
+**Dashboard v2** (`streamlit run dashboard_v2/app.py`): all 6 pages checked on the real data (Overview, Model
+Comparison, Predict with NDVI, Rudraprayag Map, Explainability, Full State Map); no server errors and no
+synthetic-era wording. The Explainability caption claimed SHAP runs "in seconds" and an SVM would take "hours"
+(neither measured); it now reports the measured time from `shap_summary.json`.
+
+**Tidy-up:** `verify_phase2.py` now also parses `dashboard_v2/app.py`, `run_phase2.py` and `run_phase3.py`;
+`run_phase3.py` estimates updated to the real runs (SHAP 60 to 120 s, state raster 9 to 11 min).

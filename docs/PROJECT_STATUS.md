@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 17 September 2026, after commit `6d525e0` (evaluation verdict fix), with the literature review update and `PROJECT_HANDOFF_V4.md`. Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
+Last updated: 17 September 2026 on branch `phase3-preparation`, with the Phase 3 results (section 9). `main` holds Phase 2 only. Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
 
 ## 1. Snapshot
 
@@ -110,17 +110,38 @@ The pipeline was built and tested on a synthetic dataset first (3,600 rows, 29 f
 
 ### Phase 3
 
-| Item | Notes |
-|---|---|
-| Merge `phase3-preparation` into `main` | branch has 6 commits `main` lacks; `main` has many the branch lacks. Recheck `verify_phase2.py` and `dashboard_v2` against 23 features, NDVI and the rare-class merge |
-| Full Uttarakhand state map | RF about 11 min in tiles; SVM about 5 hours |
-| SHAP explainability | built on the branch for the synthetic models; rerun on the real RF |
-| Dashboard v2 (6 pages) | on the branch |
-| XGBoost | Phase 3 only |
-| Spatial cross-validation | future work; measures how optimistic the random split is |
+See section 9.
 
 ## 8. Housekeeping
 
 - `data/processed/` holds about 4.3 GB, much of it intermediates; cleanup needs the user's go-ahead.
 - `data/processed/dataset.csv` and `dataset_raw.csv` are untracked and not gitignored: never `git add .` on `main`.
-- `outputs/figures/shap/` and `outputs/susceptibility_map_uk.html` are untracked Phase 3 leftovers.
+- `outputs/figures/shap/`, `outputs/susceptibility_map_uk.html` and the `susceptibility_uk_*.tif` rasters are Phase 3 outputs: gitignored on `phase3-preparation`, untracked on `main`.
+
+## 9. Phase 3 (branch `phase3-preparation`, not merged into `main`)
+
+`main` was merged into the branch on 17 September (`c7eeb4e`), so Phase 3 runs on the real models; `main` itself is unchanged until Phase 2 is submitted. Details and numbers: [decisions.md](decisions.md), "Phase 3 results on the real models".
+
+### Complete
+
+| Item | Status | Result |
+|---|---|---|
+| Phase 2 audit (`verify_phase2.py`) | ✅ | 59 checks, 59 OK, 0 FAIL |
+| Rudraprayag raster, real models (`predict_raster_full.py --district rudraprayag`) | ✅ | 23.5 s, peak 0.78 GB; identical to the Phase 2 RF map cell for cell |
+| SHAP explainability (`explain_shap.py`) | ✅ | 500 test points in 78 s; ranking dist_roads, elevation, slope, ndvi (matches RF permutation top 4) |
+| Full state raster (`predict_raster_full.py --state --yes`) | ✅ | 58,945,876 cells in 9.1 min, peak 0.80 GB; **High + Very High 7.8%** (4,099 km2) |
+| State web map (`map_generator_full.py`) | ✅ | 6.99 MB; all 5,063 GSI points; browser-checked after marker, label, popup and title fixes |
+| Dashboard v2, 6 pages (`streamlit run dashboard_v2/app.py`) | ✅ | every page checked on real data; Explainability caption corrected |
+| `run_phase3.py` | ✅ | estimates updated to the real runs; dry run shows every step up to date |
+
+The state's 7.8% High + Very High is not comparable with Chauhan et al.'s 18.47%: fixed breaks (0.2 / 0.4 / 0.6 / 0.8) here, natural breaks recomputed per map there.
+
+### Pending
+
+| Item | Notes |
+|---|---|
+| XGBoost | Phase 3 extension |
+| Spatial cross-validation | measures how optimistic the random split is |
+| Phase 3 report | not started |
+| Merge `phase3-preparation` into `main` | only after Phase 2 is submitted |
+| SVM state map (optional) | about 5 hours at 3,266 cells/s |

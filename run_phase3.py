@@ -10,7 +10,7 @@ Steps, in order:
     0  src/verify_phase2.py                  always runs; everything stops if it reports a FAIL
     1  src/explain_shap.py                   skipped if the SHAP results are newer than the model
     2  src/predict_raster_full.py --state    skipped if the state rasters are newer than the model;
-                                             asks first, because it takes about 8 to 10 minutes
+                                             asks first, because it takes about 9 to 11 minutes
     3  src/map_generator_full.py             skipped if the web map is newer than the state raster
     4  dashboard                             the command is printed, not launched
 
@@ -46,8 +46,10 @@ MODEL_FILES = [config.RF_MODEL_PATH, config.SCALER_PATH, config.FEATURE_NAMES_PA
 LOW_RAM_BYTES = 1_500_000_000
 FALLBACK_STATE_CELLS = 59_400_000
 
-# Estimated seconds (low, high) per step, from the test runs on this laptop.
-ESTIMATES = {"verify": (10, 20), "shap": (20, 40), "state": (480, 600), "map": (30, 90)}
+# Estimated seconds (low, high) per step, measured on this laptop with the real models (17 September 2026):
+# verify 15 s, SHAP 78 s for 500 points (the real forest's deeper trees take about 4x the synthetic 19 s),
+# state raster 548 s, web map 12 s.
+ESTIMATES = {"verify": (10, 30), "shap": (60, 120), "state": (540, 660), "map": (10, 60)}
 STEP_TITLES = {"verify": "Step 0: verify Phase 2 artifacts", "shap": "Step 1: SHAP explanations",
                "state": "Step 2: full-state susceptibility rasters", "map": "Step 3: full-state web map"}
 COMMANDS = {"verify": ["src/verify_phase2.py"], "shap": ["src/explain_shap.py"],
@@ -259,7 +261,7 @@ def main() -> int:
             header(f"{STEP_TITLES['state']}  ({span(*ESTIMATES['state'])}; {reason})")
             cells = state_cells()
             available = free_ram()
-            print(f"This will score about {cells / 1e6:.0f} million cells and take about 8-10 minutes.")
+            print(f"This will score about {cells / 1e6:.0f} million cells and take about 9-11 minutes.")
             if available is not None:
                 print(f"Free RAM right now: {available / 1e9:.1f} GB"
                       + (" (low: the run will use small strips and may take longer)" if available < LOW_RAM_BYTES else ""))
