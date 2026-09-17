@@ -67,15 +67,25 @@ NASA_POINTS = config.RAW_LANDSLIDE_DIR / "global_landslide_catalog_NASA.shp"
 MAX_PIXELS = 4000
 SIZE_LIMIT_MB = 50
 SIMPLIFY_M = 100
-POINT_FILL = "#1a1a1a"
+# Landslide points: small and semi-transparent, so the susceptibility zones stay readable underneath at state zoom
+# while the road-corridor pattern of the inventory still shows.
+POINT_RADIUS = 4
+POINT_STROKE = "darkred"
+POINT_FILL = "red"
+POINT_OPACITY = 0.8
+POINT_FILL_OPACITY = 0.6
+PAGE_TITLE = "Uttarakhand Landslide Susceptibility Map"
 NASA_LABEL = "Historical landslides (Provisional: NASA GLC, accuracy varies)"
 PENDING_MESSAGE = "Full state map pending: showing Rudraprayag demo only"
 RUN_STATE_HINT = "Run predict_raster_full.py --state --yes first"
 
 # NASA Global Landslide Catalog fields (shapefile names are cut to 10 characters).
-NASA_FIELDS = [("event_titl", "Event"), ("event_date", "Date"), ("location_a", "Location accuracy"),
-               ("landslide_", "Category"), ("landslid_1", "Trigger"), ("landslid_2", "Size"),
-               ("fatality_c", "Fatalities")]
+# Each field is (column, format); the value is HTML-escaped and put in place of {}.
+NASA_FIELDS = [("event_titl", "<b>Event:</b> {}"), ("event_date", "<b>Date:</b> {}"),
+               ("location_a", "<b>Location accuracy:</b> {}"), ("landslide_", "<b>Category:</b> {}"),
+               ("landslid_1", "<b>Trigger:</b> {}"), ("landslid_2", "<b>Size:</b> {}"),
+               ("fatality_c", "<b>Fatalities:</b> {}")]
+GSI_FIELDS = [("gsi_objectid", "<b>GSI record {}</b>"), ("slide_no", "Slide: {}"), ("district", "District: {}")]
 
 
 # ---------------------------------------------------------------------------
@@ -194,8 +204,13 @@ def load_landslides(state_geometry) -> dict:
         points = gpd.read_file(INVENTORY_POINTS).to_crs(config.GEOGRAPHIC_CRS)
         if "landslide" in points.columns:
             points = points[points["landslide"] == 1]
-        fields = [(c, c) for c in points.columns if c not in ("geometry", "landslide")][:6]
-        return {"points": points, "label": "Landslide inventory (Step 2d, data/shapefiles/landslides.gpkg)",
+        # The cleaned inventory keeps only ids, so the district for the popup comes from the district polygons.
+        if "district" not in points.columns and config.DISTRICT_BOUNDARIES.exists():
+            districts = gpd.read_file(config.DISTRICT_BOUNDARIES).to_crs(config.GEOGRAPHIC_CRS)[["district", "geometry"]]
+            joined = gpd.sjoin(points, districts, predicate="within", how="left")
+            points = joined[~joined.index.duplicated()].drop(columns="index_right")
+        fields = [f for f in GSI_FIELDS if f[0] in points.columns]
+        return {"points": points, "label": f"GSI landslide inventory ({len(points):,} points)",
                 "source": INVENTORY_POINTS, "fields": fields, "provisional": False}
     if NASA_POINTS.exists():
         points = gpd.read_file(NASA_POINTS).to_crs(config.GEOGRAPHIC_CRS)
@@ -208,11 +223,11 @@ def load_landslides(state_geometry) -> dict:
 
 def popup_html(row, fields: list, provisional: bool) -> str:
     lines = []
-    for column, title in fields:
+    for column, template in fields:
         value = row.get(column)
         if value is None or (isinstance(value, float) and math.isnan(value)) or str(value).strip() == "":
             continue
-        lines.append(f"<b>{html.escape(title)}:</b> {html.escape(str(value))[:160]}")
+        lines.append(template.format(html.escape(str(value))[:160]))
     if provisional:
         lines.append('<span style="color:#52514e">Provisional: NASA Global Landslide Catalog; '
                      'location accuracy varies (1 to 50 km)</span>')
@@ -243,7 +258,8 @@ def legend_html(mode: str, zones: dict | None, image: dict | None, landslides: d
         rows += f'<div class="lsm-note">Percent = {basis}. Uncoloured: water, data gaps, or not mapped yet.</div>'
     count = 0 if landslides["points"] is None else len(landslides["points"])
     rows += (f'<div class="lsm-row" style="margin-top:8px"><span class="lsm-dot"></span>'
-             f'<span class="lsm-name">{html.escape(landslides["label"])}: {count:,} points</span></div>')
+             f'<span class="lsm-name">{html.escape(landslides["label"])}'
+             f'{"" if "points)" in landslides["label"] else f": {count:,} points"}</span></div>')
     summary = (zones or {}).get("summary", {})
     data_source = summary.get("data_source", config.DATA_SOURCE)
     footer = f"Data source: {html.escape(data_source)}"
@@ -266,8 +282,8 @@ def legend_html(mode: str, zones: dict | None, image: dict | None, landslides: d
 .lsm-legend .lsm-scope {{ color:#52514e; margin:2px 0 6px; }}
 .lsm-row {{ display:flex; align-items:center; gap:8px; margin:3px 0; }}
 .lsm-swatch {{ width:18px; height:14px; flex:none; border:2px solid #fff; outline:1px solid rgba(0,0,0,.15); }}
-.lsm-dot {{ width:10px; height:10px; flex:none; border-radius:50%; background:{POINT_FILL}; border:2px solid #fff;
-  outline:1px solid rgba(0,0,0,.25); margin:0 4px; }}
+.lsm-dot {{ width:8px; height:8px; flex:none; border-radius:50%; background:{POINT_FILL}; opacity:{POINT_FILL_OPACITY};
+  border:1px solid {POINT_STROKE}; margin:0 5px; }}
 .lsm-name {{ flex:1; }}
 .lsm-value {{ color:#52514e; font-variant-numeric:tabular-nums; white-space:nowrap; }}
 .lsm-note, .lsm-foot {{ color:#52514e; margin-top:6px; }}
@@ -405,8 +421,9 @@ def build_map(mode, zones, image, boundaries, landslides, stale):
     points_group = folium.FeatureGroup(name=landslides["label"])
     if landslides["points"] is not None:
         for _, row in landslides["points"].iterrows():
-            folium.CircleMarker(location=[row.geometry.y, row.geometry.x], radius=4.5, color="#ffffff", weight=1.5,
-                                fill=True, fill_color=POINT_FILL, fill_opacity=0.9, bubblingMouseEvents=False,
+            folium.CircleMarker(location=[row.geometry.y, row.geometry.x], radius=POINT_RADIUS, color=POINT_STROKE,
+                                weight=1, opacity=POINT_OPACITY, fill=True, fill_color=POINT_FILL,
+                                fill_opacity=POINT_FILL_OPACITY, bubblingMouseEvents=False,
                                 popup=folium.Popup(popup_html(row, landslides["fields"], landslides["provisional"]),
                                                    max_width=320)).add_to(points_group)
     points_group.add_to(fmap)
@@ -428,6 +445,7 @@ def build_map(mode, zones, image, boundaries, landslides, stale):
     fmap.fit_bounds([[south, west], [north, east]])
 
     root = fmap.get_root()
+    root.header.add_child(folium.Element(f"<title>{html.escape(PAGE_TITLE)}</title>"))
     root.html.add_child(folium.Element(legend_html(mode, zones, image, landslides, stale)))
     if mode != "state":
         banner = PENDING_MESSAGE if mode == "fallback" else "Full state map pending: no susceptibility raster yet"
