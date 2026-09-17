@@ -63,6 +63,8 @@ Test set 4,551 points (1,513 landslides), 30% stratified, seed 42, never resampl
 
 ## 3. Data pipeline as built
 
+`python run_phase2.py` runs the 14 Python steps below in order (dry run: `--dry-run`; rerun all: `--force`). It skips a step only when its outputs are newer than its inputs and its own script. On 17 September its dry run plans a full rebuild, because `ndvi.tif` (16 Sep 23:45) is newer than `non_landslides.gpkg` (16 Sep 17:19) and `warp_ndvi.py` was committed after `ndvi.tif` was built; separate checks showed both rebuilds give identical files.
+
 | Step | Command | Result |
 |---|---|---|
 | 2d GSI points | `python -m src.clean_gsi` | `data/raw/landslides/GSI_Landslide_Inventory.shp.zip` (bharatlas.com geoportal, NDSAP, downloaded 15 Sep) -> 30,842 national -> 5,201 in state (spatial clip; STATE field gives 5,206) -> minus 2 repeat entries, 125 rows in 41 shared-coordinate groups of different landslides, 4 longitudes and 7 latitudes with 0 or 1 decimals -> **5,063** in `data/shapefiles/landslides.gpkg` (columns gsi_objectid, slide_no, landslide) |

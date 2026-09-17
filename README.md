@@ -82,7 +82,9 @@ The GSI cleaning removed 2 repeat entries, all 125 rows of 41 groups of differen
 
 ## Running the pipeline
 
-Always run from the repo root with the environment active. Steps 1 to 3 need the raw downloads and rasters, which are not in git (see [Setup](#setup-on-windows)).
+Always run from the repo root with the environment active. The first rows need the raw downloads and rasters, which are not in git (see [Setup](#setup-on-windows)).
+
+**One command for the Python half.** Once the base rasters, the GSI zip and the NDVI export exist, `python run_phase2.py` runs `warp_ndvi` through the Rudraprayag map (14 steps) in order, skips steps whose outputs are newer than their inputs, stops at the first failure and prints the results. `python run_phase2.py --dry-run` shows the plan and time estimate without running anything; `--force` reruns everything. Full run about 20 to 35 minutes on the project laptop.
 
 | Step | Command | Output |
 |---|---|---|

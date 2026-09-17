@@ -71,6 +71,7 @@ Last updated: 17 September 2026, after commit `6d525e0` (evaluation verdict fix)
 | Dashboard method text | ✅ | "How the pipeline works" follows the real order (`6d525e0`) |
 | Literature review | ✅ | real results side by side with Chauhan et al. (2025), agreed wording, 11 factors / 23 inputs |
 | Handoff | ✅ | `PROJECT_HANDOFF_V4.md` replaces V3 |
+| Reproducibility | ✅ | `src/warp_ndvi.py` rebuilds `ndvi.tif` pixel for pixel; `make_stable_points` rerun gives identical points; `python run_phase2.py` runs the 14 Python steps (tested: dry run, skip logic, stop on failure, missing inputs) |
 
 ## 4. Dropped and merged
 
