@@ -103,6 +103,45 @@ def engineer_aspect(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def merge_rare_classes(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, list[str]]]:
+    """Step 2a. Merge classes with fewer than RARE_CLASS_MIN_ROWS rows into RARE_CLASS_LABEL.
+
+    Tested on the real dataset (17 September 2026): land cover had Herbaceous wetland (7 rows) and
+    Shrubland (20); soil had Podzols (3), Regosols (5), Vertisols (7) and Chernozems (31). A dummy column
+    with a handful of rows carries no stable pattern, and some CV folds would not contain it at all.
+
+    Only row counts decide, never the landslide label, so classes with many rows but few landslides
+    (Snow and ice, Cryosols) keep their own column. Like the reference class, the counts are taken over the
+    whole dataset before the split; they decide which column a class belongs to, never a value a model
+    is trained on. The merged names are saved in metadata.json so prediction merges them the same way.
+    """
+    df = df.copy()
+    merged: dict[str, list[str]] = {}
+    for col in config.active_categorical_features():
+        if col not in df.columns:
+            continue
+        counts = df[col].astype(str).value_counts()
+        rare = sorted(name for name, n in counts.items() if n < config.RARE_CLASS_MIN_ROWS)
+        if rare:
+            merged[col] = rare
+            df[col] = df[col].where(~df[col].astype(str).isin(rare), config.RARE_CLASS_LABEL)
+            detail = ", ".join(f"{name} ({counts[name]})" for name in rare)
+            print(f"  {col}: merged {len(rare)} class(es) under {config.RARE_CLASS_MIN_ROWS} rows into "
+                  f"{config.RARE_CLASS_LABEL!r}: {detail} -> {int((df[col] == config.RARE_CLASS_LABEL).sum())} rows")
+    if not merged:
+        print(f"  no class under {config.RARE_CLASS_MIN_ROWS} rows")
+    return df, merged
+
+
+def apply_class_merge(df: pd.DataFrame, merged: dict[str, list[str]]) -> pd.DataFrame:
+    """The prediction-time half of merge_rare_classes: the same names go to the same label."""
+    df = df.copy()
+    for col, names in merged.items():
+        if col in df.columns:
+            df[col] = df[col].where(~df[col].astype(str).isin(names), config.RARE_CLASS_LABEL)
+    return df
+
+
 def reference_levels(df: pd.DataFrame) -> dict[str, str]:
     """The class each categorical feature is measured against: its most frequent class.
 
@@ -186,6 +225,7 @@ def main() -> int:
     df, filled = handle_missing(df)
 
     print("[2] Encoding")
+    df, merged_classes = merge_rare_classes(df)
     df = engineer_aspect(df)
     encoded, references = encode_categoricals(df)
     y = encoded[config.TARGET].astype(int)
@@ -253,6 +293,8 @@ def main() -> int:
         "aspect_encoding": "sine and cosine; flat ground (-1) becomes (0, 0)",
         "categorical_encoding": "one-hot, most frequent class of each feature left out as the reference",
         "categorical_reference_levels": references,
+        "rare_class_min_rows": config.RARE_CLASS_MIN_ROWS,
+        "rare_classes_merged": {"label": config.RARE_CLASS_LABEL, "classes": merged_classes},
         "vif_threshold": config.VIF_THRESHOLD,
         "vif_dropped": dropped,
         "vif_kept": [row for row in vif_log if row["kept"]],
@@ -272,13 +314,26 @@ def main() -> int:
     return 0
 
 
-def prepare_for_prediction(raw: pd.DataFrame, feature_names: list[str], scaler) -> np.ndarray:
+def saved_class_merge() -> dict[str, list[str]]:
+    """Rare classes merged at training time, from metadata.json (empty for models trained before 17 Sep 2026)."""
+    if not config.METADATA_PATH.exists():
+        return {}
+    import json
+
+    meta = json.loads(config.METADATA_PATH.read_text(encoding="utf-8"))
+    return meta.get("preprocessing", {}).get("rare_classes_merged", {}).get("classes", {})
+
+
+def prepare_for_prediction(raw: pd.DataFrame, feature_names: list[str], scaler,
+                           merged: dict[str, list[str]] | None = None) -> np.ndarray:
     """Apply the identical transform at predict time (dashboard, Phase 3 raster).
 
     Feature order must match training exactly or the predictions are silently wrong, so the
     frame is reindexed onto feature_names and any dummy the caller did not produce becomes 0.
+    Rare classes are merged exactly as in training; without that, a merged class such as Shrubland
+    would get all-zero dummies and be scored as the reference class.
     """
-    df = raw.copy()
+    df = apply_class_merge(raw, saved_class_merge() if merged is None else merged)
     for col in config.active_numeric_features():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")

@@ -218,24 +218,49 @@ def write_verdict(results: dict, comparison: dict, y_test) -> list[str]:
                      f"landslide is worse than sending someone to check a safe slope, so that matters.")
         lines.append("")
 
-    lines.append("Why the ranking comes out this way:")
-    if winner == "Random Forest":
-        lines.append("- Random Forest splits on thresholds, which is the shape terrain failure actually "
-                     "takes: risk changes sharply around a slope angle rather than sliding smoothly.")
-        lines.append("- It also handles the one-hot rock and land-cover columns without needing them to "
-                     "be comparable in scale, and it models interactions between factors for free.")
-    else:
-        lines.append("- The RBF kernel bends one smooth boundary through the feature space, which suits "
-                     "this data better than the forest's axis-aligned steps.")
+    # Only measured results from here on. An earlier version explained the ranking with fixed sentences
+    # (thresholds suit terrain, one-hot rock columns) that were never tested on this data.
+    lines.append("What the measurements show:")
+    meta = json.loads(config.METADATA_PATH.read_text(encoding="utf-8")) if config.METADATA_PATH.exists() else {}
+    permutation = meta.get("rf", {}).get("feature_importance_permutation", {})
+    if permutation:
+        top = sorted(permutation.items(), key=lambda kv: -kv[1])[:5]
+        lines.append("- Random Forest's strongest inputs by permutation importance (drop in test AUC when "
+                     "the column is shuffled): " + ", ".join(f"{f} {v:+.3f}" for f, v in top) + ".")
     svm_gap = results["SVM (RBF)"].get("linear_gap")
     if svm_gap is not None:
         if svm_gap > 0.01:
-            lines.append(f"- Inside the SVM, the RBF kernel beats a linear one by {svm_gap:+.4f} AUC, "
-                         f"so the terrain relationships genuinely are not straight lines.")
+            lines.append(f"- Inside the SVM, the RBF kernel beats a linear one by {svm_gap:+.4f} AUC on the "
+                         f"test set: a curved boundary separates these inputs better than a straight one.")
         else:
             lines.append(f"- Inside the SVM, the RBF kernel beats a linear one by only {svm_gap:+.4f} AUC. "
                          f"The non-linearity argument is weak on this dataset, and saying so is more "
                          f"defensible than assuming the fancier kernel must be better.")
+
+    # The near-road check runs after this script, so its saved numbers count only if they came from the
+    # same models: its all-test-points AUCs must equal the ones measured above.
+    near = meta.get("near_road_check", {}).get("subsets", {})
+    everything = near.get("all test points", {})
+    same_models = everything and all(
+        abs(everything.get(n, {}).get("auc", -1) - results[n]["auc"]) < 1e-4 for n in names)
+    if same_models:
+        split_km = meta["near_road_check"]["split_m"] / 1000
+        for label, subset in near.items():
+            if label == "all test points":
+                continue
+            diff = subset["rf_minus_svm"]
+            small = " Few landslides, so read these intervals as wide." if subset["landslide"] < 200 else ""
+            lines.append(f"- Test points {label.replace('1000 m', f'{split_km:g} km')} "
+                         f"({subset['rows']:,} rows, {subset['landslide']:,} landslides): "
+                         f"SVM AUC {subset['SVM (RBF)']['auc']:.3f}, Random Forest {subset['Random Forest']['auc']:.3f}, "
+                         f"RF minus SVM {diff['mean_difference']:+.3f} ({diff['ci_low']:+.3f} to {diff['ci_high']:+.3f}).{small}")
+        lines.append("  Within the road corridor, where distance to roads separates the classes far less, "
+                     "both models score lower than on the whole test set. The size of that drop is an "
+                     "estimate of how much of the headline AUC comes from where the inventory was surveyed; "
+                     "some road effect remains even within the corridor.")
+    elif not config.IS_SYNTHETIC:
+        lines.append("- Near-road AUCs: run `python -m src.near_road_check` after this script, then rerun "
+                     "this script to include them.")
 
     lines.append("")
     lines.append("Limitations to state alongside these numbers:")
@@ -245,6 +270,10 @@ def write_verdict(results: dict, comparison: dict, y_test) -> list[str]:
     lines.append("- Train and test rows were split at random, so points near each other in the "
                  "landscape can land on both sides. Terrain is spatially correlated, so these scores "
                  "are likely a little optimistic compared with predicting a region never seen.")
+    if not config.IS_SYNTHETIC:
+        lines.append("- The GSI inventory follows roads, so part of each headline AUC reflects where "
+                     "landslides were recorded rather than terrain alone; the near-road AUCs above "
+                     "measure how much.")
     if config.IS_SYNTHETIC:
         lines.append(f"- {config.SYNTHETIC_LABEL}: every number above comes from simulated data and "
                      f"describes nothing about Uttarakhand.")

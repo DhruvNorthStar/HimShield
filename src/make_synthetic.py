@@ -96,6 +96,11 @@ LULC_EFFECT = {"Barren": 0.7, "Scrub": 0.5, "Agriculture": 0.4, "Builtup": 0.3, 
 SOIL_EFFECT = {"Regosols": 0.3, "Leptosols": 0.2, "Luvisols": 0.1, "Cambisols": 0.0,
                "Fluvisols": -0.3, "Glacier": -0.8}
 
+# Typical NDVI per synthetic land-cover class, from the class medians on the real Sentinel-2 layer.
+NDVI_BY_LULC = {"Forest": 0.78, "Scrub": 0.69, "Grassland": 0.50, "Agriculture": 0.48, "Builtup": 0.30,
+                "Barren": 0.04, "Snow": -0.03, "Water": -0.05}
+NDVI_NOISE_SD = 0.15  # chosen so NDVI overlaps land cover as on the real training points: R2 0.78, VIF 5.0 (real 0.79, 5.11)
+
 MISSING_RATES = {"rainfall": 0.005, "soil_type": 0.015, "lithology": 0.010,
                  "twi": 0.002}  # the real layer is NoData on a one-cell rim along the state border
 
@@ -150,6 +155,17 @@ def build_terrain_pool(rng: np.random.Generator) -> pd.DataFrame:
     log_area = (4.5 + 1.5 * np.exp(-pool["dist_streams"] / 200) - 0.35 * pool["curvature"]
                 + twi_rng.normal(0, 1.0, size=len(pool)))
     pool["twi"] = (log_area - np.log(np.tan(np.radians(pool["slope"].clip(lower=0.5))))).clip(1.3, 32)
+
+    # NDVI, added 16 September 2026, also with its own generator so every column above is unchanged. It is
+    # set mostly by land cover, at the class medians measured on the real Sentinel-2 layer (Tree cover 0.78
+    # ... Snow and ice -0.03), falling with elevation and rising with rainfall as measured there (whole-state
+    # rank correlation -0.50 and 0.42). It is deliberately left out of hidden_log_odds: land cover already
+    # carries the vegetation effect, and adding a term would change which synthetic points are landslides.
+    ndvi_rng = np.random.default_rng(config.RANDOM_STATE + 2)
+    pool["ndvi"] = (pool["lulc"].map(NDVI_BY_LULC)
+                    - 0.00004 * (pool["elevation"] - 1500)
+                    + 0.00005 * (pool["rainfall"] - 1500)
+                    + ndvi_rng.normal(0, NDVI_NOISE_SD, size=len(pool))).clip(-1, 1)
     return pool
 
 
@@ -224,6 +240,7 @@ def tidy(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].round(2)
     df["curvature"] = df["curvature"].round(3)
     df["twi"] = df["twi"].round(3)
+    df["ndvi"] = df["ndvi"].round(3)
     return df[config.SCHEMA_COLUMNS]
 
 

@@ -1,6 +1,6 @@
 # Literature review
 
-Started 14 September 2026. This file becomes the literature review chapter of the report and is what we point to when asked "what has already been done for Uttarakhand, and what does this project add?".
+Started 14 September 2026; updated 17 September 2026 with the real-data results. This file becomes the literature review chapter of the report and is what we point to when asked "what has already been done for Uttarakhand, and what does this project add?".
 
 Rule for this file: a paper goes in section 1 or 2 only after it has been read. Anything taken from another paper's reference list stays in section 4, marked unread, until it has been opened. Check volume, issue and page numbers against the publisher page before the report is submitted.
 
@@ -54,11 +54,11 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 
 ### 1.3 What it means for this project
 
-- **It confirms the data route.** The GSI inventory for the whole state came through Bhukosh, which is the registration this project is waiting on.
+- **Same inventory owner, different route.** They took the GSI inventory from Bhukosh. This project used the GSI inventory from the bharatlas.com public geoportal (NDSAP open data), because Bhukosh access was not available; the same lack of access is why this project has no geology layer.
 - **It matches our grid decisions.** They also used 30 m, UTM zone 44N (our EPSG:32644).
-- **Their Random Forest AUC of 90.94% is a reference point, not a target.** AUCs from different inventories, different non-landslide sampling and different splits cannot be ranked against each other. Our current numbers come from synthetic data and cannot be compared with anything.
+- **Their Random Forest AUC of 90.94% is a reference point, not a target.** This project's AUCs are comparable to Chauhan et al. (2025), with road-survey bias quantified (within 1 km of roads: RF 0.934, SVM 0.907). AUCs from different inventory handling, non-landslide sampling, factors and splits cannot be ranked against each other; section 2.1 sets the numbers side by side with those differences.
 - **Both studies split at random.** Nearby points land in both training and test sets, so both sets of scores are likely optimistic for unseen areas. This is a shared limitation, not a weakness of one study.
-- **Their table pointed to five factors we did not have:** geomorphons, soil moisture, NDVI, TWI and TRI. Section 2.3 measures which were worth adding. TWI has since been added; TRI was rejected.
+- **Their table pointed to five factors we did not have:** geomorphons, soil moisture, NDVI, TWI and TRI. Section 2.3 measures which were worth adding. TWI and NDVI were added; TRI was rejected.
 
 ---
 
@@ -70,21 +70,37 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
 |---|---|---|
 | Question | Which of five approaches maps the state best | A controlled head-to-head of SVM against Random Forest, the comparison the faculty brief requires |
 | Models | Shannon entropy, fuzzy-AHP, logistic regression, RF, XGBoost; **no SVM** | SVM with an RBF kernel (plus a linear kernel to test whether non-linearity helps) and Random Forest |
-| Comparing models | AUC and metrics side by side, with no interval or significance test reported | Bootstrap 95% interval on the AUC difference (1,000 resamples of the test set) |
-| Landslide inventory | 7,182 GSI points | GSI inventory requested through Bhukosh; NASA Global Landslide Catalog as a provisional stand-in (205 points, 85 located to within 5 km) |
-| Non-landslide sampling | Not described | 2 per landslide, at least 500 m from any landslide, never on water; set in `src/config.py` |
+| Comparing models | AUC and metrics side by side, with no interval or significance test reported | Bootstrap 95% interval on the AUC difference (1,000 resamples of the test set), and AUC measured separately within and beyond 1 km of a road |
+| Landslide inventory | 7,182 GSI points from Bhukosh (polygons converted to points, slides under 900 m2 removed) | **5,063 GSI points** (bharatlas.com geoportal, NDSAP): 5,201 inside the state, minus 2 repeat entries, 125 rows of 41 groups of different landslides sharing one coordinate, and 11 points with a coordinate given to 0 or 1 decimal place. NASA Global Landslide Catalog used only as a map overlay |
+| Non-landslide sampling | Not described | **10,126 points** (2 per landslide), uniformly random, at least 500 m from every GSI point and from each other, 50 m clear of water, every factor valid; seed 42 |
 | Class imbalance | Not described | SMOTE on training data only, inside each cross-validation fold. Resampling before cross-validation was measured here at CV 0.92 against test 0.69 |
-| Categorical factors | Integer codes (class 1 to 12), which gives classes an order they do not have | One-hot columns, with the most frequent class of each factor left out as the reference |
+| Categorical factors | Integer codes (class 1 to 12), which gives classes an order they do not have | One-hot columns, with the most frequent class of each factor left out as the reference; classes under 50 rows merged into "Other" |
 | Scaling | Min-max to 0 to 1; whether before or after the split is not stated | StandardScaler fitted on training rows only |
 | Multicollinearity | VIF computed, all factors kept | VIF, dropping the worst factor above 10 one at a time |
 | Tuning | RF: repeated tenfold CV with random search | Grid search, 5-fold CV on AUC, identical protocol for both models |
 | Metrics | AUC; sensitivity, specificity, accuracy, precision, F1 at one threshold | AUC as headline, average precision, all metrics at 0.5 and at the Youden threshold |
 | Susceptibility zones | Natural breaks, recomputed per model | Fixed breaks at 0.2, 0.4, 0.6, 0.8, identical for both models, so zone areas compare directly |
-| Map extent | Whole state | Rudraprayag district for Phase 2, with measured prediction time and a projection for the state (whole-state mapping is Phase 3) |
-| Factors | 16 | 12 in the schema: 11 built including TWI (added 14 September 2026), lithology pending. Not included: geomorphons, soil moisture, NDVI, TRI (TRI measured and rejected). Distance to faults is built but dropped from the models: the only open fault layer (GEM) misses the Main Central Thrust |
-| Data | IMD rainfall, Esri land cover, GSI geology and soil; ArcGIS Pro, SAGA, R | Copernicus GLO-30 DEM, CHIRPS 2009 to 2024, ESA WorldCover, SoilGrids, OpenStreetMap, GEM faults; QGIS and Python |
+| Map extent | Whole state | Rudraprayag district for Phase 2 (RF and SVM maps), with measured prediction time and a projection for the state (whole-state mapping is Phase 3) |
+| Factors | 16 conditioning factors | **11 conditioning factors, 23 model inputs after encoding**: elevation, slope, aspect, curvature, **TWI** (added 14 September 2026), rainfall, **NDVI** (Sentinel-2, added 16 September 2026), soil type, land cover, distance to roads, distance to streams. **Lithology excluded:** GSI geology needs Bhukosh access, which was unavailable. Distance to faults built but dropped (the only open fault layer, GEM, misses the Main Central Thrust). Not included: geomorphons, soil moisture, TRI (TRI measured and rejected). VIF dropped none (highest 6.47) |
+| Data | IMD rainfall, Esri land cover, GSI geology and soil; ArcGIS Pro, SAGA, R | Copernicus GLO-30 DEM, CHIRPS 2009 to 2024, ESA WorldCover, SoilGrids, Sentinel-2 NDVI (Google Earth Engine), OpenStreetMap, GSI inventory; QGIS and Python |
 | Reproducibility | No data or code released | Public repository, every step scripted or documented click by click, locked environment, seed 42 |
-| Data checks reported | None | SRTM voids of 766 km2 (switched to Copernicus); a 42.7% step change in CHIRPS before 2009; SoilGrids code 0 is rock and ice, not a soil; GEM faults miss the Main Central Thrust in Rudraprayag; per-map report of inputs outside the training range |
+| Data checks reported | None | SRTM voids of 766 km2 (switched to Copernicus); a 42.7% step change in CHIRPS before 2009; SoilGrids code 0 is rock and ice, not a soil; GEM faults miss the Main Central Thrust in Rudraprayag; GSI groups of different landslides sharing one coordinate; two NDVI exports rejected for missing strips of the state; per-map report of inputs outside the training range; **road-survey bias measured** (median distance to a road 30 m at landslides, 1,154 m at stable points) |
+
+**Results side by side.** The numbers are placed together for reference, not ranked: the two studies differ in inventory handling, non-landslide sampling, factors (they had geology, soil moisture and geomorphons), encoding and tuning.
+
+| | Chauhan et al. (2025) | Landslide Susceptibility Mapping for Uttarakhand |
+|---|---|---|
+| Test set | 30% stratified random | 4,551 points (1,513 landslides), 30% stratified random, never resampled |
+| Random Forest test AUC | 90.94% | **0.9604** (0.955 to 0.966) |
+| SVM (RBF) test AUC | not tested | **0.9404** (0.934 to 0.947); linear SVM 0.9265 |
+| Other models | XGBoost 91.36%, logistic regression 85.34%, Shannon entropy 58.87%, fuzzy-AHP 55.49% | none in Phase 2 (XGBoost planned for Phase 3) |
+| Random Forest sensitivity / specificity / F1 | 0.85 / 0.82 / 0.84 | 0.886 / 0.910 / 0.858 at 0.5 |
+| Model gap tested | no | RF minus SVM +0.0199, 95% interval +0.0157 to +0.0242 |
+| AUC within 1 km of a road | not measured | **RF 0.934, SVM 0.907** (2,855 test points, 1,440 landslides) |
+| Most important factors (ML) | not reported | distance to roads, elevation, slope, NDVI, rainfall (RF permutation importance) |
+| High to very high share of the mapped area | 18.47% of the state (RF, natural breaks) | 7.5% of Rudraprayag (RF), 14.9% (SVM), fixed breaks at 0.6 and 0.8: not comparable (different area and zoning rule) |
+
+**Wording for the report:** AUCs comparable to Chauhan et al. (2025), with road-survey bias quantified (within 1 km of roads: RF 0.934, SVM 0.907).
 
 ### 2.2 What this project can honestly claim as its contribution
 
@@ -101,13 +117,14 @@ Open access, published 12 January 2025. Read from the article's full text on 14 
    The primary reference does not report the first two.
 3. **An open, reproducible pipeline built on open data.** Anyone can rebuild every layer and every number from the repository. Each data problem found along the way is recorded with the check that found it.
 4. **Factor selection backed by measurement.** Factors are tested on this project's grid before joining the schema, rather than copied from a published list. Example: TRI tracks slope with a rank correlation of 0.989 in Rudraprayag; see section 2.3.
+5. **Sampling bias in the inventory, measured rather than ignored.** The GSI points follow roads, and distance to roads is the strongest factor. Splitting the test set at 1 km from a road shows how much of the AUC depends on it: both models lose about 0.03 within 1 km, and Random Forest stays ahead there (+0.027, interval +0.020 to +0.035).
 
 **What not to claim:**
 - higher accuracy than Chauhan et al.;
 - a better or more complete state map;
 - a larger inventory.
 
-None of these is true, and a single question in the viva would expose it.
+None of these is true, and a single question in the viva would expose it. The defensible statement is: AUCs comparable to Chauhan et al. (2025), with road-survey bias quantified (within 1 km of roads: RF 0.934, SVM 0.907).
 
 ### 2.3 Factors from Chauhan et al. that we lack
 
@@ -118,7 +135,7 @@ Measured on 14 September 2026 with the Step 2 rasters and the TWI and TRI rehear
 | TWI (`r.watershed` topographic index) | -0.39 / -0.51 | 1.65 / 1.64 | **Added 14 September 2026.** It carries information none of our layers holds; VIF 1.73 on the full real feature set |
 | TRI (Riley) | **0.989 / 0.993** | **16.4 / 21.2** | **Do not add.** At 30 m it is almost a copy of slope, and our VIF step would drop one of the two anyway |
 | Geomorphons | not measured | not measured | Optional. `r.geomorphon` is in GRASS; categorical with 10 classes. Worth a test only if time allows |
-| NDVI | not measured | not measured | Optional. Overlaps with WorldCover land cover; needs Sentinel-2 processing |
+| NDVI (Sentinel-2, Oct to Nov 2023) | state: elevation -0.49, rainfall 0.42, slope -0.06 | 7.37 on the state grid; 5.11 at the training points (5.08 in the final preprocessing run) | **Added 16 September 2026.** Under the VIF threshold, but land cover alone explains R2 0.84 (grid) / 0.78 (points) of it: report the overlap. Ranked 4th in Random Forest permutation importance (+0.018) |
 | Soil moisture (SMAP) | not measured | not measured | Skip for Phase 2. About 9 km resolution, so like rainfall it describes an area, not a slope |
 
 Chauhan et al. report a highest VIF of 3.66 with both TRI and slope included. That does not match the near-perfect TRI to slope correlation measured here, so check their Table 2. The difference may come from SAGA's TRI, from how their slope was derived, or from computing VIF on sample points rather than on the grid.

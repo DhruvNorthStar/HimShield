@@ -27,6 +27,8 @@ EXPECTED = {
     "twi": (0, 50, "ln(a / tan slope). Negative or infinite values mean it was computed by hand "
                    "without handling flat cells; use the r.watershed Topographic index output"),
     "rainfall": (0, 10000, "mm/year"),
+    "ndvi": (-1, 1, "(B8 - B4) / (B8 + B4). Values in the thousands mean a band was exported instead of the "
+                    "ratio; a range of about 0 to 0.1 means integer division"),
     # Distances run over the whole rectangular grid, not just the state, and its diagonal is about
     # 452 km. Sparse layers get large: tested dist_faults reaches 275 km in the grid corners.
     "dist_roads": (0, 500000, "metres. Small whole numbers mean proximity ran in pixel units"),

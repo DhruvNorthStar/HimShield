@@ -697,6 +697,25 @@ Measured against the Step 2 layers. Rudraprayag used 300,000 cells. The whole st
 
 ---
 
+## NDVI raster (Google Earth Engine)
+
+**Status:** `ndvi` is in the schema since 16 September 2026, and `data/processed/ndvi.tif` is built from the third export (v3), which covers the whole state. The first export stopped at 28.85 N (230.8 km2 of Udham Singh Nagar missing) and the second at 31.30 N (258.0 km2 of Uttarkashi missing): check the file's edges against the state before warping.
+
+**Source settings:** `COPERNICUS/S2_SR_HARMONIZED`, scenes from 2023-10-01 to 2023-11-30 with `CLOUDY_PIXEL_PERCENTAGE` below 15, median composite, NDVI = (B8 - B4) / (B8 + B4), exported as Float32 GeoTIFF in EPSG:4326 at scale 30 m. Export region: the bounding box of the state boundary buffered by 1 km. The scene filter drops cloudy scenes; it is not a per-pixel cloud mask.
+
+**On the dem grid:** run `python -m src.warp_ndvi` (checks coverage first, then warps; this is what built the installed layer), or by hand: warp to `data/processed/ndvi.tif` with the extent, 30 m cell size and EPSG:32644 taken from `dem.tif`, **bilinear** (a continuous value exported at the same 30 m), Float32, NoData -9999, DEFLATE. In QGIS: Raster > Projections > Warp, target CRS EPSG:32644, resampling Bilinear, NoData -9999, output resolution 30, georeferenced extent from layer `dem`. Then `python -m src.check_layers` must show `ndvi ... aligned yes`, a range inside -1 to 1, and no NoData inside the state.
+
+**Measured** (v3, warped as above): whole-state 1-in-100 grid sample NDVI VIF 7.37, elevation 7.86 to 8.37; at the 15,189 Step 2d/2e points NDVI VIF **5.11**, elevation 6.27 to 6.49. The first export gave the same values. Land cover alone explains NDVI with R2 0.84 (grid) and 0.79 (points): state this overlap in the report. Median NDVI by WorldCover class: Tree cover 0.78, Shrubland 0.69, Grassland 0.50, Cropland 0.48, Built-up 0.30, Bare/sparse 0.04, Snow and ice -0.03.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Values in the thousands | a reflectance band exported instead of the ratio | export `normalizedDifference(['B8', 'B4'])` |
+| A NoData strip along one edge of the state | export region smaller than the boundary | export the bounding box of the boundary buffered by 1 km |
+| Blotches of values near 0 in forest | cloud or shadow left in the median | tighten the scene filter or add a per-pixel mask |
+| `aligned: NO` for ndvi | extent or resolution not taken from `dem` | redo the warp with the extent from layer `dem` and 30 m |
+
+---
+
 ## 2d. Landslide points
 
 1. Load the GSI inventory, set its CRS if QGIS asks, and reproject to EPSG:32644.
@@ -735,6 +754,8 @@ Also state plainly what sampling cannot fix: "stable" here means "no landslide h
 
 ## 2f. Extract raster values to the points
 
+**Done by script on 16 September 2026:** `python -m src.extract_points` does steps 1 and 2 below (cell value under each point, NoData made empty) and writes `data/shapefiles/all_points.gpkg` and `data/processed/dataset_raw.csv`: 15,189 rows, 22 problem rows, all landslides (20 on water, 2 on the border rim). Lithology is dropped, so step 3 is skipped. The QGIS steps stay here as the manual equivalent.
+
 1. **`native:mergevectorlayers`**: `landslides.gpkg` plus `non_landslides.gpkg`, both in EPSG:32644, into `all_points.gpkg`. Check that the count equals positives plus negatives and that `landslide` holds only 1 and 0.
 2. **`native:rastersampling`** ("Sample raster values"), once per raster, feeding each output back in as the next input. Use these column prefixes exactly:
 
@@ -746,6 +767,7 @@ Also state plainly what sampling cannot fix: "stable" here means "no landslide h
    | `curvature.tif` | `curvature` |
    | `twi.tif` | `twi` |
    | `rainfall.tif` | `rainfall` |
+   | `ndvi.tif` | `ndvi` |
    | `dist_roads.tif` | `dist_roads` |
    | `dist_streams.tif` | `dist_streams` |
    | `dist_faults.tif` | `dist_faults` |

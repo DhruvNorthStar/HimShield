@@ -48,7 +48,7 @@ DISTRICT_BOUNDARIES = SHAPEFILE_DIR / "uttarakhand_districts.gpkg"
 #
 # To override for a single run without editing this file (PowerShell):
 #     $env:LSM_DATA_SOURCE = "real"
-DEFAULT_DATA_SOURCE = "synthetic"
+DEFAULT_DATA_SOURCE = "real"
 DATA_SOURCE = os.environ.get("LSM_DATA_SOURCE", DEFAULT_DATA_SOURCE).strip().lower()
 if DATA_SOURCE not in ("synthetic", "real"):
     raise ValueError(f"LSM_DATA_SOURCE must be 'synthetic' or 'real', got {DATA_SOURCE!r}")
@@ -77,12 +77,18 @@ TARGET = "landslide"  # 1 = GSI landslide location, 0 = sampled stable terrain
 # twi added 14 September 2026. Measured on the real rasters before adding it: whole-state rank
 # correlation with slope -0.51 and VIF 1.64, so it carries new information. TRI was measured and
 # left out: rank correlation with slope 0.993, VIF 21.2. See docs/literature_review.md, section 2.3.
+#
+# ndvi added 16 September 2026. Source: Sentinel-2 L2A (COPERNICUS/S2_SR_HARMONIZED) in Google Earth
+# Engine, median of scenes 2023-10-01 to 2023-11-30 with CLOUDY_PIXEL_PERCENTAGE < 15, exported at 30 m,
+# bilinear to the dem.tif grid. Measured before adding it: VIF 5.11 on the 15,189 training points and 7.40
+# on a whole-state grid sample, both under VIF_THRESHOLD. It overlaps land cover (R2 0.79 at the points,
+# 0.84 on the grid), which the report states as a limitation. See docs/decisions.md.
 SCHEMA_COLUMNS = [
-    "landslide", "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
+    "landslide", "slope", "aspect", "elevation", "curvature", "twi", "rainfall", "ndvi",
     "soil_type", "lithology", "lulc", "dist_roads", "dist_streams", "dist_faults",
 ]
 NUMERIC_FEATURES = [
-    "slope", "aspect", "elevation", "curvature", "twi", "rainfall",
+    "slope", "aspect", "elevation", "curvature", "twi", "rainfall", "ndvi",
     "dist_roads", "dist_streams", "dist_faults",
 ]
 CATEGORICAL_FEATURES = ["soil_type", "lithology", "lulc"]
@@ -94,6 +100,7 @@ FEATURE_UNITS = {
     "curvature": "1/100 m (negative = concave)",
     "twi": "ln(a / tan slope), higher = wetter",
     "rainfall": "mm/year (mean annual)",
+    "ndvi": "unitless (-1 to 1)",
     "dist_roads": "m",
     "dist_streams": "m",
     "dist_faults": "m",
@@ -114,6 +121,11 @@ DROPPED_COLUMNS: dict[str, str] = {
         "whole-state grid sample it tracks elevation (rank correlation 0.90) and pushed elevation's VIF "
         "to 14.5, so Step 4 would have dropped elevation instead. Dropped 14 September 2026; restore it "
         "if GSI structural lines arrive from Bhukosh."
+    ),
+    "lithology": (
+        "No state-wide geology raster available. GSI geology layer requires Bhukosh access which is "
+        "unavailable. Chauhan et al. (2025) used GSI geology via Bhukosh; this study could not access it "
+        "within the project timeline. Dropped 16 September 2026; see docs/decisions.md."
     ),
 }
 
@@ -152,6 +164,11 @@ RANDOM_STATE = 42              # used everywhere: split, SMOTE, CV shuffling, RF
 TEST_SIZE = 0.30               # stratified 70/30 split
 CV_FOLDS = 5                   # StratifiedKFold inside GridSearchCV
 VIF_THRESHOLD = 10.0           # drop the worst feature above this, one at a time
+# Categorical classes with fewer rows than this are merged into RARE_CLASS_LABEL before one-hot encoding.
+# A dummy column holding 3 rows is noise, and in 5-fold CV some folds would see none of them. The rule
+# counts rows only, never landslides, so it cannot pick classes by their outcome. Decided 17 Sep 2026.
+RARE_CLASS_MIN_ROWS = 50
+RARE_CLASS_LABEL = "Other"
 SMOTE_SAMPLING_STRATEGY = 1.0  # after SMOTE, minority count = majority count (training set only)
 SMOTE_K_NEIGHBORS = 5
 

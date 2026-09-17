@@ -56,46 +56,49 @@ FACTORS = {
     "curvature": ("Curvature", "Copernicus GLO-30 DEM, profile curvature"),
     "twi": ("Topographic wetness index", "Copernicus GLO-30 DEM, GRASS r.watershed (multiple flow direction)"),
     "rainfall": ("Rainfall", "CHIRPS v2.0, mean of 2009 to 2024"),
+    "ndvi": ("Vegetation index (NDVI)", "Sentinel-2 L2A, median of Oct to Nov 2023 (Google Earth Engine)"),
     "soil_type": ("Soil type", "SoilGrids WRB, most probable class"),
-    "lithology": ("Lithology", "GSI, awaiting Bhukosh access"),
+    "lithology": ("Lithology", "Dropped: Bhukosh unavailable"),
     "lulc": ("Land cover", "ESA WorldCover 2021"),
     "dist_roads": ("Distance to roads", "OpenStreetMap roads"),
     "dist_streams": ("Distance to streams", "stream network derived from the DEM"),
     "dist_faults": ("Distance to faults", "GEM Global Active Faults"),
 }
-SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "twi": 0.1, "rainfall": 10.0,
+SLIDER_STEPS = {"slope": 0.5, "elevation": 10.0, "curvature": 0.05, "twi": 0.1, "rainfall": 10.0, "ndvi": 0.01,
                 "dist_roads": 10.0, "dist_streams": 10.0, "dist_faults": 50.0}
 INPUT_GROUPS = {
     "Terrain": ["slope", "elevation", "curvature", "aspect"],
     "Water and access": ["rainfall", "twi", "dist_streams", "dist_roads", "dist_faults"],
-    "Ground": ["soil_type", "lithology", "lulc"],
+    "Ground": ["soil_type", "lithology", "lulc", "ndvi"],
 }
 
 
 # ---------------------------------------------------------------------------
 # Loading. Each loader takes the file's modification time, so retraining while the
 # dashboard is open shows the new results on the next rerun instead of a stale cache.
+# The argument must not start with an underscore: Streamlit leaves such arguments out of
+# the cache key, which is exactly what made the cache ignore retraining before.
 # ---------------------------------------------------------------------------
 def mtime(path: Path) -> float:
     return path.stat().st_mtime if path.exists() else 0.0
 
 
 @st.cache_data
-def load_metadata(_stamp: float) -> dict:
+def load_metadata(stamp: float) -> dict:
     if not config.METADATA_PATH.exists():
         return {}
     return json.loads(config.METADATA_PATH.read_text(encoding="utf-8"))
 
 
 @st.cache_data
-def load_dataset(_stamp: float) -> pd.DataFrame | None:
+def load_dataset(stamp: float) -> pd.DataFrame | None:
     if not config.DATASET_CSV.exists():
         return None
     return pd.read_csv(config.DATASET_CSV)
 
 
 @st.cache_resource
-def load_models(_stamp: float) -> dict:
+def load_models(stamp: float) -> dict:
     return {
         "SVM (RBF)": joblib.load(config.SVM_MODEL_PATH),
         "Random Forest": joblib.load(config.RF_MODEL_PATH),
@@ -169,7 +172,7 @@ def page_overview() -> None:
         synthetic_banner()
     st.markdown(
         "A comparison of a **Support Vector Machine** and a **Random Forest** for **Uttarakhand, India**. "
-        "Both models look at the terrain conditions at a location (slope, rainfall, rock, land cover, "
+        "Both models look at the terrain conditions at a location (slope, rainfall, soil, land cover, vegetation, "
         "wetness, distance to roads and streams, and more) and score how likely that ground is to be "
         "landslide-prone.")
 
@@ -203,15 +206,17 @@ def page_overview() -> None:
             f"1. **Sample points.** Landslide locations are the positives. Stable points are drawn "
             f"{config.NEG_TO_POS_RATIO} per landslide, at least {config.NEGATIVE_BUFFER_M} m from any "
             f"landslide, never on water.\n"
-            f"2. **Split first.** A stratified {100 - round(config.TEST_SIZE * 100)}/"
+            f"2. **Clean and encode the whole dataset.** Rows on water are dropped and the few missing "
+            f"values filled. Categories with fewer than {config.RARE_CLASS_MIN_ROWS} rows merge into "
+            f"\"{config.RARE_CLASS_LABEL}\", aspect becomes sine and cosine (359° and 1° are neighbours), "
+            f"and categories become yes/no columns.\n"
+            f"3. **VIF check.** Any input above {config.VIF_THRESHOLD:g} is removed, one at a time.\n"
+            f"4. **Split.** A stratified {100 - round(config.TEST_SIZE * 100)}/"
             f"{round(config.TEST_SIZE * 100)} split with seed {config.RANDOM_STATE}. The test set is "
             f"never resampled and never used for tuning.\n"
-            f"3. **Encode.** Aspect becomes sine and cosine, because 359° and 1° are neighbours. "
-            f"Categories become yes/no columns. A VIF check removes any input above "
-            f"{config.VIF_THRESHOLD:g}.\n"
-            f"4. **Scale on training rows only**, so nothing about the test set leaks into training.\n"
-            f"5. **Balance with SMOTE inside each cross-validation fold**, on training data only.\n"
-            f"6. **Tune** with {config.CV_FOLDS}-fold grid search on AUC, then score once on the "
+            f"5. **Scale on training rows only**, so nothing about the test set leaks into training.\n"
+            f"6. **Balance with SMOTE inside each cross-validation fold**, on training data only.\n"
+            f"7. **Tune** with {config.CV_FOLDS}-fold grid search on AUC, then score once on the "
             f"held-out test set.")
 
     st.subheader("Study area")
@@ -229,14 +234,31 @@ def page_overview() -> None:
                 show_figure(name)
 
     with st.expander("Limitations to keep in mind"):
-        st.markdown(
+        items = [
             "- **Stable means \"no recorded landslide\"**, not \"cannot fail\". Some stable points are "
-            "risky ground nobody has mapped, which caps how high any score can go.\n"
+            "risky ground nobody has mapped, which caps how high any score can go.",
             "- **The train/test split is random**, so nearby points can fall on both sides. Terrain is "
-            "spatially correlated, so scores are likely somewhat optimistic for an unseen region.\n"
+            "spatially correlated, so scores are likely somewhat optimistic for an unseen region.",
             "- **Rainfall is a 16-year annual mean** at about 5.5 km resolution. It describes the climate "
-            "of an area, not the short bursts of rain that trigger individual landslides.\n"
-            "- **The landslide inventory and lithology are still pending** from GSI.")
+            "of an area, not the short bursts of rain that trigger individual landslides.",
+        ]
+        if "lithology" in config.DROPPED_COLUMNS:
+            items.append(
+                "- **Lithology was excluded.** GSI geology data requires Bhukosh portal access, which was "
+                "unavailable. Chauhan et al. (2025) used GSI geology via Bhukosh; this study could not access it.")
+        if not config.IS_SYNTHETIC and "dist_roads" in df.columns:
+            r = df[config.TARGET].corr(df["dist_roads"])
+            road = f"- **Road-survey bias.** Distance to roads is the strongest single predictor (r = {r:.2f})"
+            near = meta.get("near_road_check", {}).get("subsets", {})
+            within = next((v for k, v in near.items() if k.startswith("within")), None)
+            if within:
+                road += (f". Within {meta['near_road_check']['split_m'] / 1000:g} km of a road, "
+                         f"RF AUC = {within['Random Forest']['auc']:.3f} and SVM AUC = {within['SVM (RBF)']['auc']:.3f}. "
+                         "AUCs are comparable to Chauhan et al. (2025), with this bias quantified.")
+            else:
+                road += ". Run `python -m src.near_road_check` to measure its effect on AUC."
+            items.append(road)
+        st.markdown("\n".join(items))
 
 
 # ---------------------------------------------------------------------------
@@ -524,13 +546,15 @@ def page_map() -> None:
 
     demo = metadata().get("demo_map", {})
     if demo:
-        cols = st.columns(4)
-        cols[0].metric("Model", demo.get("model", "-"))
-        cols[1].metric("Cells scored", f"{demo.get('cells_scored', 0):,}", help="30 m cells, water excluded")
-        cols[2].metric("Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
+        # Four metrics in one row truncated the values ("Rando...", "2,145,..."), so the model name is a
+        # line of text and the numbers get three wider columns.
+        st.markdown(f"**Model:** {demo.get('model', '-')}")
+        cols = st.columns(3)
+        cols[0].metric("Cells scored", f"{demo.get('cells_scored', 0):,}", help="30 m cells, water excluded")
+        cols[1].metric("Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
         projected = demo.get("projection_full_state", {}).get("predict_minutes")
         if projected is not None:
-            cols[3].metric("Whole state, projected", f"{projected:.0f} min",
+            cols[2].metric("Whole state, projected", f"{projected:.0f} min",
                            help="Linear projection from this run. Full-state mapping is Phase 3.")
         zones = demo.get("zones")
         if zones:
@@ -567,7 +591,7 @@ def main() -> None:
         st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
         written = meta.get("written", {}).get("evaluation")
         if written:
-            st.caption(f"Evaluation written {written[:10]}")
+            st.caption(f"Evaluation written {written[:10]} (date shown in UTC)")
 
     pages.run()
 
