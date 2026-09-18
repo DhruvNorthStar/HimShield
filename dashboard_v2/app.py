@@ -59,7 +59,7 @@ STATE_ZONES = config.PROCESSED_DIR / "susceptibility_uk_zones.tif"
 DEMO_ZONES = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_zones.tif"
 DEMO_PROBABILITY_PHASE2 = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_rf.tif"
 ONLINE_HOSTS = ("cdn.jsdelivr.net", "tile.openstreetmap.org")
-MODEL_NAMES = ["Random Forest", "SVM (RBF)"]
+MODEL_NAMES = ["Random Forest", "SVM (RBF)"]  # plus "XGBoost" when its model exists (see model_names)
 
 
 # ---------------------------------------------------------------------------
@@ -239,16 +239,65 @@ def probability_chart(scores: dict, thresholds: dict):
     # and the bands' zone colours would fight over it and the bars would vanish.
     return (band_layer + band_labels + bar_layer + threshold_layer + value_layer).resolve_scale(
         color="independent").properties(
-        height=150, padding={"top": 22, "left": 5, "right": 30, "bottom": 5}).configure_view(strokeWidth=0)
+        height=50 * len(scores) + 50, padding={"top": 22, "left": 5, "right": 30, "bottom": 5}).configure_view(
+        strokeWidth=0)
+
+
+@st.cache_resource
+def load_xgb(stamp: float):
+    import joblib
+
+    return joblib.load(config.XGB_MODEL_PATH)
+
+
+def model_names(ev: dict) -> list[str]:
+    """Random Forest and SVM always; XGBoost too once it is trained and evaluated (Phase 3 extension)."""
+    extra = ["XGBoost"] if config.XGB_MODEL_PATH.exists() and "XGBoost" in ev["models"] else []
+    return MODEL_NAMES + extra
+
+
+def page_comparison_v2() -> None:
+    """The Phase 2 comparison page (it already shows every evaluated model), then the XGBoost gaps."""
+    p2.page_comparison()
+    ev = p2.evaluation_section()
+    pairwise = ev.get("pairwise_auc_differences", {})
+    if "XGBoost" not in ev["models"] or len(pairwise) < 3:
+        return
+    st.subheader("Phase 3 extension: XGBoost against both Phase 2 models")
+    st.caption("Same split, SMOTE inside each fold and 5-fold CV on AUC as SVM and Random Forest; the grid was "
+               "fixed in src/config.py before training. Gaps are bootstrap means over 1,000 resamples of the "
+               "test set, with 95% intervals.")
+    cols = st.columns(len(pairwise))
+    for col, (label, d) in zip(cols, pairwise.items()):
+        col.metric(label, f"{d['mean_difference']:+.3f}", help=f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}")
+        col.caption(f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}: "
+                    + ("excludes zero, a real difference." if d["separable"] else "includes zero, not separable."))
+    best = ev["winner"]
+    others = [n for n in ev["models"] if n != best]
+    beats = [label for label, d in pairwise.items()
+             if label.startswith(best) and d["separable"] and d["mean_difference"] > 0]
+    loses = [label for label, d in pairwise.items() if label.endswith(best) and not d["separable"]]
+    verdict = f"**{best}** has the highest test AUC ({ev['models'][best]['auc']:.4f})"
+    if len(beats) == len(others):
+        verdict += ", and its lead over both other models excludes zero."
+    else:
+        close = [label for label, d in pairwise.items() if best in label and not d["separable"]]
+        verdict += (f", but it cannot be separated from the runner-up ({'; '.join(close)}: the interval includes "
+                    "zero), so the honest reading is that the top models perform alike on this test set."
+                    if close else ".")
+    st.info(verdict)
 
 
 def page_predict_v2() -> None:
     bundle, df, ev = p2.models(), p2.dataset(), p2.evaluation_section()
     feature_names, scaler = bundle["feature_names"], bundle["scaler"]
+    names = model_names(ev)
+    if "XGBoost" in names:
+        bundle = {**bundle, "XGBoost": load_xgb(file_stamp(config.XGB_MODEL_PATH))}
 
-    st.title("Predict: Random Forest and SVM side by side")
-    st.markdown("Set the conditions at one location. Both models score it through the same preprocessing as "
-                "training, and the chart puts both scores on one scale, over the five risk zones.")
+    st.title("Predict: " + (", ".join(names[:-1]) + " and " + names[-1]) + " side by side")
+    st.markdown("Set the conditions at one location. Every model scores it through the same preprocessing as "
+                "training, and the chart puts the scores on one scale, over the five risk zones.")
 
     if "in_slope" not in st.session_state:
         p2.set_inputs(p2.typical_row(df), df)
@@ -270,16 +319,16 @@ def page_predict_v2() -> None:
 
     raw = pd.DataFrame([p2.read_inputs()])
     X = pd.DataFrame(p2.prepare_for_prediction(raw, feature_names, scaler), columns=feature_names)
-    scores = {name: float(bundle[name].predict_proba(X)[0, 1]) for name in MODEL_NAMES}
-    thresholds = {name: ev["models"][name]["youden"]["threshold"] for name in MODEL_NAMES}
+    scores = {name: float(bundle[name].predict_proba(X)[0, 1]) for name in names}
+    thresholds = {name: ev["models"][name]["youden"]["threshold"] for name in names}
 
     st.subheader("Scores")
     st.altair_chart(probability_chart(scores, thresholds), use_container_width=True)
     st.caption("Bars: each model's landslide score. White tick: that model's tuned (Youden) threshold; a bar that "
                "passes its tick is flagged as landslide-prone. Coloured bands: the five risk zones.")
 
-    cards = st.columns(len(MODEL_NAMES), gap="medium")
-    for column, name in zip(cards, MODEL_NAMES):
+    cards = st.columns(len(names), gap="medium")
+    for column, name in zip(cards, names):
         score, threshold = scores[name], thresholds[name]
         with column.container(border=True):
             st.markdown(f"**{name}**")
@@ -290,9 +339,9 @@ def page_predict_v2() -> None:
                         + f"Test AUC {ev['models'][name]['auc']:.3f}")
 
     difference = scores["Random Forest"] - scores["SVM (RBF)"]
-    same = (scores["Random Forest"] >= thresholds["Random Forest"]) == (scores["SVM (RBF)"] >= thresholds["SVM (RBF)"])
+    same = len({scores[n] >= thresholds[n] for n in names}) == 1
     st.markdown(f"Random Forest minus SVM: **{difference:+.3f}**. " +
-                ("Both models reach the same decision." if same else
+                ("All models reach the same decision." if same else
                  "**The models disagree on this location**, which usually means it sits near the boundary "
                  "between the classes."))
     st.caption("Scores rank ground from safer to riskier. Both models were trained on classes balanced by SMOTE, "
@@ -454,7 +503,7 @@ def main() -> None:
     st.set_page_config(page_title=f"{p2.PROJECT_NAME} (Phase 3)", page_icon="⛰️", layout="wide")
     pages = st.navigation([
         st.Page(p2.page_overview, title="Overview", icon=":material/landscape:", url_path="overview", default=True),
-        st.Page(p2.page_comparison, title="Model Comparison", icon=":material/compare_arrows:", url_path="comparison"),
+        st.Page(page_comparison_v2, title="Model Comparison", icon=":material/compare_arrows:", url_path="comparison"),
         st.Page(page_predict_v2, title="Predict", icon=":material/tune:", url_path="predict"),
         st.Page(page_rudraprayag_v2, title=f"{config.DEMO_DISTRICT} Map", icon=":material/map:", url_path="map"),
         st.Page(page_explainability, title="Explainability", icon=":material/insights:", url_path="explainability"),

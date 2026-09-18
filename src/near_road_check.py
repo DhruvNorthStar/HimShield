@@ -40,6 +40,8 @@ def main() -> int:
     bundle = joblib.load(config.PROCESSED_DIR / "prepared.joblib")
     X_test, y_test = bundle["X_test"], bundle["y_test"]
     models = {"SVM (RBF)": joblib.load(config.SVM_MODEL_PATH), "Random Forest": joblib.load(config.RF_MODEL_PATH)}
+    if config.XGB_MODEL_PATH.exists():  # Phase 3 extension; absent on the Phase 2 branch
+        models["XGBoost"] = joblib.load(config.XGB_MODEL_PATH)
 
     # The test rows keep their row numbers from dataset.csv (preprocess only drops rows, never renumbers),
     # so the unscaled distance comes straight from the CSV.
@@ -65,16 +67,22 @@ def main() -> int:
         yy = y[mask]
         row = {"rows": int(mask.sum()), "landslide": int(yy.sum()), "stable": int((yy == 0).sum())}
         cells = []
-        for name in ["SVM (RBF)", "Random Forest"]:
+        for name in models:
             auc = float(roc_auc_score(yy, scores[name][mask]))
             low, high = auc_interval(yy, scores[name][mask])
             row[name] = {"auc": round(auc, 4), "ci_low": round(low, 4), "ci_high": round(high, 4)}
             cells.append(f"{auc:.4f} ({low:.3f}-{high:.3f})")
         diff = bootstrap_auc_difference(yy, scores["SVM (RBF)"][mask], scores["Random Forest"][mask])
         row["rf_minus_svm"] = diff
+        if "XGBoost" in models:
+            row["xgb_minus_rf"] = bootstrap_auc_difference(yy, scores["Random Forest"][mask], scores["XGBoost"][mask])
         results[label] = row
         print(f"  {label:<26}{row['rows']:>6,}{row['landslide']:>10,}{row['stable']:>8,}   {cells[0]:<24}{cells[1]:<24}"
               f"{diff['mean_difference']:+.4f} ({diff['ci_low']:+.4f} to {diff['ci_high']:+.4f})")
+        if "XGBoost" in models:
+            x = row["xgb_minus_rf"]
+            print(f"  {'':<26}{'':>6}{'':>10}{'':>8}   XGBoost AUC {cells[2]}   XGB - RF {x['mean_difference']:+.4f} "
+                  f"({x['ci_low']:+.4f} to {x['ci_high']:+.4f})")
 
     artifacts.update_metadata("near_road_check", {
         "split_m": ROAD_SPLIT_M, "road_source": "OpenStreetMap, dist_roads.tif",

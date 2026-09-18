@@ -10,6 +10,10 @@
 # nothing already in the environment was upgraded or downgraded. After installing, numpy 2.2.6,
 # scikit-learn 1.7.2, pandas 2.3.3 and scipy 1.15.2 were confirmed unchanged, so the saved Phase 2
 # models still load. Versions and builds below are exactly what was installed and tested.
+#
+# xgboost added 18 September 2026 (Phase 3 extension: a third model, src/train_xgboost.py). A conda dry run
+# showed three new packages and nothing upgraded or downgraded; numpy 2.2.6, scikit-learn 1.7.2, pandas 2.3.3,
+# scipy 1.15.2 and imbalanced-learn 0.14.2 were confirmed unchanged after installing, and the saved models load.
 name: landslide
 channels:
   - conda-forge
@@ -20,3 +24,6 @@ dependencies:
   - cloudpickle=3.1.2=pyhcf101f3_1
   - slicer=0.0.8=pyhd8ed1ab_0
   - tqdm=4.70.1=pyh6be1c34_0
+  - xgboost=3.4.2=cpu_pyhb39878e_0
+  - py-xgboost=3.4.2=cpu_pyh718b53a_0
+  - libxgboost=3.4.2=cpu_hd161407_0

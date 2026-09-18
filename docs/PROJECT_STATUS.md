@@ -132,7 +132,8 @@ See section 9.
 | Full state raster (`predict_raster_full.py --state --yes`) | ✅ | 58,945,876 cells in 9.1 min, peak 0.80 GB; **High + Very High 7.8%** (4,099 km2) |
 | State web map (`map_generator_full.py`) | ✅ | 6.99 MB; all 5,063 GSI points; browser-checked after marker, label, popup and title fixes |
 | Dashboard v2, 6 pages (`streamlit run dashboard_v2/app.py`) | ✅ | every page checked on real data; Explainability caption corrected |
-| `run_phase3.py` | ✅ | estimates updated to the real runs; dry run shows every step up to date |
+| `run_phase3.py` | ✅ | estimates updated to the real runs; XGBoost and three-model evaluation added as steps 0b and 0c; dry run shows every step up to date |
+| **XGBoost (third model)** (`train_xgboost.py`) | ✅ | 114 s grid search; test AUC **0.9616** (CV 0.9629); minus RF +0.0012 (-0.0005 to +0.0030), **not separable**; minus SVM +0.0211 (+0.0170 to +0.0258). Within 1 km of a road 0.937 |
 
 The state's 7.8% High + Very High is not comparable with Chauhan et al.'s 18.47%: fixed breaks (0.2 / 0.4 / 0.6 / 0.8) here, natural breaks recomputed per map there.
 
@@ -140,7 +141,6 @@ The state's 7.8% High + Very High is not comparable with Chauhan et al.'s 18.47%
 
 | Item | Notes |
 |---|---|
-| XGBoost | Phase 3 extension |
 | Spatial cross-validation | measures how optimistic the random split is |
 | Phase 3 report | not started |
 | Merge `phase3-preparation` into `main` | only after Phase 2 is submitted |

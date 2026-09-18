@@ -297,7 +297,9 @@ def page_comparison() -> None:
                          f"from {gap['rounds']:,} bootstrap resamples of the test set")
 
     if gap["separable"]:
-        st.info(f"**{ev['winner']} ranks risky ground above stable ground better.** Resampling the test set "
+        # The gap is RF minus SVM, so name the better of those two; ev["winner"] may be a third model (Phase 3).
+        pair_winner = ev.get("phase2_winner", ev["winner"])
+        st.info(f"**{pair_winner} ranks risky ground above stable ground better.** Resampling the test set "
                 f"{gap['rounds']:,} times puts the AUC gap between {gap['ci_low']:+.3f} and "
                 f"{gap['ci_high']:+.3f}. That range excludes zero, so the difference is bigger than the "
                 f"noise in a test set this size.")
@@ -363,6 +365,11 @@ def page_comparison() -> None:
         rows.append({"Model": "Random Forest", "Best parameters": params_text(rf["best_params"]),
                      "CV AUC": rf["best_cv_auc"], "Test AUC": results["Random Forest"]["auc"],
                      "Grid search (s)": rf["timing_seconds"]["grid_search"]})
+    xgb = meta.get("xgb", {})
+    if xgb and "XGBoost" in results:  # Phase 3 extension, absent on the Phase 2 branch
+        rows.append({"Model": "XGBoost (Phase 3)", "Best parameters": params_text(xgb["best_params"]),
+                     "CV AUC": xgb["best_cv_auc"], "Test AUC": results["XGBoost"]["auc"],
+                     "Grid search (s)": xgb["timing_seconds"]["grid_search"]})
     if rows:
         st.dataframe(pd.DataFrame(rows), hide_index=True,
                      column_config={"CV AUC": st.column_config.NumberColumn(format="%.3f"),

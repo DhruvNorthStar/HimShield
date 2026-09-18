@@ -375,3 +375,47 @@ Two map fixes made with the same change (18 September 2026):
   `write_colormap`, no rescoring; index 0 stays transparent for NoData. Future `predict_raster_full.py` runs write
   the new colours themselves.
 - **State map markers:** navy `#0d1b2a` fill at 0.7, white outline at 0.9, radius 4, weight 1.
+
+## 18 September 2026: XGBoost as a third model (Phase 3 extension)
+
+`python -m src.train_xgboost` (xgboost 3.4.2, conda-forge; a dry run showed three new packages and nothing else
+changed). Same protocol as SVM and Random Forest: the saved split, scaled training rows, SMOTE inside each fold,
+stratified 5-fold grid search on ROC AUC, seed 42. Grid fixed in `config.XGB_PARAM_GRID` before training:
+n_estimators [100, 200, 300] x max_depth [3, 5, 7] x learning_rate [0.01, 0.1, 0.3] x subsample [0.8, 1.0], 54
+combinations, 270 fits, **114 s**.
+
+| | SVM (RBF) | Random Forest | **XGBoost** |
+|---|---|---|---|
+| Best parameters | C 100, gamma 0.01 | 300 trees, depth None, split 2 | 100 trees, depth 5, learning rate 0.1, subsample 0.8 |
+| CV AUC | 0.9427 | 0.9618 | **0.9629** |
+| Test AUC | 0.9404 | 0.9604 | **0.9616** |
+| Average precision | 0.8814 | 0.9143 | 0.9208 |
+| At 0.5: recall / precision / F1 | 0.896 / 0.759 / 0.822 | 0.886 / 0.831 / 0.858 | 0.890 / 0.828 / 0.858 |
+| Missed landslides / false alarms at 0.5 | 158 / 430 | 172 / 272 | 167 / 280 |
+| AUC within 1 km of a road | 0.907 | 0.934 | 0.937 |
+| AUC beyond 1 km (73 landslides) | 0.833 | 0.952 | 0.945 |
+
+Pairwise test AUC gaps, bootstrap over 1,000 resamples of the test set:
+
+| Gap | Mean | 95% interval | Reading |
+|---|---|---|---|
+| Random Forest minus SVM | +0.0199 | +0.0157 to +0.0242 | separable |
+| **XGBoost minus Random Forest** | **+0.0012** | **-0.0005 to +0.0030** | **not separable** |
+| XGBoost minus SVM | +0.0211 | +0.0170 to +0.0258 | separable |
+| XGBoost minus RF, within 1 km of a road | +0.0032 | +0.0001 to +0.0062 | just excludes zero |
+| XGBoost minus RF, beyond 1 km | -0.0071 | -0.0184 to +0.0031 | not separable |
+
+Reading: XGBoost has the highest test AUC, but on the whole test set it cannot be told apart from Random Forest;
+both tree ensembles beat the SVM by about 0.02. The honest statement is that the two tree ensembles perform alike
+here, not that XGBoost is better. The Phase 2 comparison (SVM against Random Forest) and its verdict are unchanged.
+
+XGBoost importance (permutation / gain share): dist_roads +0.154 / 0.504, elevation +0.083 / 0.061, slope +0.058 /
+0.101, ndvi +0.024 / 0.057, rainfall +0.008 / 0.036: the same top five, in the same order, as the Random Forest.
+
+Limitation: n_estimators = 100 is the lowest value in the grid (an edge); the grid was not widened after seeing
+results. Colour: purple `#6a1b9a`, dotted (green `#2ca02c` failed the colour-blind check against SVM red).
+
+Code: `evaluate.py` and `near_road_check.py` include XGBoost only when `models/xgb_model.pkl` exists, so the
+Phase 2 two-model run on `main` is unchanged; the evaluation keeps `winner` (highest AUC overall) and adds
+`phase2_winner` (the better of SVM and RF) and `pairwise_auc_differences`. The Phase 2 dashboard's verdict line now
+uses `phase2_winner`, because the RF-minus-SVM interval it quotes is about those two models.

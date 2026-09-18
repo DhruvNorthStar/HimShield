@@ -1,6 +1,6 @@
 # PROJECT HANDOFF V5: Landslide Susceptibility Mapping for Uttarakhand
 
-Written 17 September 2026, on branch `phase3-preparation`. **Supersedes V4 for the current state.** V4
+Written 17 September 2026 and updated 18 September (scheme 4 theme, XGBoost), on branch `phase3-preparation`. **Supersedes V4 for the current state.** V4
 (`PROJECT_HANDOFF_V4.md`) stays the full reference for Phase 2: results, data pipeline, decisions, limitations,
 environment and Windows quirks. This file adds what changed after V4: the Phase 3 run on the real models. Every
 number was read from the logs, `models/metadata.json` or `outputs/figures/shap/shap_summary.json`. Reasons and
@@ -25,8 +25,8 @@ measurements: `docs/decisions.md`.
 | | |
 |---|---|
 | Phase 2 | Complete on real data, on `main` at `720caf8`: RF test AUC 0.9604, SVM 0.9404, gap +0.0199 (+0.0157 to +0.0242), 23 features, 15,169 rows, `run_phase2.py` reproduces everything byte for byte. Report document not written yet |
-| Phase 3 | Complete on real data on `phase3-preparation` (this commit and earlier): audit, Rudraprayag raster, SHAP, full state raster, state web map, dashboard v2 |
-| Pending | XGBoost (Phase 3 extension), spatial cross-validation, Phase 3 report, Phase 2 report, merge into `main` after Phase 2 submission |
+| Phase 3 | Complete on real data on `phase3-preparation`: audit, Rudraprayag raster, SHAP, full state raster, state web map, dashboard v2, scheme 4 theme, XGBoost as a third model |
+| Pending | Spatial cross-validation, Phase 3 report, Phase 2 report, merge into `main` after Phase 2 submission (Commit A `a174f61` of the theme is the Phase 2 part to carry over) |
 | Deadline | Final submission mid-October 2026 |
 
 Branch history after V4: `c7eeb4e` merge of `main` into the branch; `481fdbe` state map markers, labels, popups,
@@ -41,17 +41,20 @@ this file).
 | Rudraprayag raster | `python src/predict_raster_full.py --district rudraprayag` | 2,145,236 cells, 23.5 s, peak 0.78 GB; identical to the Phase 2 RF map cell for cell (max difference 0.0) |
 | SHAP | `python src/explain_shap.py` | 500 held-out test points (cap in the script), 78 s (real forest 57 MB, about 4x the synthetic 19 s). Mean abs SHAP: dist_roads 0.192, elevation 0.100, slope 0.091, ndvi 0.054, dist_streams 0.035, rainfall 0.029. Top 4 match RF permutation importance; 5 and 6 swap |
 | State raster | `python src/predict_raster_full.py --state --yes` | 58,945,876 cells scored (334,365 water skipped), 548 s, peak 0.80 GB. Very Low 71.1, Low 13.8, Moderate 7.4, High 4.7, Very High 3.1 %; **High + Very High 7.8% (4,099 km2)**. `susceptibility_uk_probability.tif` 150.7 MB, `_zones.tif` 5.9 MB |
-| State web map | `python src/map_generator_full.py` | `outputs/susceptibility_map_uk.html` 6.99 MB: zones at about 90 m, districts, 5,063 GSI points (radius 4, dark red / red, semi-transparent), popups "GSI record / Slide / District", page title. Browser-checked |
+| State web map | `python src/map_generator_full.py` | `outputs/susceptibility_map_uk.html` 6.99 MB: zones at about 90 m, districts, 5,063 GSI points (radius 4, navy `#0d1b2a` with a white outline), popups "GSI record / Slide / District", page title. Browser-checked |
 | Dashboard v2 | `streamlit run dashboard_v2/app.py` (port 8502 in `.claude/launch.json`) | 6 pages: `/`, `/comparison`, `/predict`, `/map`, `/explainability`, `/state-map`; all checked on real data, no errors, no synthetic-era wording |
 | Orchestrator | `python run_phase3.py --dry-run` | verify always runs; SHAP, state raster and web map skip as up to date |
 
 All outputs are gitignored: `data/processed/susceptibility_*`, `outputs/figures/shap/`, `outputs/susceptibility_map_uk.html`.
 
+**XGBoost (18 September):** `python -m src.train_xgboost`, test AUC 0.9616 (CV 0.9629), 100 trees, depth 5, learning rate 0.1, subsample 0.8, 114 s. Minus RF +0.0012 (-0.0005 to +0.0030), not separable; minus SVM +0.0211, separable. Report the two tree ensembles as performing alike. Purple `#6a1b9a`, dotted. Details in `docs/decisions.md`.
+
 ## 3. Things to know
 
-- **Map readability:** at state zoom the markers still merge into solid red along the densest valley corridors
-  (Tehri Garhwal, Garhwal, Almora); zones read clearly outside them and at district zoom, or with the landslide
-  layer off. Red is close in hue to the orange-brown zone ramp.
+- **Colours (scheme 4, 18 September):** zones light to dark `#d4edda`, `#a1d99b`, `#fd8d3c`, `#e31a1c`, `#67000d`
+  (lightness steps at least 10 L*, colour-blind separation at least 19); models RF `#1565c0` solid, SVM `#dc3545`
+  dashed, XGBoost `#6a1b9a` dotted; state map markers navy. Light basemap is Esri World Light Gray (CartoDB now
+  needs an API key).
 - **SHAP beeswarm:** dist_roads is very skewed, so almost every dot is coloured "low"; use
   `shap_dependence_1_dist_roads.png` for the road effect.
 - **Streamlit 404s:** opening a page URL directly (for example `/state-map`) logs 404s for `<page>/_stcore/health`
@@ -62,12 +65,11 @@ All outputs are gitignored: `data/processed/susceptibility_*`, `outputs/figures/
 
 ## 4. Pending
 
-1. XGBoost (Phase 3 extension; not in Phase 2).
-2. Spatial cross-validation (future work in Phase 2; candidate for Phase 3).
-3. Phase 3 report, and the Phase 2 report (format to confirm with the college).
-4. Merge `phase3-preparation` into `main`, only after Phase 2 is submitted; then run `python src/verify_phase2.py`
+1. Spatial cross-validation (future work in Phase 2; candidate for Phase 3).
+2. Phase 3 report, and the Phase 2 report (format to confirm with the college).
+3. Merge `phase3-preparation` into `main`, only after Phase 2 is submitted; then run `python src/verify_phase2.py`
    and `python run_phase3.py --dry-run` on `main`.
-5. From V4: check Chauhan et al. tables and citations against the PDF; user backups; offline screenshots.
+4. From V4: check Chauhan et al. tables and citations against the PDF; user backups; offline screenshots.
 
 ## 5. First commands for the new session
 
@@ -79,4 +81,4 @@ git ls-remote origin refs/heads/main refs/heads/phase3-preparation
 ```
 
 Expect: on `phase3-preparation`, clean apart from the two untracked dataset CSVs; `main` at `720caf8` locally and
-on GitHub; the audit 59 OK, 0 FAIL; the dry run with verify RUN and SHAP, state raster and web map SKIP.
+on GitHub; the audit 59 OK, 0 FAIL; the dry run with verify RUN and XGBoost, the three-model evaluation, SHAP, state raster and web map SKIP.

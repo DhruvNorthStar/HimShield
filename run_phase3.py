@@ -8,6 +8,10 @@ Phase 3 master pipeline.
 
 Steps, in order:
     0  src/verify_phase2.py                  always runs; everything stops if it reports a FAIL
+    0b src.train_xgboost                     third model (Phase 3 extension); skipped if xgb_model.pkl is newer
+                                             than the prepared split and the script
+    0c src.evaluate, src.near_road_check,    three-model comparison; skipped if the evaluation already includes
+       src.evaluate                          XGBoost and was written after the XGBoost model
     1  src/explain_shap.py                   skipped if the SHAP results are newer than the model
     2  src/predict_raster_full.py --state    skipped if the state rasters are newer than the model;
                                              asks first, because it takes about 9 to 11 minutes
@@ -49,10 +53,14 @@ FALLBACK_STATE_CELLS = 59_400_000
 # Estimated seconds (low, high) per step, measured on this laptop with the real models (17 September 2026):
 # verify 15 s, SHAP 78 s for 500 points (the real forest's deeper trees take about 4x the synthetic 19 s),
 # state raster 548 s, web map 12 s.
-ESTIMATES = {"verify": (10, 30), "shap": (60, 120), "state": (540, 660), "map": (10, 60)}
-STEP_TITLES = {"verify": "Step 0: verify Phase 2 artifacts", "shap": "Step 1: SHAP explanations",
+ESTIMATES = {"verify": (10, 30), "xgb": (100, 240), "compare": (40, 120), "shap": (60, 120), "state": (540, 660),
+             "map": (10, 60)}
+XGB_INPUTS = [config.PROCESSED_DIR / "prepared.joblib", ROOT / "src" / "train_xgboost.py"]
+STEP_TITLES = {"verify": "Step 0: verify Phase 2 artifacts", "xgb": "Step 0b: train XGBoost (third model)",
+               "compare": "Step 0c: evaluate all three models", "shap": "Step 1: SHAP explanations",
                "state": "Step 2: full-state susceptibility rasters", "map": "Step 3: full-state web map"}
-COMMANDS = {"verify": ["src/verify_phase2.py"], "shap": ["src/explain_shap.py"],
+COMMANDS = {"verify": ["src/verify_phase2.py"], "xgb": ["-m", "src.train_xgboost"],
+            "compare": ["-m", "src.evaluate"], "shap": ["src/explain_shap.py"],
             "state": ["src/predict_raster_full.py", "--state", "--yes"], "map": ["src/map_generator_full.py"]}
 FAILURE_HINTS = {
     "shap": {2: "explain_shap.py stopped itself because its own estimate exceeded 5 minutes. Run "
@@ -93,6 +101,35 @@ def decide_shap(force: bool, model: float | None) -> tuple[bool, str]:
     if shap_time <= model:
         return True, f"SHAP results ({when(shap_time)}) are older than the model ({when(model)})"
     return False, f"SHAP results ({when(shap_time)}) are newer than the model ({when(model)})"
+
+
+def decide_xgb(force: bool) -> tuple[bool, str]:
+    if force:
+        return True, "--force"
+    xgb_time = stamp(config.XGB_MODEL_PATH)
+    if xgb_time is None:
+        return True, "no XGBoost model yet"
+    newer = [(stamp(p), p.name) for p in XGB_INPUTS if stamp(p) is not None and stamp(p) > xgb_time]
+    if newer:
+        t, name = max(newer)
+        return True, f"{name} ({when(t)}) is newer than the XGBoost model ({when(xgb_time)})"
+    return False, f"XGBoost model ({when(xgb_time)}) is newer than the prepared split and its script"
+
+
+def decide_compare(force: bool, xgb_runs: bool) -> tuple[bool, str]:
+    if force:
+        return True, "--force"
+    if xgb_runs:
+        return True, "Step 0b trains a new XGBoost model"
+    meta = json.loads(config.METADATA_PATH.read_text(encoding="utf-8")) if config.METADATA_PATH.exists() else {}
+    if "XGBoost" not in meta.get("evaluation", {}).get("models", {}):
+        return True, "the evaluation does not include XGBoost yet"
+    written = meta.get("written", {}).get("evaluation")
+    evaluated = datetime.fromisoformat(written).timestamp() if written else None
+    xgb_time = stamp(config.XGB_MODEL_PATH)
+    if evaluated is None or (xgb_time is not None and evaluated <= xgb_time):
+        return True, f"evaluation ({when(evaluated)}) is older than the XGBoost model ({when(xgb_time)})"
+    return False, f"evaluation ({when(evaluated)}) already includes XGBoost"
 
 
 def decide_state(force: bool, model: float | None) -> tuple[bool, str]:
@@ -163,10 +200,17 @@ def ask(question: str) -> bool:
     return answer.strip().lower() in ("y", "yes")
 
 
+# The comparison step reruns evaluate after near_road_check, so the report includes the near-road AUCs.
+SEQUENCES = {"compare": [["-m", "src.evaluate"], ["-m", "src.near_road_check"], ["-m", "src.evaluate"]]}
+
+
 def run(key: str) -> tuple[int, float]:
     started = time.perf_counter()
-    result = subprocess.run([sys.executable, *COMMANDS[key]], cwd=ROOT)
-    return result.returncode, time.perf_counter() - started
+    for command in SEQUENCES.get(key, [COMMANDS[key]]):
+        result = subprocess.run([sys.executable, *command], cwd=ROOT)
+        if result.returncode != 0:
+            return result.returncode, time.perf_counter() - started
+    return 0, time.perf_counter() - started
 
 
 def print_summary(records: list[dict]) -> None:
@@ -200,6 +244,8 @@ def main() -> int:
 
     model = model_time()
     plan = {"verify": (True, "always runs first")}
+    plan["xgb"] = decide_xgb(args.force)
+    plan["compare"] = decide_compare(args.force, plan["xgb"][0])
     plan["shap"] = decide_shap(args.force, model)
     plan["state"] = decide_state(args.force, model)
     plan["map"] = decide_map(args.force, plan["state"][0])
@@ -241,6 +287,21 @@ def main() -> int:
             return 1
         records.append({"title": STEP_TITLES["verify"], "status": "ok", "seconds": seconds, "reason": "no FAIL rows"})
         model = model_time()
+
+        # Steps 0b and 0c: the third model and the three-model comparison
+        xgb_ran = False
+        for key in ("xgb", "compare"):
+            will_run, reason = decide_xgb(args.force) if key == "xgb" else decide_compare(args.force, xgb_ran)
+            if will_run:
+                header(f"{STEP_TITLES[key]}  ({span(*ESTIMATES[key])}; {reason})")
+                code, seconds = run(key)
+                if code != 0:
+                    return fail(records, key, code, seconds)
+                records.append({"title": STEP_TITLES[key], "status": "ran", "seconds": seconds, "reason": reason})
+                xgb_ran = xgb_ran or key == "xgb"
+            else:
+                print(f"\n{STEP_TITLES[key]}: skipped, {reason}")
+                records.append({"title": STEP_TITLES[key], "status": "skipped", "reason": reason})
 
         # Step 1
         will_run, reason = decide_shap(args.force, model)
