@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 17 September 2026 on branch `phase3-preparation`, with the Phase 3 results (section 9). `main` holds Phase 2 only. Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
+Last updated: 18 September 2026 on branch `phase3-preparation`, with the Phase 3 results including XGBoost (section 9). **Phase 3 is complete.** `main` holds Phase 2 only. Update this file whenever a step finishes or a decision is made. The reasons and measurements behind every item are in [decisions.md](decisions.md).
 
 ## 1. Snapshot
 
@@ -33,6 +33,7 @@ Last updated: 17 September 2026 on branch `phase3-preparation`, with the Phase 3
 - RF minus SVM AUC **+0.0199**, 95% bootstrap interval **+0.0157 to +0.0242** (excludes zero). Within 1 km of a road: +0.027 (+0.020 to +0.035).
 - Linear SVM test AUC 0.9265: the RBF kernel adds +0.0139.
 - RF importance (impurity / permutation): dist_roads 0.314 / +0.143, elevation 0.160 / +0.051, slope 0.117 / +0.042, ndvi 0.099 / +0.018, rainfall 0.058 / +0.008.
+- Phase 3 extension (section 9): **XGBoost test AUC 0.9616** (CV 0.9629). XGBoost minus RF +0.0012, 95% interval -0.0005 to +0.0030: not separable, so the two tree ensembles perform alike; XGBoost minus SVM +0.0211 (+0.0170 to +0.0258).
 - Wording for the report: "AUCs comparable to Chauhan et al. (2025), with road-survey bias quantified by a near-road check (RF 0.934 within 1 km of roads)". No claim of higher accuracy.
 
 | Data | Count |

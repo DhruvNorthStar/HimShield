@@ -25,7 +25,7 @@ measurements: `docs/decisions.md`.
 | | |
 |---|---|
 | Phase 2 | Complete on real data, on `main` at `720caf8`: RF test AUC 0.9604, SVM 0.9404, gap +0.0199 (+0.0157 to +0.0242), 23 features, 15,169 rows, `run_phase2.py` reproduces everything byte for byte. Report document not written yet |
-| Phase 3 | Complete on real data on `phase3-preparation`: audit, Rudraprayag raster, SHAP, full state raster, state web map, dashboard v2, scheme 4 theme, XGBoost as a third model |
+| Phase 3 | Complete on real data on `phase3-preparation`: audit, Rudraprayag raster, SHAP, full state raster, state web map, dashboard v2, scheme 4 theme, XGBoost as a third model (test AUC 0.9616; minus RF +0.0012, -0.0005 to +0.0030, not separable). **Phase 3 is complete** |
 | Pending | Spatial cross-validation, Phase 3 report, Phase 2 report, merge into `main` after Phase 2 submission (Commit A `a174f61` of the theme is the Phase 2 part to carry over) |
 | Deadline | Final submission mid-October 2026 |
 
