@@ -41,7 +41,7 @@ WATERMARK_HTML = """
   position: fixed; top: 55%; left: 50%;
   transform: translate(-50%, -50%) rotate(-24deg);
   font: 800 clamp(3rem, 9vw, 7rem)/1 system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: 0.06em; color: rgba(213, 94, 0, 0.08);
+  letter-spacing: 0.06em; color: rgba(227, 26, 28, 0.08);  /* scheme 4 danger #e31a1c, faint */
   white-space: nowrap; pointer-events: none; user-select: none; z-index: 999;
 }
 </style>
@@ -141,11 +141,12 @@ def evaluation_section() -> dict:
 def synthetic_banner() -> None:
     """The first thing an examiner sees on the homepage: these results test the pipeline, they are not findings."""
     st.markdown(
-        '<div style="border:2px solid #D55E00;border-left-width:8px;border-radius:6px;padding:14px 18px;'
-        'margin:0 0 1.2rem;background:rgba(213,94,0,0.06)">'
-        '<div style="font-weight:800;font-size:1.2rem;letter-spacing:0.05em;color:#0b0b0b">'
+        # Scheme 4: danger red #e31a1c on a faint tint, text in the theme's #222222.
+        '<div style="border:2px solid #e31a1c;border-left-width:8px;border-radius:6px;padding:14px 18px;'
+        'margin:0 0 1.2rem;background:rgba(227,26,28,0.06)">'
+        '<div style="font-weight:800;font-size:1.2rem;letter-spacing:0.05em;color:#222222">'
         'SYNTHETIC DATA: RESULTS ARE NOT FINAL</div>'
-        '<div style="margin-top:6px;color:#1a1a1a">Every number, chart, prediction and map in this dashboard '
+        '<div style="margin-top:6px;color:#222222">Every number, chart, prediction and map in this dashboard '
         'comes from a simulated dataset built to test the pipeline end to end. The real GSI landslide '
         'inventory has not been processed yet, so none of these results describe Uttarakhand. Both models '
         'will be retrained on real data before any result is reported.</div></div>',
@@ -296,7 +297,9 @@ def page_comparison() -> None:
                          f"from {gap['rounds']:,} bootstrap resamples of the test set")
 
     if gap["separable"]:
-        st.info(f"**{ev['winner']} ranks risky ground above stable ground better.** Resampling the test set "
+        # The gap is RF minus SVM, so name the better of those two; ev["winner"] may be a third model (Phase 3).
+        pair_winner = ev.get("phase2_winner", ev["winner"])
+        st.info(f"**{pair_winner} ranks risky ground above stable ground better.** Resampling the test set "
                 f"{gap['rounds']:,} times puts the AUC gap between {gap['ci_low']:+.3f} and "
                 f"{gap['ci_high']:+.3f}. That range excludes zero, so the difference is bigger than the "
                 f"noise in a test set this size.")
@@ -362,6 +365,11 @@ def page_comparison() -> None:
         rows.append({"Model": "Random Forest", "Best parameters": params_text(rf["best_params"]),
                      "CV AUC": rf["best_cv_auc"], "Test AUC": results["Random Forest"]["auc"],
                      "Grid search (s)": rf["timing_seconds"]["grid_search"]})
+    xgb = meta.get("xgb", {})
+    if xgb and "XGBoost" in results:  # Phase 3 extension, absent on the Phase 2 branch
+        rows.append({"Model": "XGBoost (Phase 3)", "Best parameters": params_text(xgb["best_params"]),
+                     "CV AUC": xgb["best_cv_auc"], "Test AUC": results["XGBoost"]["auc"],
+                     "Grid search (s)": xgb["timing_seconds"]["grid_search"]})
     if rows:
         st.dataframe(pd.DataFrame(rows), hide_index=True,
                      column_config={"CV AUC": st.column_config.NumberColumn(format="%.3f"),

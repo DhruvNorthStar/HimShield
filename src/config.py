@@ -189,6 +189,15 @@ RF_PARAM_GRID = {
     "max_depth": [None, 10, 20],
     "min_samples_split": [2, 5, 10],
 }
+# Phase 3 extension (18 September 2026): XGBoost as a third model, same split, same SMOTE-inside-folds pipeline
+# and same 5-fold CV on AUC as SVM and RF. Grid fixed here before any XGBoost training, and not changed after
+# seeing results. 3 x 3 x 3 x 2 = 54 combinations, 270 fits.
+XGB_PARAM_GRID = {
+    "n_estimators": [100, 200, 300],
+    "max_depth": [3, 5, 7],
+    "learning_rate": [0.01, 0.1, 0.3],
+    "subsample": [0.8, 1.0],
+}
 PRIMARY_CV_METRIC = "roc_auc"  # threshold-free, so it is not fooled by class imbalance
 
 # ---------------------------------------------------------------------------
@@ -196,6 +205,7 @@ PRIMARY_CV_METRIC = "roc_auc"  # threshold-free, so it is not fooled by class im
 # ---------------------------------------------------------------------------
 SVM_MODEL_PATH = MODELS_DIR / "svm_model.pkl"
 RF_MODEL_PATH = MODELS_DIR / "rf_model.pkl"
+XGB_MODEL_PATH = MODELS_DIR / "xgb_model.pkl"  # Phase 3 extension; optional everywhere Phase 2 reads models
 SCALER_PATH = MODELS_DIR / "scaler.pkl"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"  # ordered, post-VIF. The contract between phases.
 METADATA_PATH = MODELS_DIR / "metadata.json"

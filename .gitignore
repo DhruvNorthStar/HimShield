@@ -65,3 +65,9 @@ outputs/demo_map_*.html
 
 # Local Claude Code settings (preview launcher)
 .claude/
+
+# Phase 3 outputs (phase3-preparation branch). The full-state web map is large and rebuilt by
+# src/map_generator_full.py; SHAP figures are rebuilt by src/explain_shap.py. The full-state
+# raster is written to data/processed/, which is already ignored.
+outputs/susceptibility_map_uk.html
+outputs/figures/shap/

@@ -22,16 +22,26 @@ weighted avg      0.882     0.871     0.873      4551
    macro avg      0.886     0.898     0.892      4551
 weighted avg      0.905     0.902     0.903      4551
 
+--- XGBoost (threshold 0.5) ---
+              precision    recall  f1-score   support
+
+      stable      0.943     0.908     0.925      3038
+   landslide      0.828     0.890     0.858      1513
+
+    accuracy                          0.902      4551
+   macro avg      0.885     0.899     0.891      4551
+weighted avg      0.905     0.902     0.903      4551
+
 
 SUMMARY
-                   SVM (RBF)  Random Forest
-AUC                   0.9404         0.9604
-average precision     0.8814         0.9143
-accuracy              0.8708         0.9024
-precision             0.7591         0.8314
-recall                0.8956         0.8863
-f1                    0.8217         0.8580
-specificity           0.8585         0.9105
+                   SVM (RBF)  Random Forest  XGBoost
+AUC                   0.9404         0.9604   0.9616
+average precision     0.8814         0.9143   0.9208
+accuracy              0.8708         0.9024   0.9018
+precision             0.7591         0.8314   0.8278
+recall                0.8956         0.8863   0.8896
+f1                    0.8217         0.8580   0.8576
+specificity           0.8585         0.9105   0.9078
 
 VERDICT
 Random Forest is the better model on this data.
@@ -47,11 +57,17 @@ Note the split decision: Random Forest ranks better overall, but SVM (RBF) catch
 What the measurements show:
 - Random Forest's strongest inputs by permutation importance (drop in test AUC when the column is shuffled): dist_roads +0.143, elevation +0.051, slope +0.042, ndvi +0.018, rainfall +0.008.
 - Inside the SVM, the RBF kernel beats a linear one by +0.0139 AUC on the test set: a curved boundary separates these inputs better than a straight one.
-- Test points within 1 km of a road (2,855 rows, 1,440 landslides): SVM AUC 0.907, Random Forest 0.934, RF minus SVM +0.027 (+0.020 to +0.035).
-- Test points beyond 1 km (1,696 rows, 73 landslides): SVM AUC 0.833, Random Forest 0.952, RF minus SVM +0.119 (+0.069 to +0.176). Few landslides, so read these intervals as wide.
+- Test points within 1 km of a road (2,855 rows, 1,440 landslides): SVM AUC 0.907, Random Forest 0.934, XGBoost 0.937, RF minus SVM +0.027 (+0.020 to +0.035).
+- Test points beyond 1 km (1,696 rows, 73 landslides): SVM AUC 0.833, Random Forest 0.952, XGBoost 0.945, RF minus SVM +0.119 (+0.069 to +0.176). Few landslides, so read these intervals as wide.
   Within the road corridor, where distance to roads separates the classes far less, both models score lower than on the whole test set. The size of that drop is an estimate of how much of the headline AUC comes from where the inventory was surveyed; some road effect remains even within the corridor.
 
 Limitations to state alongside these numbers:
 - The stable points are places with no recorded landslide, which is not the same as places where none can happen. Some of them are risky ground that has never been mapped, which caps how high any score here can go.
 - Train and test rows were split at random, so points near each other in the landscape can land on both sides. Terrain is spatially correlated, so these scores are likely a little optimistic compared with predicting a region never seen.
 - The GSI inventory follows roads, so part of each headline AUC reflects where landslides were recorded rather than terrain alone; the near-road AUCs above measure how much.
+
+Phase 3 extension: XGBoost as a third model (same split, SMOTE inside folds, 5-fold CV on AUC):
+- XGBoost test AUC 0.9616, average precision 0.9208; at 0.5 it catches 89% of landslides with precision 83% (167 missed, 280 false alarms).
+- XGBoost minus Random Forest: +0.0012, 95% interval -0.0005 to +0.0030, which includes zero: not separable on this test set.
+- XGBoost minus SVM (RBF): +0.0211, 95% interval +0.0170 to +0.0258, which excludes zero: a real difference.
+- Highest test AUC of the three: XGBoost (0.9616).

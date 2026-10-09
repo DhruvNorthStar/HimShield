@@ -39,6 +39,10 @@ def load_everything():
     bundle = joblib.load(bundle_path)
     models = {"SVM (RBF)": joblib.load(config.SVM_MODEL_PATH),
               "Random Forest": joblib.load(config.RF_MODEL_PATH)}
+    # Phase 3 extension: XGBoost joins the comparison when its model exists. Without it (Phase 2, main branch)
+    # everything below runs exactly as the two-model comparison.
+    if config.XGB_MODEL_PATH.exists():
+        models["XGBoost"] = joblib.load(config.XGB_MODEL_PATH)
     return bundle, models
 
 
@@ -112,17 +116,18 @@ def plot_roc(y_true, scored: dict):
     import matplotlib.pyplot as plt
     from sklearn.metrics import roc_auc_score, roc_curve
 
-    colours = {"SVM (RBF)": viz.STABLE, "Random Forest": viz.LANDSLIDE}
+    colours = viz.MODEL_COLORS
     fig, ax = plt.subplots(figsize=(6.4, 6))
     for name, scores in scored.items():
         fpr, tpr, _ = roc_curve(y_true, scores)
         auc = roc_auc_score(y_true, scores)
-        ax.plot(fpr, tpr, color=colours[name], linewidth=2.2, label=f"{name}, AUC {auc:.3f}")
+        ax.plot(fpr, tpr, color=colours[name], linestyle=viz.MODEL_LINESTYLES[name], linewidth=2.2,
+                label=f"{name}, AUC {auc:.3f}")
     ax.plot([0, 1], [0, 1], color=viz.MUTED, linewidth=1, linestyle=(0, (4, 4)),
             label="random guessing, AUC 0.500")
     ax.set_xlabel("False positive rate (stable ground flagged as risky)")
     ax.set_ylabel("True positive rate (landslides caught)")
-    ax.set_title("SVM vs Random Forest on held-out data")
+    ax.set_title(" vs ".join(n.replace(" (RBF)", "") for n in scored) + " on held-out data")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.005)
     ax.set_aspect("equal")
@@ -134,7 +139,7 @@ def plot_confusion(y_true, scored: dict, thresholds: dict):
     import matplotlib.pyplot as plt
     from sklearn.metrics import confusion_matrix
 
-    fig, axes = plt.subplots(1, 2, figsize=(9.5, 4.4))
+    fig, axes = plt.subplots(1, len(scored), figsize=(4.75 * len(scored), 4.4))
     for ax, (name, scores) in zip(axes, scored.items()):
         pred = (scores >= thresholds[name]).astype(int)
         cm = confusion_matrix(y_true, pred, labels=[0, 1])
@@ -160,13 +165,14 @@ def plot_precision_recall(y_true, scored: dict):
     import matplotlib.pyplot as plt
     from sklearn.metrics import average_precision_score, precision_recall_curve
 
-    colours = {"SVM (RBF)": viz.STABLE, "Random Forest": viz.LANDSLIDE}
+    colours = viz.MODEL_COLORS
     base = float(np.mean(y_true))
     fig, ax = plt.subplots(figsize=(6.4, 5))
     for name, scores in scored.items():
         precision, recall, _ = precision_recall_curve(y_true, scores)
         ap = average_precision_score(y_true, scores)
-        ax.plot(recall, precision, color=colours[name], linewidth=2.2, label=f"{name}, AP {ap:.3f}")
+        ax.plot(recall, precision, color=colours[name], linestyle=viz.MODEL_LINESTYLES[name], linewidth=2.2,
+                label=f"{name}, AP {ap:.3f}")
     ax.axhline(base, color=viz.MUTED, linewidth=1, linestyle=(0, (4, 4)),
                label=f"always predict landslide, {base:.3f}")
     ax.set_xlabel("Recall (share of real landslides caught)")
@@ -180,8 +186,12 @@ def plot_precision_recall(y_true, scored: dict):
 
 # ---------------------------------------------------------------------------
 def write_verdict(results: dict, comparison: dict, y_test) -> list[str]:
-    """State which model wins, on what, and how confident that claim can be."""
-    names = list(results)
+    """State which model wins, on what, and how confident that claim can be.
+
+    This is the Phase 2 question, SVM against Random Forest; a third model, if present, gets its own section
+    from xgb_verdict so the faculty comparison stays the headline.
+    """
+    names = [n for n in ("SVM (RBF)", "Random Forest") if n in results]
     aucs = {n: results[n]["auc"] for n in names}
     winner = max(aucs, key=aucs.get)
     loser = min(aucs, key=aucs.get)
@@ -250,9 +260,10 @@ def write_verdict(results: dict, comparison: dict, y_test) -> list[str]:
                 continue
             diff = subset["rf_minus_svm"]
             small = " Few landslides, so read these intervals as wide." if subset["landslide"] < 200 else ""
+            xgb_part = f", XGBoost {subset['XGBoost']['auc']:.3f}" if "XGBoost" in subset else ""
             lines.append(f"- Test points {label.replace('1000 m', f'{split_km:g} km')} "
                          f"({subset['rows']:,} rows, {subset['landslide']:,} landslides): "
-                         f"SVM AUC {subset['SVM (RBF)']['auc']:.3f}, Random Forest {subset['Random Forest']['auc']:.3f}, "
+                         f"SVM AUC {subset['SVM (RBF)']['auc']:.3f}, Random Forest {subset['Random Forest']['auc']:.3f}{xgb_part}, "
                          f"RF minus SVM {diff['mean_difference']:+.3f} ({diff['ci_low']:+.3f} to {diff['ci_high']:+.3f}).{small}")
         lines.append("  Within the road corridor, where distance to roads separates the classes far less, "
                      "both models score lower than on the whole test set. The size of that drop is an "
@@ -277,6 +288,23 @@ def write_verdict(results: dict, comparison: dict, y_test) -> list[str]:
     if config.IS_SYNTHETIC:
         lines.append(f"- {config.SYNTHETIC_LABEL}: every number above comes from simulated data and "
                      f"describes nothing about Uttarakhand.")
+    return lines
+
+
+def xgb_verdict(results: dict, pairwise: dict) -> list[str]:
+    """Phase 3 extension: where XGBoost stands against the two Phase 2 models, with bootstrap intervals."""
+    x = results["XGBoost"]
+    lines = ["", "Phase 3 extension: XGBoost as a third model (same split, SMOTE inside folds, 5-fold CV on AUC):",
+             f"- XGBoost test AUC {x['auc']:.4f}, average precision {x['average_precision']:.4f}; at 0.5 it catches "
+             f"{x['default']['recall']:.0%} of landslides with precision {x['default']['precision']:.0%} "
+             f"({x['default']['false_negatives']} missed, {x['default']['false_positives']} false alarms)."]
+    for label, d in pairwise.items():
+        verdict = ("excludes zero: a real difference" if d["separable"]
+                   else "includes zero: not separable on this test set")
+        lines.append(f"- {label}: {d['mean_difference']:+.4f}, 95% interval {d['ci_low']:+.4f} to "
+                     f"{d['ci_high']:+.4f}, which {verdict}.")
+    best = max(results, key=lambda n: results[n]["auc"])
+    lines.append(f"- Highest test AUC of the three: {best} ({results[best]['auc']:.4f}).")
     return lines
 
 
@@ -320,6 +348,15 @@ def main() -> int:
     print(f"\nAUC difference (RF minus SVM): {comparison['mean_difference']:+.4f}, "
           f"95% interval {comparison['ci_low']:+.4f} to {comparison['ci_high']:+.4f}")
 
+    pairwise = {}
+    if "XGBoost" in scored:
+        pairwise["XGBoost minus Random Forest"] = bootstrap_auc_difference(
+            y_test, scored["Random Forest"], scored["XGBoost"])
+        pairwise["XGBoost minus SVM (RBF)"] = bootstrap_auc_difference(y_test, scored["SVM (RBF)"], scored["XGBoost"])
+        for label, d in pairwise.items():
+            print(f"AUC difference ({label}): {d['mean_difference']:+.4f}, "
+                  f"95% interval {d['ci_low']:+.4f} to {d['ci_high']:+.4f}")
+
     thresholds = {name: 0.5 for name in scored}
     figures = {
         "roc_comparison": plot_roc(y_test, scored),
@@ -331,6 +368,8 @@ def main() -> int:
         print(f"  {viz.save_fig(fig, name).relative_to(config.ROOT)}")
 
     verdict = write_verdict(results, comparison, y_test)
+    if "XGBoost" in results:
+        verdict += xgb_verdict(results, pairwise)
     print("\n" + "=" * 78)
     for line in verdict:
         print(line)
@@ -354,7 +393,9 @@ def main() -> int:
         "test_positives": int(np.sum(y_test)),
         "models": results,
         "auc_difference_rf_minus_svm": comparison,
+        "pairwise_auc_differences": {"Random Forest minus SVM (RBF)": comparison, **pairwise},
         "winner": max(results, key=lambda n: results[n]["auc"]),
+        "phase2_winner": max(("SVM (RBF)", "Random Forest"), key=lambda n: results[n]["auc"]),
         "figures": [f"outputs/figures/{n}.png" for n in figures],
     })
     print("Next: Step 8, the dashboard")

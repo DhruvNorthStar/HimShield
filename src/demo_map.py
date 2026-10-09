@@ -52,11 +52,13 @@ MODELS = {
     "svm": ("SVM (RBF)", config.SVM_MODEL_PATH),
 }
 
-# One hue, light to dark, for five ordered zones: an ordinal scale, so no rainbow and no
-# green-to-red (which also fails for red-green colour-blind readers). Vermillion matches the
-# landslide colour in every report figure. Checked with a palette validator for an ordinal ramp on
-# a light basemap: every step clears 2:1 contrast and neighbouring steps stay distinguishable.
-ZONE_COLOURS = ["#ec9a60", "#e27a3a", "#d55e00", "#a94700", "#6e2c00"]
+# Five ordered zones on one light-to-dark ramp (scheme 4, 17 September 2026; replaces a single vermillion ramp).
+# The order is carried by lightness, so the map still reads in black and white: CIELAB L* 91.5, 81.6, 69.7,
+# 48.5, 19.7, every step at least 10 units. Neighbouring zones stay apart for red-green colour-blind readers:
+# simulated deuteranopia and protanopia (Machado et al. 2009) give a colour difference of at least 19.
+# Low was lightened from #74c476 to #a1d99b because that shade sat only 2.9 L* above Moderate.
+# Imported by map_generator_full.py, predict_raster_full.py and dashboard_v2, so every map shares it.
+ZONE_COLOURS = ["#d4edda", "#a1d99b", "#fd8d3c", "#e31a1c", "#67000d"]
 
 # SYNTHETIC MODELS ONLY. The simulated dataset invented its own class names, while the rasters carry
 # WorldCover and SoilGrids names. Without a bridge every real class would be unknown to the model and
@@ -234,7 +236,12 @@ def render_map(zones: np.ndarray, grid: dict, geometry, zone_rows: list[dict], l
 
     fmap = folium.Map(location=[(south + north) / 2, (west + east) / 2], zoom_start=10,
                       tiles=None, control_scale=True)
-    folium.TileLayer("CartoDB positron", name="Light basemap").add_to(fmap)
+    # Esri's light canvas, not CartoDB positron: CartoDB started requiring an API key and now serves tiles
+    # stamped "API KEY REQUIRED" (seen 17 September 2026). Esri needs no key, like the imagery layer below.
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/"
+              "{z}/{y}/{x}",
+        attr="Tiles &copy; Esri", name="Light basemap", max_zoom=16).add_to(fmap)
     folium.TileLayer("OpenStreetMap", name="OpenStreetMap").add_to(fmap)
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
