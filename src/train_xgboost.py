@@ -48,6 +48,7 @@ def plot_importance(gain: pd.Series, permutation: pd.Series, top_n: int = 15):
     return fig
 
 
+@artifacts.protected_step("xgb")
 def main() -> int:
     from imblearn.over_sampling import SMOTE
     from imblearn.pipeline import Pipeline
@@ -110,7 +111,7 @@ def main() -> int:
     print(f"  {figure_path.relative_to(config.ROOT)}")
 
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(best, config.XGB_MODEL_PATH)
+    joblib.dump(best, artifacts.output_path(config.XGB_MODEL_PATH))
     artifacts.update_metadata("xgb", {
         "library": f"xgboost {xgb_version}",
         "best_params": {k: v for k, v in best_params.items()},

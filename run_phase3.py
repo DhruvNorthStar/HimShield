@@ -1,35 +1,14 @@
 """
-Phase 3 master pipeline.
+Phase 3 pipeline with content-based provenance and protected benchmark outputs.
 
-    python run_phase3.py              run whatever is out of date, asking before the long state step
-    python run_phase3.py --dry-run    show what would run and what would be skipped; runs nothing
-    python run_phase3.py --yes        no questions, for an unattended run
-    python run_phase3.py --force      rerun every step even if its outputs are up to date
-
-Steps, in order:
-    0  src/verify_phase2.py                  always runs; everything stops if it reports a FAIL
-    0b src.train_xgboost                     third model (Phase 3 extension); skipped if xgb_model.pkl is newer
-                                             than the prepared split and the script
-    0c src.evaluate, src.near_road_check,    three-model comparison; skipped if the evaluation already includes
-       src.evaluate                          XGBoost and was written after the XGBoost model
-    1  src/explain_shap.py                   skipped if the SHAP results are newer than the model
-    2  src/predict_raster_full.py --state    skipped if the state rasters are newer than the model;
-                                             asks first, because it takes about 9 to 11 minutes
-    3  src/map_generator_full.py             skipped if the web map is newer than the state raster
-    4  dashboard                             the command is printed, not launched
-
-"The model" means the newest of models/rf_model.pkl, models/scaler.pkl and models/feature_names.json: the three
-files every Random Forest output depends on. Retraining touches all three, so every step downstream reruns.
-
-Exit codes:
-    0    finished: every step ran or was already up to date
-    1    verify_phase2.py reported a FAIL
-    2    a step failed
-    3    stopped at the confirmation: the state raster was not built
-    130  interrupted with Ctrl+C
+Use --dry-run to inspect validated dependencies. --force requests rebuilding only
+inside an explicitly selected LSM_EXPERIMENT_ID; it never unlocks benchmarks.
+Every subprocess inherits the activated environment. No model or scientific output
+is rebuilt merely because Git checkout changed file modification times.
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -40,11 +19,13 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src import config  # noqa: E402
+from src import config, provenance  # noqa: E402
+
+FORCE_REBUILD = False
 
 SHAP_SUMMARY = config.FIGURES_DIR / "shap" / "shap_summary.json"
-STATE_PROBABILITY = config.PROCESSED_DIR / "susceptibility_uk_probability.tif"
-STATE_ZONES = config.PROCESSED_DIR / "susceptibility_uk_zones.tif"
+STATE_PROBABILITY = config.DERIVED_DIR / "susceptibility_uk_probability.tif"
+STATE_ZONES = config.DERIVED_DIR / "susceptibility_uk_zones.tif"
 STATE_MAP = config.OUTPUTS_DIR / "susceptibility_map_uk.html"
 MODEL_FILES = [config.RF_MODEL_PATH, config.SCALER_PATH, config.FEATURE_NAMES_PATH]
 LOW_RAM_BYTES = 1_500_000_000
@@ -55,7 +36,7 @@ FALLBACK_STATE_CELLS = 59_400_000
 # state raster 548 s, web map 12 s.
 ESTIMATES = {"verify": (10, 30), "xgb": (100, 240), "compare": (40, 120), "shap": (60, 120), "state": (540, 660),
              "map": (10, 60)}
-XGB_INPUTS = [config.PROCESSED_DIR / "prepared.joblib", ROOT / "src" / "train_xgboost.py"]
+XGB_INPUTS = [config.PREPARED_PATH, ROOT / "src" / "train_xgboost.py"]
 STEP_TITLES = {"verify": "Step 0: verify Phase 2 artifacts", "xgb": "Step 0b: train XGBoost (third model)",
                "compare": "Step 0c: evaluate all three models", "shap": "Step 1: SHAP explanations",
                "state": "Step 2: full-state susceptibility rasters", "map": "Step 3: full-state web map"}
@@ -86,77 +67,24 @@ def model_time() -> float | None:
     return max(p.stat().st_mtime for p in MODEL_FILES)
 
 
-def decide_shap(force: bool, model: float | None) -> tuple[bool, str]:
-    if force:
-        return True, "--force"
-    if not SHAP_SUMMARY.exists():
-        return True, "no SHAP results yet"
-    listed = json.loads(SHAP_SUMMARY.read_text(encoding="utf-8")).get("figures", [])
-    missing = [f for f in listed if not (ROOT / f).exists()]
-    if missing or not listed:
-        return True, f"{len(missing) or 'all'} SHAP figure(s) missing"
-    if model is None:
-        return True, "model files missing (Step 0 will stop first)"
-    shap_time = stamp(SHAP_SUMMARY)
-    if shap_time <= model:
-        return True, f"SHAP results ({when(shap_time)}) are older than the model ({when(model)})"
-    return False, f"SHAP results ({when(shap_time)}) are newer than the model ({when(model)})"
+def decide_shap(force: bool, model: float | None = None) -> tuple[bool, str]:
+    return provenance.decision("shap", force)
 
 
 def decide_xgb(force: bool) -> tuple[bool, str]:
-    if force:
-        return True, "--force"
-    xgb_time = stamp(config.XGB_MODEL_PATH)
-    if xgb_time is None:
-        return True, "no XGBoost model yet"
-    newer = [(stamp(p), p.name) for p in XGB_INPUTS if stamp(p) is not None and stamp(p) > xgb_time]
-    if newer:
-        t, name = max(newer)
-        return True, f"{name} ({when(t)}) is newer than the XGBoost model ({when(xgb_time)})"
-    return False, f"XGBoost model ({when(xgb_time)}) is newer than the prepared split and its script"
+    return provenance.decision("xgb", force)
 
 
 def decide_compare(force: bool, xgb_runs: bool) -> tuple[bool, str]:
-    if force:
-        return True, "--force"
-    if xgb_runs:
-        return True, "Step 0b trains a new XGBoost model"
-    meta = json.loads(config.METADATA_PATH.read_text(encoding="utf-8")) if config.METADATA_PATH.exists() else {}
-    if "XGBoost" not in meta.get("evaluation", {}).get("models", {}):
-        return True, "the evaluation does not include XGBoost yet"
-    written = meta.get("written", {}).get("evaluation")
-    evaluated = datetime.fromisoformat(written).timestamp() if written else None
-    xgb_time = stamp(config.XGB_MODEL_PATH)
-    if evaluated is None or (xgb_time is not None and evaluated <= xgb_time):
-        return True, f"evaluation ({when(evaluated)}) is older than the XGBoost model ({when(xgb_time)})"
-    return False, f"evaluation ({when(evaluated)}) already includes XGBoost"
+    return provenance.decision("evaluate", force, xgb_runs)
 
 
-def decide_state(force: bool, model: float | None) -> tuple[bool, str]:
-    if force:
-        return True, "--force"
-    if not STATE_ZONES.exists() or not STATE_PROBABILITY.exists():
-        return True, "state rasters not built yet"
-    if model is None:
-        return True, "model files missing (Step 0 will stop first)"
-    raster_time = min(stamp(STATE_ZONES), stamp(STATE_PROBABILITY))
-    if raster_time <= model:
-        return True, f"state rasters ({when(raster_time)}) are older than the model ({when(model)})"
-    return False, f"state rasters ({when(raster_time)}) are newer than the model ({when(model)})"
+def decide_state(force: bool, model: float | None = None) -> tuple[bool, str]:
+    return provenance.decision("state", force)
 
 
 def decide_map(force: bool, state_runs: bool) -> tuple[bool, str]:
-    if force:
-        return True, "--force"
-    if state_runs:
-        return True, "Step 2 builds a new state raster"
-    if not STATE_MAP.exists():
-        return True, "web map not built yet" + ("" if STATE_ZONES.exists() else " (it will be the Rudraprayag fallback)")
-    if STATE_ZONES.exists():
-        if stamp(STATE_MAP) <= stamp(STATE_ZONES):
-            return True, f"web map ({when(stamp(STATE_MAP))}) is older than the state raster ({when(stamp(STATE_ZONES))})"
-        return False, f"web map ({when(stamp(STATE_MAP))}) is newer than the state raster ({when(stamp(STATE_ZONES))})"
-    return False, "no state raster yet, and the Rudraprayag fallback map already exists"
+    return provenance.decision("map", force, state_runs)
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +135,10 @@ SEQUENCES = {"compare": [["-m", "src.evaluate"], ["-m", "src.near_road_check"], 
 def run(key: str) -> tuple[int, float]:
     started = time.perf_counter()
     for command in SEQUENCES.get(key, [COMMANDS[key]]):
-        result = subprocess.run([sys.executable, *command], cwd=ROOT)
+        environment = os.environ.copy()
+        if FORCE_REBUILD or key == "compare":
+            environment["LSM_REBUILD"] = "1"
+        result = subprocess.run([sys.executable, *command], cwd=ROOT, env=environment)
         if result.returncode != 0:
             return result.returncode, time.perf_counter() - started
     return 0, time.perf_counter() - started
@@ -221,11 +152,8 @@ def print_summary(records: list[dict]) -> None:
 
 
 def print_merge_instructions() -> None:
-    print("\nPhase 3 complete. To merge into main:")
-    print("git checkout main")
-    print("git merge phase3-preparation")
-    print("python src/verify_phase2.py")
-    print("streamlit run dashboard_v2/app.py")
+    print("\nDashboard: streamlit run dashboard_v2/app.py")
+    print("Benchmark promotion requires separate review and approval.")
 
 
 # ---------------------------------------------------------------------------
@@ -233,8 +161,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run Phase 3 in order, skipping what is up to date")
     parser.add_argument("--dry-run", action="store_true", help="show the plan and run nothing")
     parser.add_argument("--yes", action="store_true", help="do not ask before the full-state step")
-    parser.add_argument("--force", action="store_true", help="rerun every step")
+    parser.add_argument("--force", action="store_true", help="request experiment rebuilds; benchmarks remain locked")
     args = parser.parse_args()
+    global FORCE_REBUILD
+    FORCE_REBUILD = args.force
 
     header("Phase 3 pipeline" + ("  (DRY RUN: nothing will be run)" if args.dry_run else ""))
     print(config.data_source_banner())
@@ -243,12 +173,13 @@ def main() -> int:
               f"Run `conda activate landslide` first.")
 
     model = model_time()
-    plan = {"verify": (True, "always runs first")}
-    plan["xgb"] = decide_xgb(args.force)
-    plan["compare"] = decide_compare(args.force, plan["xgb"][0])
-    plan["shap"] = decide_shap(args.force, model)
-    plan["state"] = decide_state(args.force, model)
-    plan["map"] = decide_map(args.force, plan["state"][0])
+    with provenance.fingerprint_session():
+        plan = {"verify": (True, "always runs first")}
+        plan["xgb"] = decide_xgb(args.force)
+        plan["compare"] = decide_compare(args.force, plan["xgb"][0])
+        plan["shap"] = decide_shap(args.force, model)
+        plan["state"] = decide_state(args.force, model)
+        plan["map"] = decide_map(args.force, plan["state"][0])
 
     print(f"\nModel files: newest {when(model)} "
           f"({', '.join(p.name for p in MODEL_FILES)})")
@@ -256,7 +187,7 @@ def main() -> int:
     low = high = 0
     for key, (will_run, reason) in plan.items():
         estimate = span(*ESTIMATES[key]) if will_run else "-"
-        print(f"  {STEP_TITLES[key]:<44} {'RUN' if will_run else 'SKIP':<5} {estimate:<20} {reason}")
+        print(f"  {STEP_TITLES[key]:<44} {'BLOCKED' if reason.startswith('BLOCKED') else ('RUN' if will_run else 'SKIP'):<7} {estimate:<20} {reason}")
         if will_run:
             low += ESTIMATES[key][0]
             high += ESTIMATES[key][1]
@@ -267,6 +198,11 @@ def main() -> int:
     if args.dry_run:
         print("\nDry run: nothing was run. Remove --dry-run to run the steps marked RUN.")
         return 0
+
+    blocked = [reason for will_run, reason in plan.values() if will_run and reason.startswith("BLOCKED")]
+    if blocked:
+        print("\nNot started: " + blocked[0])
+        return 2
 
     records = []
     try:

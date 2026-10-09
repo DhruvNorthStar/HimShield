@@ -28,7 +28,7 @@ from rasterio.vrt import WarpedVRT
 from rasterio.windows import Window
 from shapely.geometry import box
 
-from src import config
+from src import artifacts, config
 
 SOURCE = config.RAW_DIR / "ndvi" / "Uttarakhand_NDVI_2023_v3.tif"
 OUTPUT = config.PROCESSED_DIR / "ndvi.tif"
@@ -38,6 +38,7 @@ DESCRIPTION = ("NDVI (B8-B4)/(B8+B4), Sentinel-2 L2A median 2023-10-01 to 2023-1
                "bilinear to the dem.tif grid by src/warp_ndvi.py")
 
 
+@artifacts.protected_step("source-data")
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     parser.add_argument("--src", type=Path, default=SOURCE)

@@ -17,14 +17,36 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parents[1]
 
+# Benchmarks keep their original paths. Only an explicitly selected experiment
+# redirects derived outputs; source CSVs, vectors and GIS rasters stay shared.
+def experiment_directory(identifier: str) -> Path:
+    import re
+
+    reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+                *(f"LPT{i}" for i in range(1, 10))}
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", identifier) or identifier.upper() in reserved:
+        raise ValueError("Experiment ID must use 1-64 letters, numbers, underscores or hyphens; no Windows reserved names.")
+    destination = ROOT / "outputs" / "experiments" / identifier
+    expected_parent = ROOT.resolve() / "outputs" / "experiments"
+    if not destination.resolve().is_relative_to(expected_parent):
+        raise ValueError("Experiment path escapes the repository.")
+    return destination
+
+
+EXPERIMENT_ID = os.environ.get("LSM_EXPERIMENT_ID", "").strip()
+EXPERIMENT_DIR = experiment_directory(EXPERIMENT_ID) if EXPERIMENT_ID else None
+BENCHMARK_MANIFEST = ROOT / "artifacts" / "benchmark.json"
+
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"                # portal downloads, never committed
 PROCESSED_DIR = DATA_DIR / "processed"    # extracted CSVs
 SHAPEFILE_DIR = DATA_DIR / "shapefiles"   # boundary, roads, faults, inventory
-MODELS_DIR = ROOT / "models"              # never committed
-OUTPUTS_DIR = ROOT / "outputs"
+MODELS_DIR = EXPERIMENT_DIR / "models" if EXPERIMENT_DIR else ROOT / "models"
+OUTPUTS_DIR = EXPERIMENT_DIR if EXPERIMENT_DIR else ROOT / "outputs"
 FIGURES_DIR = OUTPUTS_DIR / "figures"
 NOTEBOOKS_DIR = ROOT / "notebooks"
+DERIVED_DIR = EXPERIMENT_DIR / "processed" if EXPERIMENT_DIR else PROCESSED_DIR
+PREPARED_PATH = DERIVED_DIR / "prepared.joblib"
 
 # Raw downloads, one folder per factor (Step 1). See docs/01_data_sourcing.md.
 RAW_DEM_DIR = RAW_DIR / "dem"                # SRTM or Copernicus 1-degree tiles

@@ -215,6 +215,7 @@ def vif_prune(X: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
     return X[features], log
 
 
+@artifacts.protected_step("preprocess")
 def main() -> int:
     df = load_dataset()
 
@@ -275,7 +276,7 @@ def main() -> int:
 
     print("\nSaving artifacts")
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(scaler, config.SCALER_PATH)
+    joblib.dump(scaler, artifacts.output_path(config.SCALER_PATH))
     artifacts.save_feature_names(feature_names)
     bundle = {
         "X_train": X_res, "y_train": y_res,                 # scaled and resampled, for fitting
@@ -283,8 +284,8 @@ def main() -> int:
         "X_test": X_test_scaled, "y_test": y_test,          # scaled, never resampled
         "feature_names": feature_names,
     }
-    prepared_path = config.PROCESSED_DIR / "prepared.joblib"
-    joblib.dump(bundle, prepared_path)
+    prepared_path = config.PREPARED_PATH
+    joblib.dump(bundle, artifacts.output_path(prepared_path))
     artifacts.update_metadata("preprocessing", {
         "rows_in": int(len(df)) + int(artefact_note.get("water_rows_dropped", 0)),
         "rows_used": int(len(df)),

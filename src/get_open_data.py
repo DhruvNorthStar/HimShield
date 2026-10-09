@@ -22,7 +22,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from src import config
+from src import artifacts, config
 
 USER_AGENT = "landslide-uttarakhand-pbl/1.0 (educational project)"
 
@@ -320,6 +320,7 @@ def download_roads() -> None:
 
 
 # ---------------------------------------------------------------------------
+@artifacts.protected_step("source-data")
 def main() -> int:
     parser = argparse.ArgumentParser(description="Download open fallback datasets (no registration).")
     # No argparse `choices` here: with nargs="*", Python 3.11 rejects an empty list as an invalid choice.

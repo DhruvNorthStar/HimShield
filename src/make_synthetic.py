@@ -38,7 +38,7 @@ How it is generated, so the values are plausible rather than random noise:
 import numpy as np
 import pandas as pd
 
-from src import config
+from src import artifacts, config
 
 N_POOL = 60_000       # candidate terrain points
 N_POSITIVE = 1_200    # landslide points (an arbitrary size for testing, not the real inventory count)
@@ -258,6 +258,7 @@ result about Uttarakhand. The real dataset is data/processed/dataset.csv.
 """
 
 
+@artifacts.protected_step("source-data")
 def main() -> None:
     rng = np.random.default_rng(config.RANDOM_STATE)
     pool = build_terrain_pool(rng)

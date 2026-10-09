@@ -26,7 +26,7 @@ from scipy.spatial import cKDTree
 from shapely import contains_xy, prepare
 from shapely.geometry import box
 
-from src import config
+from src import artifacts, config
 from src.clean_gsi import GSI_LAYER, GSI_ZIP
 from src.demo_map import RASTERS, WATER_CODE
 
@@ -76,6 +76,7 @@ def near_water(x: np.ndarray, y: np.ndarray, lulc: np.ndarray, transform) -> np.
     return hit
 
 
+@artifacts.protected_step("source-data")
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     parser.add_argument("--out", type=Path, default=OUTPUT)

@@ -149,8 +149,8 @@ def open_outputs(prob_path: Path, zone_path: Path, height: int, width: int, tran
     common = {"driver": "GTiff", "height": height, "width": width, "count": 1, "crs": crs,
               "transform": transform, "tiled": True, "blockxsize": 512, "blockysize": 512,
               "compress": "deflate", "BIGTIFF": "IF_SAFER"}
-    prob = rasterio.open(prob_path, "w", dtype="float32", nodata=NODATA_SCORE, predictor=3, **common)
-    zones = rasterio.open(zone_path, "w", dtype="uint8", nodata=0, **common)
+    prob = rasterio.open(artifacts.output_path(prob_path), "w", dtype="float32", nodata=NODATA_SCORE, predictor=3, **common)
+    zones = rasterio.open(artifacts.output_path(zone_path), "w", dtype="uint8", nodata=0, **common)
     colours = {0: (0, 0, 0, 0)}
     for zone, hex_colour in enumerate(ZONE_COLOURS, start=1):
         colours[zone] = tuple(int(hex_colour[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
@@ -159,6 +159,7 @@ def open_outputs(prob_path: Path, zone_path: Path, height: int, width: int, tran
 
 
 # ---------------------------------------------------------------------------
+@artifacts.protected_step("state")
 def main() -> int:
     parser = argparse.ArgumentParser(description="Chunked Random Forest susceptibility rasters")
     where = parser.add_mutually_exclusive_group(required=True)
@@ -249,8 +250,8 @@ def main() -> int:
         print("    Rerun with --yes to go ahead.")
         return 2
 
-    prob_path = config.PROCESSED_DIR / f"susceptibility_{slug}_probability.tif"
-    zone_path = config.PROCESSED_DIR / f"susceptibility_{slug}_zones.tif"
+    prob_path = config.DERIVED_DIR / f"susceptibility_{slug}_probability.tif"
+    zone_path = config.DERIVED_DIR / f"susceptibility_{slug}_zones.tif"
     sources = {}
     for feature, name in RASTERS.items():
         if feature in config.DROPPED_COLUMNS:
@@ -364,8 +365,8 @@ def main() -> int:
     if summary["outside_training_range_percent"]:
         print("    outside the training range: " + ", ".join(
             f"{f} {p}%" for f, p in summary["outside_training_range_percent"].items()))
-    print(f"    {prob_path.relative_to(config.ROOT)}  ({prob_path.stat().st_size / 1e6:.1f} MB)")
-    print(f"    {zone_path.relative_to(config.ROOT)}  ({zone_path.stat().st_size / 1e6:.1f} MB)")
+    print(f"    {prob_path.relative_to(config.ROOT)}  ({artifacts.read_output(prob_path).stat().st_size / 1e6:.1f} MB)")
+    print(f"    {zone_path.relative_to(config.ROOT)}  ({artifacts.read_output(zone_path).stat().st_size / 1e6:.1f} MB)")
 
     print("\n[6] Timing and memory")
     rate = scored_total / predict_seconds if predict_seconds else 0

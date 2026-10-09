@@ -26,7 +26,7 @@ from src import artifacts, config
 
 
 def load_prepared():
-    path = config.PROCESSED_DIR / "prepared.joblib"
+    path = config.PREPARED_PATH
     if not path.exists():
         raise SystemExit(f"{path} not found. Run `python -m src.preprocess` first.")
     return joblib.load(path)
@@ -107,6 +107,7 @@ def top_results(search, n: int = 5) -> list[dict]:
              "std_cv_auc": round(float(search.cv_results_["std_test_score"][i]), 4)} for i in order]
 
 
+@artifacts.protected_step("train_svm")
 def main() -> int:
     from sklearn.metrics import roc_auc_score
     from sklearn.svm import SVC
@@ -149,7 +150,7 @@ def main() -> int:
     print(f"  done in {refit_time:.1f}s")
 
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(final, config.SVM_MODEL_PATH)
+    joblib.dump(final, artifacts.output_path(config.SVM_MODEL_PATH))
     artifacts.update_metadata("svm", {
         "kernel": "rbf",
         "best_params": rbf_params,

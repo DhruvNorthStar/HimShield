@@ -1,0 +1,3388 @@
+{
+  "historical_producer_commit": null,
+  "inventory": {
+    "data/processed/.gitkeep": {
+      "bytes": 0,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "data/processed/aspect.tif": {
+      "bytes": 451049245,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+    },
+    "data/processed/aspect_grass.tfw": {
+      "bytes": 122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9da2b397fa8f83df28ffe0d4c5570f6138b3ad02ad38aa0abed80a3de4f0e936"
+    },
+    "data/processed/aspect_grass.tif": {
+      "bytes": 276362641,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9db86166faba56f4cd87fe528dae8a21b334e6add5a680995d67768ea6ee3ef3"
+    },
+    "data/processed/curvature.tif": {
+      "bytes": 451049263,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+    },
+    "data/processed/curvature_raw.tfw": {
+      "bytes": 122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9da2b397fa8f83df28ffe0d4c5570f6138b3ad02ad38aa0abed80a3de4f0e936"
+    },
+    "data/processed/curvature_raw.tif": {
+      "bytes": 300949438,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "46130fc14e9d55679b35308f5e4e643cda4c4b8177e4645b81d7c98f07f7dc41"
+    },
+    "data/processed/dataset.csv": {
+      "bytes": 2750915,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+    },
+    "data/processed/dataset_raw.csv": {
+      "bytes": 3272595,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "8e37a32542a295d3f363c78e5fc713d77757c657814cf20a8ed8481f788ea7b8"
+    },
+    "data/processed/dataset_synthetic.README.txt": {
+      "bytes": 528,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "dc16f3cece38cc9289886529e5ce4c992e3a1d40f65b7a72ed828823cd39a568"
+    },
+    "data/processed/dataset_synthetic.csv": {
+      "bytes": 341876,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "85e623c246eb94a5e1fb221349f9d0c648c94dba7230ee24f411efe637b0494e"
+    },
+    "data/processed/dem.tif": {
+      "bytes": 144515334,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+    },
+    "data/processed/dem.tif.aux.xml": {
+      "bytes": 436,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "62d8efb89cf14c1c742cf402131c96fc6916d8a63f862da574e5a2e1c872b453"
+    },
+    "data/processed/dem.tif.vrt": {
+      "bytes": 637489,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "0bbf38970f3a7240048c72327bf96132c4690aa7483f947eef73534ec633e6cd"
+    },
+    "data/processed/dem_merged.vrt": {
+      "bytes": 7497,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "521019d1c3ca05842a43c1d84e984c00d941015b6c52ae0a26ae6a8988621eaa"
+    },
+    "data/processed/dem_rudraprayag.tif": {
+      "bytes": 5324635,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "ba6f21dd75fbb38f17a620f2a9c63fc41299b3a5f751f049c7b2c97994f0b6b9"
+    },
+    "data/processed/dem_rudraprayag.tif.aux.xml": {
+      "bytes": 422,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "30713af8846fcbab32fb3fb87a2f6d81951c3a403556792aac28c88289c7a57c"
+    },
+    "data/processed/dem_utm.tif.vrt": {
+      "bytes": 4122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "8af0feaee2acba32ec7809b61330718cb8da4f0989520a039eab2bb755f7c78a"
+    },
+    "data/processed/dist_faults.tif": {
+      "bytes": 450987590,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "0f1b03c5efec15cb62a56a1e629f7fca9c2ca02872545a3553ab257833c337ad"
+    },
+    "data/processed/dist_faults.tif.aux.xml": {
+      "bytes": 417,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "27f0277edbe870b8d41381bd5dc2f4bff155192c57587474425e806913050b97"
+    },
+    "data/processed/dist_roads.tif": {
+      "bytes": 450987590,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+    },
+    "data/processed/dist_roads.tif.aux.xml": {
+      "bytes": 419,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "14028c915c6e705b12a0337ce28014ee81623edebc45747bdb02b9c7c56457ae"
+    },
+    "data/processed/dist_streams.tif": {
+      "bytes": 450987590,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+    },
+    "data/processed/dist_streams.tif.aux.xml": {
+      "bytes": 378,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "a9ac7b607b70aff1932988e504aaa1fd3c057591fe31405eb8b83f764a962382"
+    },
+    "data/processed/drainage.tfw": {
+      "bytes": 122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9da2b397fa8f83df28ffe0d4c5570f6138b3ad02ad38aa0abed80a3de4f0e936"
+    },
+    "data/processed/drainage.tif": {
+      "bytes": 26953536,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "afd3207d6090a8ac0e639e66884a13edf44c2610b726ad7ac151bcf9cd4df333"
+    },
+    "data/processed/faults_clip.gpkg": {
+      "bytes": 98304,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "4aaf609fbb3b8d4f34a49d159024a94632ea734fc6ac1a65feaf4d688c81d65c"
+    },
+    "data/processed/faults_no_fold.gpkg": {
+      "bytes": 98304,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "4a8f27b0ea6e14b23c85f493398aae66adb8d337e3400c11be0bd795f62e533c"
+    },
+    "data/processed/faults_rast.tif": {
+      "bytes": 112792787,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "cda372ffb7f8aa975db2aa632833b2ff00499845aa0b63a075ac80f40ddd7369"
+    },
+    "data/processed/faults_rast.tif.aux.xml": {
+      "bytes": 383,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "b38f1c6c269b5cb84356104bd3b460e2c86932f3a9062ce06e7599b3645da3d3"
+    },
+    "data/processed/lulc.tif": {
+      "bytes": 14533066,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+    },
+    "data/processed/lulc_merged.vrt": {
+      "bytes": 15261,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "e19e9739deefd22631e988d147f4e90f6f006e5a548b0a382e04e18624005390"
+    },
+    "data/processed/ndvi.tif": {
+      "bytes": 348277819,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+    },
+    "data/processed/prepared.joblib": {
+      "bytes": 6238709,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+    },
+    "data/processed/quickosm_extents/roads_part_1.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "ddf6ae95db7f0d64bf5c8d722799153f8f41c6692b814b36b1ae692ffbfbc414"
+    },
+    "data/processed/quickosm_extents/roads_part_2.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "d7f15aaa8fed764aab00c122298a637739bcc86fb8e1ac904a2e5b71ef278bc8"
+    },
+    "data/processed/quickosm_extents/roads_part_3.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "560b94dbf201d675f605c80c151862110f07084e6269dab28717d5acfc373cf5"
+    },
+    "data/processed/quickosm_extents/roads_part_4.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "9ce9f7e3a5a55158fe21621b5d565bbad514141b0cecc1d19cb88e4c20008980"
+    },
+    "data/processed/quickosm_extents/roads_part_5.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "4391f142c780524c5275c8286810c5db0869d3ae608759b9a2ea330a513f06fd"
+    },
+    "data/processed/quickosm_extents/roads_part_6.gpkg": {
+      "bytes": 98304,
+      "git_tracked": true,
+      "role": "derived_data_or_raster",
+      "sha256": "4932c8bea3249fb439deb1ff70b13e39fecbf28f2a0af08860395ca0af13d760"
+    },
+    "data/processed/rain_mean.tif": {
+      "bytes": 57624742,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "0b8594c4a1970c21ae36ceb35be74bf506ef9626ba9d56743d84c80af4574754"
+    },
+    "data/processed/rain_mean.tif.aux.xml": {
+      "bytes": 429,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "6852967f179382c64fbbc59dad222ad68a2652ba195ffd6410f2028c3c926eb5"
+    },
+    "data/processed/rainfall.tif": {
+      "bytes": 60302695,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+    },
+    "data/processed/rainfall.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "f129bef1f9c34da1d272d9de3cc066cbfcc231e25384b17370806bde48cbaa51"
+    },
+    "data/processed/roads_rast.tif": {
+      "bytes": 112792787,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "42a8a6b871a0e0d7766f18c67742a2e167f8ac8b50324454dff75cc9b774cd4e"
+    },
+    "data/processed/roads_rast.tif.aux.xml": {
+      "bytes": 380,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "b9c9fd1893649bf886d2a5ed28c30b8a7df24a02ba184318a75a70a6c2f3b140"
+    },
+    "data/processed/rudraprayag_boundary.gpkg": {
+      "bytes": 135168,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "e4b8d3e5b8c638886748e15ed6f4313aa744b88168638631b931391156252306"
+    },
+    "data/processed/slope.tfw": {
+      "bytes": 122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9da2b397fa8f83df28ffe0d4c5570f6138b3ad02ad38aa0abed80a3de4f0e936"
+    },
+    "data/processed/slope.tif": {
+      "bytes": 273695292,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+    },
+    "data/processed/slope.tif.aux.xml": {
+      "bytes": 422,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "765b5a26fcdbc1aa4edecd60148ca03d8fbe320fd7e41109b6acbfe0ef2b1bfb"
+    },
+    "data/processed/soil.tif": {
+      "bytes": 5317851,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+    },
+    "data/processed/soil.tif.aux.xml": {
+      "bytes": 407,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "987e53aa32c022502fed5e9f146887929772b1d17e7deb04191ca9f2891be48d"
+    },
+    "data/processed/state_buffer_50km.gpkg": {
+      "bytes": 102400,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "fd26f8ab541753f03d338f69eb3e2760d1a7064e30a0361332496e70881db236"
+    },
+    "data/processed/streams.tif": {
+      "bytes": 451049204,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "58c572bd8fc612d42090d36ee045c97718ffca542bbca76196cbcb7d6eb4313a"
+    },
+    "data/processed/streams_raw.tfw": {
+      "bytes": 122,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "9da2b397fa8f83df28ffe0d4c5570f6138b3ad02ad38aa0abed80a3de4f0e936"
+    },
+    "data/processed/streams_raw.tif": {
+      "bytes": 6741116,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "e26319f2e315d1129290466b35567bb2b958ec756819247d13df32505af8f43b"
+    },
+    "data/processed/susceptibility_rudraprayag_probability.tif": {
+      "bytes": 6113185,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "23bd1a807b784935c8312109588b5923f596dfd21d49532cb6be9d181b6ab494"
+    },
+    "data/processed/susceptibility_rudraprayag_rf.tif": {
+      "bytes": 6081249,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "c95bf935c2b4c0f908c73a02753a9728ff7a3f99a588620b4d90f448a570bec6"
+    },
+    "data/processed/susceptibility_rudraprayag_svm.tif": {
+      "bytes": 7213504,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "f0a4fe4bb22ee12133f7c7130ea3efb1a71a5b8980533aa38bc521d9dc6e97db"
+    },
+    "data/processed/susceptibility_rudraprayag_zones.tif": {
+      "bytes": 248949,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "39289492ec691b4087836a81a7ec33354af13bce084cb8917741bc78dc59bb0f"
+    },
+    "data/processed/susceptibility_uk_probability.tif": {
+      "bytes": 150652305,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "55d4dd21b5882b9d3d6292d6681ddf9a167b9b48761fad51fb78729dfea26aee"
+    },
+    "data/processed/susceptibility_uk_zones.tif": {
+      "bytes": 5927674,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "69f9d3b5619af2256cb1248657aeb1d11cdf282a9f51fba67d95f44f3b57f86d"
+    },
+    "data/processed/twi.tif": {
+      "bytes": 448145148,
+      "git_tracked": false,
+      "role": "derived_data_or_raster",
+      "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+    },
+    "data/raw/.gitkeep": {
+      "bytes": 0,
+      "git_tracked": true,
+      "role": "source_input",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "data/raw/boundary/geoBoundaries-IND-ADM1.geojson": {
+      "bytes": 46170854,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "47aa0acb6f69868daee49143276f3ce323f18905ba7d38d0a86816b405028736"
+    },
+    "data/raw/boundary/geoBoundaries-IND-ADM2.geojson": {
+      "bytes": 48317735,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "8bef6929fd65432e7dc775e7c44473e84efff064ebddbfd6b834e6291546db40"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N28_00_E079_00_DEM.tif": {
+      "bytes": 41665057,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "7d6ca026e3cf1fac61d56b9a73f2715e45a3bbfbc550e445b69f6d6e639b597c"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N28_00_E079_00_DEM.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5c5287ca2308abe5f3047b0666d99a575576dd0d45995ee07cde1d0c28aa79c7"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N28_00_E080_00_DEM.tif": {
+      "bytes": 42757169,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ff7adfc1be436bceeeca3d669fe7e0b4605ddd24344e3a5aea8cb47bb74758d0"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N28_00_E080_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "41de4c25a00bf8131464301c8bc03d084c89369d103d4533c5428d8a8db61168"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E077_00_DEM.tif": {
+      "bytes": 41057469,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "2c81234e2e5fdf1ac665642bb4b2e2fda3a50ddfba03b7a5f1e3749c21a5ef13"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E077_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9be14db263b208f36d2c36e889bbd206f3b81404c36caec66096cef277ffabdf"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E078_00_DEM.tif": {
+      "bytes": 42483491,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "e212c69bd2476e0564c71fcb8b06919be75b6d245229ed01457c92f3d3ad064a"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E078_00_DEM.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "7ee43368bdcf3da16152c62641b8e4c150377e0a19061e3f3c8c04a8eaa5c147"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E079_00_DEM.tif": {
+      "bytes": 43740536,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "bda5104881002b44ef0e5e0cd29110d208413db178d84d65fbb49f24a0229b1c"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E079_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b2d05f118a5ab42bcdb40988c8d91612d5827237ab099123ab20f8cc2aaeda53"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E080_00_DEM.tif": {
+      "bytes": 44136083,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "1ccf105a872ac5f46082bcb0a7106a363853c81b6e20cf00f0101b842c5355cf"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N29_00_E080_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c108d2a127f6eb482585b33c316c5d53f1e4cb236b0dff88fc0e720b3468ddf9"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E077_00_DEM.tif": {
+      "bytes": 42840847,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "bb17a71886c38c910f01d27a6ad7a6e5c3b4976b2500dc663adc9b2cab173a91"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E077_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "7852dd030d91ac63fcb5d25f3277cff8d856b2770517524169ac6ba8d67c983e"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E078_00_DEM.tif": {
+      "bytes": 43323128,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "1666bc434ca738c188149bc244614491bd0e94e16018cfbeeea789231f8ba0c7"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E078_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c67db4e1d079d3f51811cf903a720ba44f8fe59d531a346505d3575fec7efbbf"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E079_00_DEM.tif": {
+      "bytes": 41706694,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b24a393f1e1756a975b63df8ef81f9570a5b7622932d197149302a1b8e192ec1"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E079_00_DEM.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5bd047048d0f79a3b84ad8a512da70d27d38fb046dc375c52904cc4ca2b17a33"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E080_00_DEM.tif": {
+      "bytes": 39159632,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b093ff5d40d7afc7a6b8de94267d43938ec81ed81e722f3d25f8d254cedb452b"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E080_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "8c81ac9c115804884f9682e1d792a007d220f355e2227a6f5024b00ebadfd189"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E081_00_DEM.tif": {
+      "bytes": 35622337,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "1183336a0e281262bd43c60f2338de1e42510a386e46efafc89245de5adddede"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N30_00_E081_00_DEM.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "2c934495cfe61ab12cd1df1713fb809ff866502df663d3c4a19a79a4f56435fe"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E077_00_DEM.tif": {
+      "bytes": 42484524,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "6ee70595fcc9d54c96667be743e42252ba5ea68a2d013b3c4edc4a097e8d1605"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E077_00_DEM.tif.aux.xml": {
+      "bytes": 433,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "907056cc7bf9da059d03c3dcc4a7affbda24ba86e6843cd16c8e4209f939033d"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E078_00_DEM.tif": {
+      "bytes": 40645674,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "82eb7a2d68fe86918cd7b97ea4a734432dcffa308619df2e0392e0a7e0117993"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E078_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b795b100400e487e29ac8966447f2687c39e2e38d4358fbc9734e811026787c2"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E079_00_DEM.tif": {
+      "bytes": 38970156,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "e0c615d87b9bc9788a57df22999bf842592685f30300c6d8f4d6a9435c8f290a"
+    },
+    "data/raw/dem/Copernicus_DSM_COG_10_N31_00_E079_00_DEM.tif.aux.xml": {
+      "bytes": 434,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "4e4e3ba30f91f09ecebc0297fa64cedbfeb423142919e7846562e6779bbc2a47"
+    },
+    "data/raw/dem_srtm_unused/WHY_UNUSED.txt": {
+      "bytes": 828,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "58f04f1b98adefe3950c8743c10cbeeb1f08208824e1476e028654d4840c7ad8"
+    },
+    "data/raw/dem_srtm_unused/n28_e079_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "43f373728f83dd7cd42cd6db94541aa4fcf69f953e4c2f9fc0f6c381e03ce57c"
+    },
+    "data/raw/dem_srtm_unused/n28_e080_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c96602cba93c67f38312e68c63d5e39fe169c28feb5411af91835b9a294c0f02"
+    },
+    "data/raw/dem_srtm_unused/n29_e078_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ade1bb23f5680c7b8d18e7bcb708905f88fb8a9795a5527c0e9e9554f9f0692a"
+    },
+    "data/raw/dem_srtm_unused/n29_e079_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b9abe81100b39d940131c83f31e8fff51fdae9579c1fa6ed929570d727b1ebc7"
+    },
+    "data/raw/dem_srtm_unused/n29_e080_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "98b01954e9680710a16ddb85f8ffcc2e2211e000a8252b58efc6b37f75176182"
+    },
+    "data/raw/dem_srtm_unused/n30_e077_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "a5fc435150a54e9c1f25bad6e77cc09ff10fe8af269c6c8a3e1087b2cb7e9be5"
+    },
+    "data/raw/dem_srtm_unused/n30_e078_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "de88f115404f6101c7efa00f9af17eb42ecdd6078090e386a66f2566c6c7332e"
+    },
+    "data/raw/dem_srtm_unused/n30_e079_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "a78ee0a5b565220cd674d9013d7e005103ebefde5c772b332f8ba978cd8cbc45"
+    },
+    "data/raw/dem_srtm_unused/n30_e080_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "f9c21e992397539081eb4315c01f1bc5df8f0af105a5fd84706bbe0c609d24fa"
+    },
+    "data/raw/dem_srtm_unused/n31_e077_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "38664d19242da6a57f5017b604ab2807b2508886db4719bd62777e009f962949"
+    },
+    "data/raw/dem_srtm_unused/n31_e078_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "69a860d3af3d08679f41a83674da4dd269ca76513d62c6f9ffc3a7eac33aedfc"
+    },
+    "data/raw/dem_srtm_unused/n31_e079_1arc_v3.tif": {
+      "bytes": 25964800,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "909e5d1e07adf03fc2dd5f07a420b0dfd1db3ba38c979c3b8323579d150ac685"
+    },
+    "data/raw/geology/gem_active_faults_harmonized.geojson": {
+      "bytes": 10622730,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "37babb516edfac22b5ae91744495d8546b3ae4676b4d4f68cc77da8222df20e1"
+    },
+    "data/raw/landslides/GSI_Landslide_Inventory.shp.zip": {
+      "bytes": 5193207,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "725ca2e9b80530775b8e098a38054779f503b046e1c94346dcb25aa83a0dac4e"
+    },
+    "data/raw/landslides/global_landslide_catalog_NASA.dbf": {
+      "bytes": 65967333,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "4c72bdca53519b87b6497596e09e3e0128931cc407b3e426850e1553d27faf76"
+    },
+    "data/raw/landslides/global_landslide_catalog_NASA.prj": {
+      "bytes": 143,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "98aaf3d1c0ecadf1a424a4536de261c3daf4e373697cb86c40c43b989daf52eb"
+    },
+    "data/raw/landslides/global_landslide_catalog_NASA.shp": {
+      "bytes": 309024,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "552f6db3b1d797fc4843fc26ba020a665967e457c5cd9ca0516aec8cd05f8e8e"
+    },
+    "data/raw/landslides/global_landslide_catalog_NASA.shx": {
+      "bytes": 88364,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b668fa8073a79f294c3670aa73fde9de9cace59616b8f040ea1451e7b78963fa"
+    },
+    "data/raw/landslides/global_landslide_catalog_nasa.zip": {
+      "bytes": 3599275,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "77380c7a56ebad779629c5ac2c29a9a5742e53f8f8593beb33dac54dc27070ef"
+    },
+    "data/raw/lulc/ESA_WorldCover_10m_2021_v200_N27E075_Map.tif": {
+      "bytes": 91078639,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "447f74f2168bb14947a77c99a5a05bdf861300f1e0bdb66dd26e7262620f563f"
+    },
+    "data/raw/lulc/ESA_WorldCover_10m_2021_v200_N27E078_Map.tif": {
+      "bytes": 103610643,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b1e2b1ed27b3547cc558fa47fbaaabb1600ce210ba5db9790048f9ddd0ea4c0e"
+    },
+    "data/raw/lulc/ESA_WorldCover_10m_2021_v200_N30E075_Map.tif": {
+      "bytes": 102543746,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "a001d3a1e3ef918d68308c62d296dd921ed255fb9df5ed9558ff04b79d9567d3"
+    },
+    "data/raw/lulc/ESA_WorldCover_10m_2021_v200_N30E078_Map.tif": {
+      "bytes": 93012520,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "dc2cfe8967a0aa15d76bdff760d8f8252d57856698aeb4544d900b26318775f1"
+    },
+    "data/raw/lulc/ESA_WorldCover_10m_2021_v200_N30E081_Map.tif": {
+      "bytes": 82091849,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5d6e57465d780dfe953ba503490f180724e05079a52c6f6c759f87768da1896b"
+    },
+    "data/raw/ndvi/Uttarakhand_NDVI_2023_v3.tif": {
+      "bytes": 583793348,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "f16c33cb5b22aa3aa0275f826e78a6e6ebbd9e7afbddc8adca3bb7935d78430e"
+    },
+    "data/raw/osm/roads_tiles/tile_28.6327_78.2183.json": {
+      "bytes": 10982124,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "2aeb27f9ae9dbd357fa292780261d76c75e3f1176a96dc7a3dfd3dff8a6d428f"
+    },
+    "data/raw/osm/roads_tiles/tile_28.6327_78.9683.json": {
+      "bytes": 9986909,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9eaf9f428fb3cfb1017c68e401f9e93c5a374ccc5d977a93ca8531796b19ddad"
+    },
+    "data/raw/osm/roads_tiles/tile_28.6327_79.7183.json": {
+      "bytes": 7169506,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "d7ffefb46d10cb9af82c6dab02dbbecbb5a62a545f4d11cb17f1a7fcd845888a"
+    },
+    "data/raw/osm/roads_tiles/tile_29.3827_77.4683.json": {
+      "bytes": 11170835,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "0cbf053c0c2b6133884107791364ca6e2eb9c357a94111823a187c744335951e"
+    },
+    "data/raw/osm/roads_tiles/tile_29.3827_78.2183.json": {
+      "bytes": 8659594,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "027fc6702b2b803babb14e026687de078501941f941816c9c02783ae9d75437a"
+    },
+    "data/raw/osm/roads_tiles/tile_29.3827_78.9683.json": {
+      "bytes": 10193463,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "f582c106fc7e3b93b7fe21acfdda7a7bf3b921a025ca8c6da5a168e65e76e590"
+    },
+    "data/raw/osm/roads_tiles/tile_29.3827_79.7183.json": {
+      "bytes": 9687507,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "e3b063e7988f87dc7c8158de3a5d83b0924c740af3e9745c72376b08485ca003"
+    },
+    "data/raw/osm/roads_tiles/tile_29.3827_80.4683.json": {
+      "bytes": 4300455,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "929bb8e21464753276fe5489108ca5a1c761a3d94c698c7a63017fb37f8d8eba"
+    },
+    "data/raw/osm/roads_tiles/tile_30.1327_77.4683.json": {
+      "bytes": 11432898,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ba7b4eb9cd98580b5deb5d61cab213644abee3b0629b20cd6cf410448ed0674c"
+    },
+    "data/raw/osm/roads_tiles/tile_30.1327_78.2183.json": {
+      "bytes": 9876096,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "e8dffc72f78be9e012c510948419553c7e277eb3e180b6cc54b2dabc5e6198b4"
+    },
+    "data/raw/osm/roads_tiles/tile_30.1327_78.9683.json": {
+      "bytes": 3880018,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ba58a6a42ae748e10028ea6ddf84f59e959c8ea311a08d6f5834e4b191ec17cf"
+    },
+    "data/raw/osm/roads_tiles/tile_30.1327_79.7183.json": {
+      "bytes": 312375,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ad9e816b3ed6c11bf81481d602860f6bf58397dcefcdf5cc05f8a48f978780de"
+    },
+    "data/raw/osm/roads_tiles/tile_30.1327_80.4683.json": {
+      "bytes": 416721,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "6eaab99ad88bfa1147b41a54a0edce73ce26dc2225493c29d867f4a88b651fe6"
+    },
+    "data/raw/osm/roads_tiles/tile_30.8827_77.4683.json": {
+      "bytes": 7186549,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ced2d805461b31ba647a79ed6a0cd6e9a4ef13d033c82747c07aef06f896a527"
+    },
+    "data/raw/osm/roads_tiles/tile_30.8827_78.2183.json": {
+      "bytes": 769914,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "11995daee1018079567c605c45e4bdf646a562da8cf6c415ef239adfa0880903"
+    },
+    "data/raw/osm/roads_tiles/tile_30.8827_78.9683.json": {
+      "bytes": 620784,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "2c4abeb53f21436a04d26baa52291a382b8dd4ed4636d33af1ee1e64b48acf3b"
+    },
+    "data/raw/osm/roads_tiles/tile_30.8827_79.7183.json": {
+      "bytes": 480759,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "0e456e31b3d7450a88dded9a7061cb02d94506eb6c14a55284888b5b1a9996c5"
+    },
+    "data/raw/rainfall/chirps-v2.0.2009.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b14cb30469a4be071f09915202b40d2a63f1b069ea6ec68c7065a7f4d48eba79"
+    },
+    "data/raw/rainfall/chirps-v2.0.2009.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "1ed21d3328c704e29d953e7df6d4b7d5d256e13a92dd68e76eeddd38ea356858"
+    },
+    "data/raw/rainfall/chirps-v2.0.2010.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "8ff84f24683b7ad3c94667e3e6ea3edff58a00925ef1e47c36231b226fbdc6e9"
+    },
+    "data/raw/rainfall/chirps-v2.0.2010.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5c14f2030f7e2346104cce7dfd0217333d1ea303660548eaef89152b849a23db"
+    },
+    "data/raw/rainfall/chirps-v2.0.2011.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9e6374b3a501cddff6e15f531a7673415ca67243d93684a7003661cda8e112d7"
+    },
+    "data/raw/rainfall/chirps-v2.0.2011.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9b6d53113e5582e02065b5559d88528b0b1dfec3f7432fdbbd0ad3f39eec1a91"
+    },
+    "data/raw/rainfall/chirps-v2.0.2012.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5f92f835efb0472016d830c9f0c53fe92f5d02cc55ff3e98a5009aa7b7e7bb00"
+    },
+    "data/raw/rainfall/chirps-v2.0.2012.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9e8899e805786576c13be8fd41e96ba18c77f0edf05fb899cb6a2f04b5b5df87"
+    },
+    "data/raw/rainfall/chirps-v2.0.2013.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9213a02ecc88bb7120036b97fd2862195cae0625e60eeb3fa679784306914c86"
+    },
+    "data/raw/rainfall/chirps-v2.0.2013.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "0b070b390ff296904bb9de6296943ae5994595564d543d58cd39537d75f9683a"
+    },
+    "data/raw/rainfall/chirps-v2.0.2014.tif": {
+      "bytes": 57616550,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "8189a22093465615ab023a70262d248c5ebc3be128ff8c5db2108537246022c2"
+    },
+    "data/raw/rainfall/chirps-v2.0.2014.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "fe0cfd96e033fb42baac68e1f1301a812bac92ca55a2a276dc1e136ff6aa5cbc"
+    },
+    "data/raw/rainfall/chirps-v2.0.2015.tif": {
+      "bytes": 57616586,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "fadbaf33e873e867040e311357a106b5ef2322a853c85b67d93eefa22dbb8d69"
+    },
+    "data/raw/rainfall/chirps-v2.0.2015.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "9077655e2d1ace9f83a909e73da65d4c6f0cb979d502f800c09993028dec60e2"
+    },
+    "data/raw/rainfall/chirps-v2.0.2016.tif": {
+      "bytes": 57616586,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "410527254af77d187831568b3a161a1dc343a7f5bd8ca3c17753597fe0b5d03b"
+    },
+    "data/raw/rainfall/chirps-v2.0.2016.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b10bdb35bd8e9ea47ba2753d62a5f5e16294b29427b7253b955f498055cd8e56"
+    },
+    "data/raw/rainfall/chirps-v2.0.2017.tif": {
+      "bytes": 57616588,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c2d241a6a94b40f33d02f49c6eda6eedcb3db4c4df0a87668b3152049314c25f"
+    },
+    "data/raw/rainfall/chirps-v2.0.2017.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "211bbd8db290284dd498400f58820abfd47bf3ffee7ec11ce3d116f2fe55ce8b"
+    },
+    "data/raw/rainfall/chirps-v2.0.2018.tif": {
+      "bytes": 57616544,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "cb6b0b8e41e75ec235d10db179e012344db448fc411c147965090f66aec43764"
+    },
+    "data/raw/rainfall/chirps-v2.0.2018.tif.aux.xml": {
+      "bytes": 422,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "b445bbda3fc827a507cc5486fde8b3a52649d506d4e49095cf76c9dbda61e694"
+    },
+    "data/raw/rainfall/chirps-v2.0.2019.tif": {
+      "bytes": 57616588,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "71f40e6fde787ed57174cf0e32b2ac28f38617fe0d384d38447557a10e2bdddd"
+    },
+    "data/raw/rainfall/chirps-v2.0.2019.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "cece1815224403aca8a8f6a8cf3a6bf32cd2ba241442666889f3542b7ced1dd2"
+    },
+    "data/raw/rainfall/chirps-v2.0.2020.tif": {
+      "bytes": 57616544,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "7ebad0a3758a57ba0f8bcee65aa2f2c6d4ca1e701bb16c19263dc10858184e38"
+    },
+    "data/raw/rainfall/chirps-v2.0.2020.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "25b50e4145e725e57952b9dda675a96f7fff96037d525fe6c42efdcc562fc08a"
+    },
+    "data/raw/rainfall/chirps-v2.0.2021.tif": {
+      "bytes": 57616544,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "d0f9c1982f66d4b5002c25f3f4fe90359f06df12e1f4755aaa0294a6fb1af69b"
+    },
+    "data/raw/rainfall/chirps-v2.0.2021.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "eb13526b6352cbd6f7d10dfaeb9af8b65861b2d7895ff421d4362d505436c10b"
+    },
+    "data/raw/rainfall/chirps-v2.0.2022.tif": {
+      "bytes": 57616544,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ce97bd0697f5862e168b24269ee3cfaa9cff81d7c3ffa2a3e5ddd22966900b14"
+    },
+    "data/raw/rainfall/chirps-v2.0.2022.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "8b966b89cb56f32cad78eb5581d3808e3bce1cb29b48855f5566a9c7dcaa1e25"
+    },
+    "data/raw/rainfall/chirps-v2.0.2023.tif": {
+      "bytes": 57612546,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "7e0943e382993e3a6cbb6e1e1caaa8757a989c5852f932e94f93d9445a58f6b0"
+    },
+    "data/raw/rainfall/chirps-v2.0.2023.tif.aux.xml": {
+      "bytes": 424,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "5d3c03480cc8760f9a4cd87bf3754aa9fbd0d929823342f68dd1e41f37563703"
+    },
+    "data/raw/rainfall/chirps-v2.0.2024.tif": {
+      "bytes": 57612546,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c6dd23b746c847e9069d5b351be5f88267d6d4bb77d8b1d63c0e8ba598aadea9"
+    },
+    "data/raw/rainfall/chirps-v2.0.2024.tif.aux.xml": {
+      "bytes": 425,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c7fd0bbbaf1f13e10a2680734d812d4c966546876680a6f75766107a3b31ef82"
+    },
+    "data/raw/soil/soilgrids_wrb_legend.json": {
+      "bytes": 650,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+    },
+    "data/raw/soil/soilgrids_wrb_mostprobable.tif": {
+      "bytes": 447419,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "4f6ea95154d0b67a8403ce7f38eb365114c079134e58c7c2e902f3889a6d3822"
+    },
+    "data/raw/soil/soilgrids_wrb_mostprobable.tif.aux.xml": {
+      "bytes": 407,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "c848003075a5160e612cc4b284a606602b26827a2d3e573fa6a69ab38eb9cb4e"
+    },
+    "data/shapefiles/.gitkeep": {
+      "bytes": 0,
+      "git_tracked": true,
+      "role": "source_input",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "data/shapefiles/all_points.gpkg": {
+      "bytes": 3403776,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "35671cfac85330d55a7960ca004026e475679e076c65e80841a2f9a256a2cce5"
+    },
+    "data/shapefiles/faults.gpkg": {
+      "bytes": 98304,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "56e47cbdb70e21e839c83dcdbba9cfd1caef319b727ebd8aaaaaa6cb68f50f0f"
+    },
+    "data/shapefiles/landslides.gpkg": {
+      "bytes": 704512,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ee05f226bba3b7ed08dc799ecba8c12ffae12a95e428a5cc2b39539f9e1e02e1"
+    },
+    "data/shapefiles/non_landslides.gpkg": {
+      "bytes": 1060864,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "d64584e094aa7c2369ac9d3611f8d0b4d50f1140c4e71866f341b1da4d4b7089"
+    },
+    "data/shapefiles/roads.gpkg": {
+      "bytes": 35373056,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "60631734f4ea21371cbf57b97f124a3ef74a6c7f2e0010d0882b485aeea6e546"
+    },
+    "data/shapefiles/uttarakhand_boundary.gpkg": {
+      "bytes": 397312,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+    },
+    "data/shapefiles/uttarakhand_districts.gpkg": {
+      "bytes": 1318912,
+      "git_tracked": false,
+      "role": "source_input",
+      "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+    },
+    "models/.gitkeep": {
+      "bytes": 0,
+      "git_tracked": true,
+      "role": "model_or_preprocessing",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "models/feature_names.json": {
+      "bytes": 478,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+    },
+    "models/metadata.json": {
+      "bytes": 22325,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "7cd253c63056052578d1611144476849d7186d6e5f7bab24a5c062ce493218a3"
+    },
+    "models/rf_model.pkl": {
+      "bytes": 57069577,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+    },
+    "models/scaler.pkl": {
+      "bytes": 1791,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+    },
+    "models/svm_model.pkl": {
+      "bytes": 853563,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "5ced2c2359151734c16359e1d4049f52de0454eca899a670d19f5e889ab6920f"
+    },
+    "models/synthetic_baseline_2026-09-14/feature_names.json": {
+      "bytes": 606,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "990781eb553537f803fa5ec698da37c51542b482e2f547247e4457624054a306"
+    },
+    "models/synthetic_baseline_2026-09-14/metadata.json": {
+      "bytes": 16626,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "c830c66a6fdbf5fbe8567cf84704e43581199472665672c73849e1da2d13fd8b"
+    },
+    "models/synthetic_baseline_2026-09-14/prepared.joblib": {
+      "bytes": 1817740,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "f3024357374e92885fb003d41a71283d972b206e6768dbf17c8e3a42eb7769b4"
+    },
+    "models/synthetic_baseline_2026-09-14/rf_model.pkl": {
+      "bytes": 12403929,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "540d87d736507287d7a26c0409a0a7748eb68bf21d8b2ba48df4ff8c3c7e5abf"
+    },
+    "models/synthetic_baseline_2026-09-14/scaler.pkl": {
+      "bytes": 2031,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "0794d03ffd0b8ac51862f5ea4fab4af3d0b970e096bcd2a6e5f0b5bb6d1579f7"
+    },
+    "models/synthetic_baseline_2026-09-14/svm_model.pkl": {
+      "bytes": 386427,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "d47c19a4d843ebf6df52b5cd879cc4a77f78842c6d1dc45cc1e8e652d69bab8d"
+    },
+    "models/xgb_model.pkl": {
+      "bytes": 234800,
+      "git_tracked": false,
+      "role": "model_or_preprocessing",
+      "sha256": "916409223e7189ccff359b441aaf247fc5998ee0b988d1d73c79bcd968241dcb"
+    },
+    "outputs/demo_map_rudraprayag.html": {
+      "bytes": 499926,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "697f1ca3a1ab6b5d74e69fda97ab038bef8486bd6df3af92317ea767cfd965f3"
+    },
+    "outputs/demo_map_rudraprayag_svm.html": {
+      "bytes": 566606,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "5085dd39e35ad84b307240c2c52db11f8bcd88a979bb7232e4a2afcb5394925f"
+    },
+    "outputs/eda_report.txt": {
+      "bytes": 5250,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "0709f32ccfb37eb3f90aa8d20ef47157e93d919bdf70842902e2f943d476b2d5"
+    },
+    "outputs/evaluation_report.txt": {
+      "bytes": 4824,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "604489a3a2223902486af901e5f759cb54175962087322be9e4244a4addb9469"
+    },
+    "outputs/figures/.gitkeep": {
+      "bytes": 0,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "outputs/figures/confusion_matrices.png": {
+      "bytes": 76424,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "bdef8568d828b0eb01bac2c83f58e5ab6d736a181bcbed205e322fb64ff65282"
+    },
+    "outputs/figures/eda_categorical_landslide_rate.png": {
+      "bytes": 106306,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "b2eb34aed5caf7cf60c074e7c0874b99027ecc6b1c1ef8733e366bf8d985c1b4"
+    },
+    "outputs/figures/eda_class_balance.png": {
+      "bytes": 24989,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "c5522f93aeddf982a167876d1987de7a09311e74f4f7e3d70c9da0adaf7f2efa"
+    },
+    "outputs/figures/eda_correlation_heatmap.png": {
+      "bytes": 100050,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "647e9a76f65d016bda06eeee3c9766e801df1bb7d8c0603792821bb1efb09718"
+    },
+    "outputs/figures/eda_distributions_by_class.png": {
+      "bytes": 93718,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "7a2a7414480c9885c78256498c162c45e1c482a9a075b861a6a9e9f74c39c554"
+    },
+    "outputs/figures/eda_missing_values.png": {
+      "bytes": 30333,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "3229ad24832958bc6c01aa0ad97e29aacc39481959d2c0519eb085bb3299ec0e"
+    },
+    "outputs/figures/precision_recall_comparison.png": {
+      "bytes": 77489,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "4b7cc3166fc48300e74312d7545bb088c77dd54b44913a257344a5998a8e32b0"
+    },
+    "outputs/figures/rf_feature_importance.png": {
+      "bytes": 78610,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "ebdd81debd105581335cb6ddf76694ad861ba040c1eb7b1a905d46ba3b66caf7"
+    },
+    "outputs/figures/roc_comparison.png": {
+      "bytes": 84486,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "96da2f91fd469787db4f27317ffe70152eb6b6237725f5b1afd366e93f6775f2"
+    },
+    "outputs/figures/shap/shap_bar.png": {
+      "bytes": 111037,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "64ad1720c01282a709764585d89851bd2f89ad7acdf4ebc1bf4fb4df80b0777a"
+    },
+    "outputs/figures/shap/shap_beeswarm.png": {
+      "bytes": 195211,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "4d6f4e70a7c55862d7b8b2c3126ea6b5e33b1f6420d43532b438990805a0bdbf"
+    },
+    "outputs/figures/shap/shap_dependence_1_dist_roads.png": {
+      "bytes": 68103,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "58f29757380e1d204dc74fc13de3de342af74135947a3658e8ae70540c0495d4"
+    },
+    "outputs/figures/shap/shap_dependence_2_elevation.png": {
+      "bytes": 69817,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "c71d6f0bd0c0cf01e0dc213fe7a5a0408fa1c9b81dde292448f38386e0ddec6b"
+    },
+    "outputs/figures/shap/shap_dependence_3_slope.png": {
+      "bytes": 67977,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "60fcc5d45ac8e7d7641c8205dc1e1e4866dc95e10c49eae9f80319c7e42006b7"
+    },
+    "outputs/figures/shap/shap_force_high_risk.png": {
+      "bytes": 96894,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "1a69a4c20b9acd578eb70b7b2eb71df062f5d139f1e36e9c15b76db14dc9f8fe"
+    },
+    "outputs/figures/shap/shap_summary.json": {
+      "bytes": 1873,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "e1f1c2b669b4d7d750ead4f4d87111d3b29fd9d731b407b69e5a87b897a91ed4"
+    },
+    "outputs/figures/xgb_feature_importance.png": {
+      "bytes": 76618,
+      "git_tracked": true,
+      "role": "report_figure_or_map",
+      "sha256": "c8df1d04e7509258f45ad2ea0b3e576ce217707e7161e9f6e2bc5814bc4d649d"
+    },
+    "outputs/susceptibility_map_uk.html": {
+      "bytes": 7001334,
+      "git_tracked": false,
+      "role": "report_figure_or_map",
+      "sha256": "8491f5a0076178f95aad255247be56e60ba2b797a057e27f1e85245620283064"
+    }
+  },
+  "kind": "frozen_benchmark",
+  "metrics": {
+    "Random Forest": {
+      "auc": 0.9603679456559717,
+      "average_precision": 0.9143028996304388,
+      "default": {
+        "accuracy": 0.9024,
+        "f1": 0.858,
+        "false_negatives": 172,
+        "false_positives": 272,
+        "precision": 0.8314,
+        "recall": 0.8863,
+        "specificity": 0.9105,
+        "threshold": 0.5,
+        "true_negatives": 2766,
+        "true_positives": 1341
+      },
+      "prediction_match": "exact, all 4551 held-out points",
+      "youden": {
+        "accuracy": 0.9051,
+        "f1": 0.8609,
+        "false_negatives": 176,
+        "false_positives": 256,
+        "precision": 0.8393,
+        "recall": 0.8837,
+        "specificity": 0.9157,
+        "threshold": 0.5167,
+        "true_negatives": 2782,
+        "true_positives": 1337
+      }
+    },
+    "SVM (RBF)": {
+      "auc": 0.9404149118871905,
+      "average_precision": 0.8814383234971094,
+      "default": {
+        "accuracy": 0.8708,
+        "f1": 0.8217,
+        "false_negatives": 158,
+        "false_positives": 430,
+        "precision": 0.7591,
+        "recall": 0.8956,
+        "specificity": 0.8585,
+        "threshold": 0.5,
+        "true_negatives": 2608,
+        "true_positives": 1355
+      },
+      "prediction_match": "exact, all 4551 held-out points",
+      "youden": {
+        "accuracy": 0.8748,
+        "f1": 0.8254,
+        "false_negatives": 166,
+        "false_positives": 404,
+        "precision": 0.7693,
+        "recall": 0.8903,
+        "specificity": 0.867,
+        "threshold": 0.521,
+        "true_negatives": 2634,
+        "true_positives": 1347
+      }
+    },
+    "XGBoost": {
+      "auc": 0.9616124811649922,
+      "average_precision": 0.9207517409859101,
+      "default": {
+        "accuracy": 0.9018,
+        "f1": 0.8576,
+        "false_negatives": 167,
+        "false_positives": 280,
+        "precision": 0.8278,
+        "recall": 0.8896,
+        "specificity": 0.9078,
+        "threshold": 0.5,
+        "true_negatives": 2758,
+        "true_positives": 1346
+      },
+      "prediction_match": "exact, all 4551 held-out points",
+      "youden": {
+        "accuracy": 0.9018,
+        "f1": 0.859,
+        "false_negatives": 151,
+        "false_positives": 296,
+        "precision": 0.8215,
+        "recall": 0.9002,
+        "specificity": 0.9026,
+        "threshold": 0.4815,
+        "true_negatives": 2742,
+        "true_positives": 1362
+      }
+    }
+  },
+  "note": "Fingerprints record the implementation verified compatible during Stage 3, not a claim that these artifacts were regenerated with it.",
+  "prediction_identity": {
+    "features": 23,
+    "models": {
+      "Random Forest": {
+        "feature_contract": true,
+        "labels_sha256": "201d223417727092d066658f9a2ad19eab0ebbb15bdb8032fce8c371143e2999",
+        "probability_sha256": "1ec0946a546700cbd2413c6a28beb56a1c9b44b5cf66d96cfdb64bbe3d7bc65b"
+      },
+      "SVM (RBF)": {
+        "feature_contract": true,
+        "labels_sha256": "51a85795e4dc5882906e0393f438ee603370a12233a66f72da03214e5946c81e",
+        "probability_sha256": "faff318d170530c45be93fc271f1663834839b3e0138670ec6e54a6a8b439672"
+      },
+      "XGBoost": {
+        "feature_contract": true,
+        "labels_sha256": "bb813fa280a08d0166f0644224db1b8f93fcf1254f4ca7ff43d76c9881e6dfe7",
+        "probability_sha256": "65f411a4ca0826bc9d6f1edee8f616f11bf5247d1a970672b3892e8d8ddf15b9"
+      }
+    },
+    "rows": 4551,
+    "test_index_hash": "018376905f23957e177957c2277ad696082f2ee1d8beb58224403185b12b61a4",
+    "test_labels_hash": "122fec03672daed9da5b02c0344163a9437d81062fe38768f6b7e6dbcb7d4d64",
+    "train_index_hash": "4467b8ef36a5a6669087b6a6e10f182c30dfe0bf6ba005f1a156b88cd3b69002"
+  },
+  "registered_utc": "2026-10-09T19:36:06.477411+00:00",
+  "schema_version": 1,
+  "steps": {
+    "clean_gsi": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "clean_gsi.py": {
+            "sha256": "4f11d30c15e86f4eda650fc60aae6aa43d5fca789b5e982c48ed0a086f05e6d6"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/raw/landslides/GSI_Landslide_Inventory.shp.zip": {
+            "bytes": 5193207,
+            "sha256": "725ca2e9b80530775b8e098a38054779f503b046e1c94346dcb25aa83a0dac4e"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/shapefiles/landslides.gpkg": {
+            "bytes": 704512,
+            "sha256": "ee05f226bba3b7ed08dc799ecba8c12ffae12a95e428a5cc2b39539f9e1e02e1"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "demo_map": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "label_categories.py": {
+            "sha256": "b6738ef7f482b5cfff08c5aa2007a53dde833105463a5791515c70efa76dd248"
+          },
+          "preprocess.py": {
+            "sha256": "2419be95e09479c5b9385a57723d52a9be444411080f377b635f2dd1e3ecb2c0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/raw/soil/soilgrids_wrb_legend.json": {
+            "bytes": 650,
+            "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          }
+        },
+        "metadata_sections": {
+          "preprocessing": "2e1f5c16ad60e5a5755c2fd26ee1405e98a05f5c4639f9afee468c66de6f5f5e"
+        },
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "DEMO_DISTRICT": "Rudraprayag",
+          "GEOGRAPHIC_CRS": "EPSG:4326",
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "RARE_CLASS_LABEL": "Other",
+          "RISK_ZONES": [
+            "Very Low",
+            "Low",
+            "Moderate",
+            "High",
+            "Very High"
+          ],
+          "RISK_ZONE_BREAKS": [
+            0.2,
+            0.4,
+            0.6,
+            0.8
+          ],
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/susceptibility_rudraprayag_rf.tif": {
+            "bytes": 6081249,
+            "sha256": "c95bf935c2b4c0f908c73a02753a9728ff7a3f99a588620b4d90f448a570bec6"
+          },
+          "outputs/demo_map_rudraprayag.html": {
+            "bytes": 499926,
+            "sha256": "697f1ca3a1ab6b5d74e69fda97ab038bef8486bd6df3af92317ea767cfd965f3"
+          }
+        },
+        "metadata_section": {
+          "name": "demo_map",
+          "sha256": "b3cb6a2ad30aafbae35b7e85ca0430093ff5cf24cf53b800f4cb1786a4502317"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "demo_map_svm": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "label_categories.py": {
+            "sha256": "b6738ef7f482b5cfff08c5aa2007a53dde833105463a5791515c70efa76dd248"
+          },
+          "preprocess.py": {
+            "sha256": "2419be95e09479c5b9385a57723d52a9be444411080f377b635f2dd1e3ecb2c0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/raw/soil/soilgrids_wrb_legend.json": {
+            "bytes": 650,
+            "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          },
+          "models/svm_model.pkl": {
+            "bytes": 853563,
+            "sha256": "5ced2c2359151734c16359e1d4049f52de0454eca899a670d19f5e889ab6920f"
+          }
+        },
+        "metadata_sections": {
+          "preprocessing": "2e1f5c16ad60e5a5755c2fd26ee1405e98a05f5c4639f9afee468c66de6f5f5e"
+        },
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "DEMO_DISTRICT": "Rudraprayag",
+          "GEOGRAPHIC_CRS": "EPSG:4326",
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "RARE_CLASS_LABEL": "Other",
+          "RISK_ZONES": [
+            "Very Low",
+            "Low",
+            "Moderate",
+            "High",
+            "Very High"
+          ],
+          "RISK_ZONE_BREAKS": [
+            0.2,
+            0.4,
+            0.6,
+            0.8
+          ],
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/susceptibility_rudraprayag_svm.tif": {
+            "bytes": 7213504,
+            "sha256": "f0a4fe4bb22ee12133f7c7130ea3efb1a71a5b8980533aa38bc521d9dc6e97db"
+          },
+          "outputs/demo_map_rudraprayag_svm.html": {
+            "bytes": 566606,
+            "sha256": "5085dd39e35ad84b307240c2c52db11f8bcd88a979bb7232e4a2afcb5394925f"
+          }
+        },
+        "metadata_section": {
+          "name": "demo_map_svm",
+          "sha256": "5e6499cf9d2f4f010eda2ff5bd9d09fa7e8da02a9a99e7058a1cd3a048df9b7f"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "district_raster": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "label_categories.py": {
+            "sha256": "b6738ef7f482b5cfff08c5aa2007a53dde833105463a5791515c70efa76dd248"
+          },
+          "predict_raster_full.py": {
+            "sha256": "321e67ae27efd117805e0351eb6f7ff05d8f6e7f010aa853f2c017bcba804b1c"
+          },
+          "preprocess.py": {
+            "sha256": "2419be95e09479c5b9385a57723d52a9be444411080f377b635f2dd1e3ecb2c0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/raw/soil/soilgrids_wrb_legend.json": {
+            "bytes": 650,
+            "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          }
+        },
+        "metadata_sections": {
+          "preprocessing": "2e1f5c16ad60e5a5755c2fd26ee1405e98a05f5c4639f9afee468c66de6f5f5e"
+        },
+        "options": {
+          "district": "rudraprayag"
+        },
+        "settings": {
+          "DATA_SOURCE": "real",
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "RARE_CLASS_LABEL": "Other",
+          "RISK_ZONES": [
+            "Very Low",
+            "Low",
+            "Moderate",
+            "High",
+            "Very High"
+          ],
+          "RISK_ZONE_BREAKS": [
+            0.2,
+            0.4,
+            0.6,
+            0.8
+          ],
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/susceptibility_rudraprayag_probability.tif": {
+            "bytes": 6113185,
+            "sha256": "23bd1a807b784935c8312109588b5923f596dfd21d49532cb6be9d181b6ab494"
+          },
+          "data/processed/susceptibility_rudraprayag_zones.tif": {
+            "bytes": 248949,
+            "sha256": "39289492ec691b4087836a81a7ec33354af13bce084cb8917741bc78dc59bb0f"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "eda": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "eda.py": {
+            "sha256": "c8197036ace4f1864bd741a48053439b70a7d1603c952c62fdb70d36eee60f08"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "viz.py": {
+            "sha256": "8c0d35c2b2a72afaf328037cc3dcbd724bfcb9860845f3d5f1d500989cf3f5df"
+          }
+        },
+        "environment": {
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2"
+        },
+        "files": {
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "outputs/eda_report.txt": {
+            "bytes": 5250,
+            "sha256": "0709f32ccfb37eb3f90aa8d20ef47157e93d919bdf70842902e2f943d476b2d5"
+          },
+          "outputs/figures/eda_categorical_landslide_rate.png": {
+            "bytes": 106306,
+            "sha256": "b2eb34aed5caf7cf60c074e7c0874b99027ecc6b1c1ef8733e366bf8d985c1b4"
+          },
+          "outputs/figures/eda_class_balance.png": {
+            "bytes": 24989,
+            "sha256": "c5522f93aeddf982a167876d1987de7a09311e74f4f7e3d70c9da0adaf7f2efa"
+          },
+          "outputs/figures/eda_correlation_heatmap.png": {
+            "bytes": 100050,
+            "sha256": "647e9a76f65d016bda06eeee3c9766e801df1bb7d8c0603792821bb1efb09718"
+          },
+          "outputs/figures/eda_distributions_by_class.png": {
+            "bytes": 93718,
+            "sha256": "7a2a7414480c9885c78256498c162c45e1c482a9a075b861a6a9e9f74c39c554"
+          },
+          "outputs/figures/eda_missing_values.png": {
+            "bytes": 30333,
+            "sha256": "3229ad24832958bc6c01aa0ad97e29aacc39481959d2c0519eb085bb3299ec0e"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "evaluate": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "evaluate.py": {
+            "sha256": "8cb5df6024ac68dd869cd81cf08f05fcf237c71232417d8b8a7d192fcfa915e2"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "viz.py": {
+            "sha256": "8c0d35c2b2a72afaf328037cc3dcbd724bfcb9860845f3d5f1d500989cf3f5df"
+          }
+        },
+        "environment": {
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "xgboost": "3.4.2"
+        },
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/svm_model.pkl": {
+            "bytes": 853563,
+            "sha256": "5ced2c2359151734c16359e1d4049f52de0454eca899a670d19f5e889ab6920f"
+          },
+          "models/xgb_model.pkl": {
+            "bytes": 234800,
+            "sha256": "916409223e7189ccff359b441aaf247fc5998ee0b988d1d73c79bcd968241dcb"
+          }
+        },
+        "metadata_sections": {
+          "near_road_check": "ae27cfdaebd0c3ab808db3ac7a3bec64119f44a13980854c950940fea83b00b7",
+          "svm": "808adbfb10ea2b99edeebff8aa0483a82fc695e036e40f94c730e90c7d65c477"
+        },
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "outputs/evaluation_report.txt": {
+            "bytes": 4824,
+            "sha256": "604489a3a2223902486af901e5f759cb54175962087322be9e4244a4addb9469"
+          },
+          "outputs/figures/confusion_matrices.png": {
+            "bytes": 76424,
+            "sha256": "bdef8568d828b0eb01bac2c83f58e5ab6d736a181bcbed205e322fb64ff65282"
+          },
+          "outputs/figures/precision_recall_comparison.png": {
+            "bytes": 77489,
+            "sha256": "4b7cc3166fc48300e74312d7545bb088c77dd54b44913a257344a5998a8e32b0"
+          },
+          "outputs/figures/roc_comparison.png": {
+            "bytes": 84486,
+            "sha256": "96da2f91fd469787db4f27317ffe70152eb6b6237725f5b1afd366e93f6775f2"
+          }
+        },
+        "metadata_section": {
+          "name": "evaluation",
+          "sha256": "6eade870da391e87cde5371506b08ab5502542104f16490e56e634c4a0755476"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "extract_points": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "extract_points.py": {
+            "sha256": "b1156dcedeb93e276ce9e99d20484ba25e0d9792a4bda17c56f1d1b9a37b75d0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_faults.tif": {
+            "bytes": 450987590,
+            "sha256": "0f1b03c5efec15cb62a56a1e629f7fca9c2ca02872545a3553ab257833c337ad"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/shapefiles/landslides.gpkg": {
+            "bytes": 704512,
+            "sha256": "ee05f226bba3b7ed08dc799ecba8c12ffae12a95e428a5cc2b39539f9e1e02e1"
+          },
+          "data/shapefiles/non_landslides.gpkg": {
+            "bytes": 1060864,
+            "sha256": "d64584e094aa7c2369ac9d3611f8d0b4d50f1140c4e71866f341b1da4d4b7089"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/dataset_raw.csv": {
+            "bytes": 3272595,
+            "sha256": "8e37a32542a295d3f363c78e5fc713d77757c657814cf20a8ed8481f788ea7b8"
+          },
+          "data/shapefiles/all_points.gpkg": {
+            "bytes": 3403776,
+            "sha256": "35671cfac85330d55a7960ca004026e475679e076c65e80841a2f9a256a2cce5"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "label_categories": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "label_categories.py": {
+            "sha256": "b6738ef7f482b5cfff08c5aa2007a53dde833105463a5791515c70efa76dd248"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/dataset_raw.csv": {
+            "bytes": 3272595,
+            "sha256": "8e37a32542a295d3f363c78e5fc713d77757c657814cf20a8ed8481f788ea7b8"
+          },
+          "data/raw/soil/soilgrids_wrb_legend.json": {
+            "bytes": 650,
+            "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "map": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "map_generator_full.py": {
+            "sha256": "7b0100e5e6312fc18a5b9030fbecddc839cc08db26ac804244238cd533518f24"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/susceptibility_uk_zones.tif": {
+            "bytes": 5927674,
+            "sha256": "69f9d3b5619af2256cb1248657aeb1d11cdf282a9f51fba67d95f44f3b57f86d"
+          },
+          "data/shapefiles/landslides.gpkg": {
+            "bytes": 704512,
+            "sha256": "ee05f226bba3b7ed08dc799ecba8c12ffae12a95e428a5cc2b39539f9e1e02e1"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          }
+        },
+        "metadata_sections": {},
+        "options": {
+          "max_pixels": 4000,
+          "out": "outputs/susceptibility_map_uk.html",
+          "zones": "data/processed/susceptibility_uk_zones.tif"
+        },
+        "settings": {
+          "DATA_SOURCE": "real",
+          "GEOGRAPHIC_CRS": "EPSG:4326",
+          "RANDOM_STATE": 42,
+          "RISK_ZONES": [
+            "Very Low",
+            "Low",
+            "Moderate",
+            "High",
+            "Very High"
+          ],
+          "RISK_ZONE_BREAKS": [
+            0.2,
+            0.4,
+            0.6,
+            0.8
+          ],
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "outputs/susceptibility_map_uk.html": {
+            "bytes": 7001334,
+            "sha256": "8491f5a0076178f95aad255247be56e60ba2b797a057e27f1e85245620283064"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "near_road": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "evaluate.py": {
+            "sha256": "8cb5df6024ac68dd869cd81cf08f05fcf237c71232417d8b8a7d192fcfa915e2"
+          },
+          "near_road_check.py": {
+            "sha256": "e0ee2cef5df2738d5ef2f6013a9c0685e45acedeff585cb1c5ec2a514b363fa8"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "xgboost": "3.4.2"
+        },
+        "files": {
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          },
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          },
+          "models/svm_model.pkl": {
+            "bytes": 853563,
+            "sha256": "5ced2c2359151734c16359e1d4049f52de0454eca899a670d19f5e889ab6920f"
+          },
+          "models/xgb_model.pkl": {
+            "bytes": 234800,
+            "sha256": "916409223e7189ccff359b441aaf247fc5998ee0b988d1d73c79bcd968241dcb"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {},
+        "metadata_section": {
+          "name": "near_road_check",
+          "sha256": "ae27cfdaebd0c3ab808db3ac7a3bec64119f44a13980854c950940fea83b00b7"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "preprocess": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "preprocess.py": {
+            "sha256": "2419be95e09479c5b9385a57723d52a9be444411080f377b635f2dd1e3ecb2c0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "imbalanced-learn": "0.14.2",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "scipy": "1.15.2",
+          "statsmodels": "0.14.6"
+        },
+        "files": {
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "RARE_CLASS_LABEL": "Other",
+          "RARE_CLASS_MIN_ROWS": 50,
+          "SMOTE_K_NEIGHBORS": 5,
+          "SMOTE_SAMPLING_STRATEGY": 1.0,
+          "TARGET": "landslide",
+          "TEST_SIZE": 0.3,
+          "VIF_THRESHOLD": 10.0,
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          }
+        },
+        "metadata_section": {
+          "name": "preprocessing",
+          "sha256": "2e1f5c16ad60e5a5755c2fd26ee1405e98a05f5c4639f9afee468c66de6f5f5e"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "shap": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "explain_shap.py": {
+            "sha256": "d6bb490f50e9f605a8d8d4091613c9a4f138aa2385c04a4562b57cd702086cfc"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "viz.py": {
+            "sha256": "8c0d35c2b2a72afaf328037cc3dcbd724bfcb9860845f3d5f1d500989cf3f5df"
+          }
+        },
+        "environment": {
+          "joblib": "1.5.3",
+          "matplotlib": "3.10.9",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "shap": "0.51.0"
+        },
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          }
+        },
+        "metadata_sections": {},
+        "options": {
+          "max_samples": 500
+        },
+        "settings": {
+          "DATA_SOURCE": "real",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "outputs/figures/shap/shap_bar.png": {
+            "bytes": 111037,
+            "sha256": "64ad1720c01282a709764585d89851bd2f89ad7acdf4ebc1bf4fb4df80b0777a"
+          },
+          "outputs/figures/shap/shap_beeswarm.png": {
+            "bytes": 195211,
+            "sha256": "4d6f4e70a7c55862d7b8b2c3126ea6b5e33b1f6420d43532b438990805a0bdbf"
+          },
+          "outputs/figures/shap/shap_dependence_1_dist_roads.png": {
+            "bytes": 68103,
+            "sha256": "58f29757380e1d204dc74fc13de3de342af74135947a3658e8ae70540c0495d4"
+          },
+          "outputs/figures/shap/shap_dependence_2_elevation.png": {
+            "bytes": 69817,
+            "sha256": "c71d6f0bd0c0cf01e0dc213fe7a5a0408fa1c9b81dde292448f38386e0ddec6b"
+          },
+          "outputs/figures/shap/shap_dependence_3_slope.png": {
+            "bytes": 67977,
+            "sha256": "60fcc5d45ac8e7d7641c8205dc1e1e4866dc95e10c49eae9f80319c7e42006b7"
+          },
+          "outputs/figures/shap/shap_force_high_risk.png": {
+            "bytes": 96894,
+            "sha256": "1a69a4c20b9acd578eb70b7b2eb71df062f5d139f1e36e9c15b76db14dc9f8fe"
+          },
+          "outputs/figures/shap/shap_summary.json": {
+            "bytes": 1873,
+            "sha256": "e1f1c2b669b4d7d750ead4f4d87111d3b29fd9d731b407b69e5a87b897a91ed4"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "stable_points": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "clean_gsi.py": {
+            "sha256": "4f11d30c15e86f4eda650fc60aae6aa43d5fca789b5e982c48ed0a086f05e6d6"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "make_stable_points.py": {
+            "sha256": "2f1c06015e4dbb7bd84b9ac2da351a491adbcafcbaba3e45ceba873792b5082f"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/raw/landslides/GSI_Landslide_Inventory.shp.zip": {
+            "bytes": 5193207,
+            "sha256": "725ca2e9b80530775b8e098a38054779f503b046e1c94346dcb25aa83a0dac4e"
+          },
+          "data/shapefiles/landslides.gpkg": {
+            "bytes": 704512,
+            "sha256": "ee05f226bba3b7ed08dc799ecba8c12ffae12a95e428a5cc2b39539f9e1e02e1"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "NEGATIVE_BUFFER_M": 500,
+          "NEG_TO_POS_RATIO": 2,
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/shapefiles/non_landslides.gpkg": {
+            "bytes": 1060864,
+            "sha256": "d64584e094aa7c2369ac9d3611f8d0b4d50f1140c4e71866f341b1da4d4b7089"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "state": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "demo_map.py": {
+            "sha256": "df06e612757c1133c7e45c6188db34687f61ce7ea9b604578d731828a1facca3"
+          },
+          "label_categories.py": {
+            "sha256": "b6738ef7f482b5cfff08c5aa2007a53dde833105463a5791515c70efa76dd248"
+          },
+          "predict_raster_full.py": {
+            "sha256": "321e67ae27efd117805e0351eb6f7ff05d8f6e7f010aa853f2c017bcba804b1c"
+          },
+          "preprocess.py": {
+            "sha256": "2419be95e09479c5b9385a57723d52a9be444411080f377b635f2dd1e3ecb2c0"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/aspect.tif": {
+            "bytes": 451049245,
+            "sha256": "5cb1d2d4cb9382e4df5face139b471d7faec5dd26e51d610655aac6efb81621b"
+          },
+          "data/processed/curvature.tif": {
+            "bytes": 451049263,
+            "sha256": "e5a5401602ad7f348c6490a6447d562e927696045aa91d3313da60a71e8316e8"
+          },
+          "data/processed/dataset.csv": {
+            "bytes": 2750915,
+            "sha256": "4476d15c88180b944922a7bf7ecf5b7216530eb8e3582490d5f9df70bba6683d"
+          },
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/processed/dist_roads.tif": {
+            "bytes": 450987590,
+            "sha256": "d66196a92be863674a77cb38ae54143d95b53100faaed582e2c82e236bb04ec0"
+          },
+          "data/processed/dist_streams.tif": {
+            "bytes": 450987590,
+            "sha256": "eb0f9b77135c9794aa415b3b9d72e6dc5f3c1276a32766e545e20ee36f335fef"
+          },
+          "data/processed/lulc.tif": {
+            "bytes": 14533066,
+            "sha256": "0b2c2a54df41a52b69a5edd40d9223ce947e706ca4b507521fafe8699cd5031e"
+          },
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          },
+          "data/processed/rainfall.tif": {
+            "bytes": 60302695,
+            "sha256": "95d4011ae89a5b24b6e6959dd74c318306320c2406201021d524c7438bd73c58"
+          },
+          "data/processed/slope.tif": {
+            "bytes": 273695292,
+            "sha256": "c8c00cf964ddc69bc5e7d5709b6b4a0a66a02838bb83808462e3196b9c4b36e8"
+          },
+          "data/processed/soil.tif": {
+            "bytes": 5317851,
+            "sha256": "749fb45e71a96563fccd347833639cf6545bbb9422e8eaaca1b30e2f2fcf0102"
+          },
+          "data/processed/twi.tif": {
+            "bytes": 448145148,
+            "sha256": "3e94c2abbbe4bc4b1a8ff3068e716d8d2fbb2494928e070919446e9d1115efa6"
+          },
+          "data/raw/soil/soilgrids_wrb_legend.json": {
+            "bytes": 650,
+            "sha256": "0fa5436810ff3f9fa84eb280320e77ed5387f1899c429b5f1ed92df5ff953c0b"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          },
+          "data/shapefiles/uttarakhand_districts.gpkg": {
+            "bytes": 1318912,
+            "sha256": "767d77ae1de9aa26820dd651f50020954c6d7b2eb5b5f331d5ab36d928572868"
+          },
+          "models/feature_names.json": {
+            "bytes": 478,
+            "sha256": "88c8cbfb8b93c4a5349845f6114c5d31641dfe0bf5e8e61190711798160379c5"
+          },
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "models/scaler.pkl": {
+            "bytes": 1791,
+            "sha256": "7b1af270ac6669cbd34c4e33ee209b47aa5050dd236275cc4701ae9b47d061e3"
+          }
+        },
+        "metadata_sections": {
+          "preprocessing": "2e1f5c16ad60e5a5755c2fd26ee1405e98a05f5c4639f9afee468c66de6f5f5e"
+        },
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "RARE_CLASS_LABEL": "Other",
+          "RISK_ZONES": [
+            "Very Low",
+            "Low",
+            "Moderate",
+            "High",
+            "Very High"
+          ],
+          "RISK_ZONE_BREAKS": [
+            0.2,
+            0.4,
+            0.6,
+            0.8
+          ],
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/susceptibility_uk_probability.tif": {
+            "bytes": 150652305,
+            "sha256": "55d4dd21b5882b9d3d6292d6681ddf9a167b9b48761fad51fb78729dfea26aee"
+          },
+          "data/processed/susceptibility_uk_zones.tif": {
+            "bytes": 5927674,
+            "sha256": "69f9d3b5619af2256cb1248657aeb1d11cdf282a9f51fba67d95f44f3b57f86d"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "train_rf": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "train_rf.py": {
+            "sha256": "3b0a1154bafffc54adf6ac0f7fb9efeaa9496a8b4863bdd948cfef72f54b26c9"
+          },
+          "viz.py": {
+            "sha256": "8c0d35c2b2a72afaf328037cc3dcbd724bfcb9860845f3d5f1d500989cf3f5df"
+          }
+        },
+        "environment": {
+          "imbalanced-learn": "0.14.2",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "scipy": "1.15.2",
+          "statsmodels": "0.14.6"
+        },
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "CV_FOLDS": 5,
+          "DATA_SOURCE": "real",
+          "PRIMARY_CV_METRIC": "roc_auc",
+          "RANDOM_STATE": 42,
+          "RF_PARAM_GRID": {
+            "max_depth": [
+              null,
+              10,
+              20
+            ],
+            "min_samples_split": [
+              2,
+              5,
+              10
+            ],
+            "n_estimators": [
+              100,
+              200,
+              300
+            ]
+          },
+          "SMOTE_K_NEIGHBORS": 5,
+          "SMOTE_SAMPLING_STRATEGY": 1.0,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "models/rf_model.pkl": {
+            "bytes": 57069577,
+            "sha256": "abf11e7785e0a17f5e81be6f8a64f589ca5f6af71d9f52099a24969bed189219"
+          },
+          "outputs/figures/rf_feature_importance.png": {
+            "bytes": 78610,
+            "sha256": "ebdd81debd105581335cb6ddf76694ad861ba040c1eb7b1a905d46ba3b66caf7"
+          }
+        },
+        "metadata_section": {
+          "name": "rf",
+          "sha256": "81902b4e943d586c66dc1684de9f0f95c5b477d0ef2e987f725ef1eedba45dd1"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "train_svm": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "train_svm.py": {
+            "sha256": "60690737a14026ebfe604f43bf6696c2d02dcb3bc424a9f0db9555ebe66e6ef1"
+          }
+        },
+        "environment": {
+          "imbalanced-learn": "0.14.2",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "scipy": "1.15.2",
+          "statsmodels": "0.14.6"
+        },
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "CV_FOLDS": 5,
+          "DATA_SOURCE": "real",
+          "PRIMARY_CV_METRIC": "roc_auc",
+          "RANDOM_STATE": 42,
+          "SMOTE_K_NEIGHBORS": 5,
+          "SMOTE_SAMPLING_STRATEGY": 1.0,
+          "SVM_LINEAR_PARAM_GRID": {
+            "C": [
+              0.1,
+              1,
+              10,
+              100
+            ]
+          },
+          "SVM_RBF_PARAM_GRID": {
+            "C": [
+              0.1,
+              1,
+              10,
+              100
+            ],
+            "gamma": [
+              1,
+              0.1,
+              0.01,
+              0.001
+            ]
+          },
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "models/svm_model.pkl": {
+            "bytes": 853563,
+            "sha256": "5ced2c2359151734c16359e1d4049f52de0454eca899a670d19f5e889ab6920f"
+          }
+        },
+        "metadata_section": {
+          "name": "svm",
+          "sha256": "808adbfb10ea2b99edeebff8aa0483a82fc695e036e40f94c730e90c7d65c477"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "warp_ndvi": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "warp_ndvi.py": {
+            "sha256": "c5d25a7bd07bab72fff26da04393f38032894b14c0bf0c6bf567de11fbcf9392"
+          }
+        },
+        "environment": {
+          "folium": "0.20.0",
+          "geopandas": "1.1.4",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pyproj": "3.7.2",
+          "python": "3.11",
+          "rasterio": "1.4.4",
+          "scikit-learn": "1.7.2",
+          "shapely": "2.1.2"
+        },
+        "files": {
+          "data/processed/dem.tif": {
+            "bytes": 144515334,
+            "sha256": "ae2e37d4c49cbccc9c068c14b39b4e89786f0747f8aa43a7fdce8e753e24f0b8"
+          },
+          "data/raw/ndvi/Uttarakhand_NDVI_2023_v3.tif": {
+            "bytes": 583793348,
+            "sha256": "f16c33cb5b22aa3aa0275f826e78a6e6ebbd9e7afbddc8adca3bb7935d78430e"
+          },
+          "data/shapefiles/uttarakhand_boundary.gpkg": {
+            "bytes": 397312,
+            "sha256": "ed3a7101bec42001f64b375d0b84cb683aa14b2f40171d9275f88eeceb76a909"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "DATA_SOURCE": "real",
+          "DEM_RESOLUTION_M": 30,
+          "PROJECT_CRS": "EPSG:32644",
+          "RANDOM_STATE": 42,
+          "TARGET": "landslide",
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "data/processed/ndvi.tif": {
+            "bytes": 348277819,
+            "sha256": "575fe1b4cd9839fdd47cd2752a36c9b1beae368eb420268450a2a9ad1963adb2"
+          }
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    },
+    "xgb": {
+      "inputs": {
+        "code": {
+          "artifacts.py": {
+            "sha256": "e43c0f5607d534fc613da9b2773f238832b0e60532a09ec82dcf55a0dd381da8"
+          },
+          "provenance.py": {
+            "sha256": "cccb642e06bb9b5252e5f30df5bc48175df53b68eedc533c52037b44d5cd0929"
+          },
+          "train_rf.py": {
+            "sha256": "3b0a1154bafffc54adf6ac0f7fb9efeaa9496a8b4863bdd948cfef72f54b26c9"
+          },
+          "train_xgboost.py": {
+            "sha256": "adbdc62457ae211752b0bf8de1c50c6d5c1b798500cd09f7e396df792a90ebb3"
+          },
+          "viz.py": {
+            "sha256": "8c0d35c2b2a72afaf328037cc3dcbd724bfcb9860845f3d5f1d500989cf3f5df"
+          }
+        },
+        "environment": {
+          "imbalanced-learn": "0.14.2",
+          "joblib": "1.5.3",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "python": "3.11",
+          "scikit-learn": "1.7.2",
+          "scipy": "1.15.2",
+          "statsmodels": "0.14.6",
+          "xgboost": "3.4.2"
+        },
+        "files": {
+          "data/processed/prepared.joblib": {
+            "bytes": 6238709,
+            "sha256": "097c9eac7b9aa17e5e8bb256acf917f53cd35b2a8a7b00efe087e6eab55ae6c8"
+          }
+        },
+        "metadata_sections": {},
+        "options": {},
+        "settings": {
+          "CV_FOLDS": 5,
+          "DATA_SOURCE": "real",
+          "PRIMARY_CV_METRIC": "roc_auc",
+          "RANDOM_STATE": 42,
+          "SMOTE_K_NEIGHBORS": 5,
+          "SMOTE_SAMPLING_STRATEGY": 1.0,
+          "TARGET": "landslide",
+          "XGB_PARAM_GRID": {
+            "learning_rate": [
+              0.01,
+              0.1,
+              0.3
+            ],
+            "max_depth": [
+              3,
+              5,
+              7
+            ],
+            "n_estimators": [
+              100,
+              200,
+              300
+            ],
+            "subsample": [
+              0.8,
+              1.0
+            ]
+          },
+          "active_categorical": [
+            "soil_type",
+            "lulc"
+          ],
+          "active_numeric": [
+            "slope",
+            "aspect",
+            "elevation",
+            "curvature",
+            "twi",
+            "rainfall",
+            "ndvi",
+            "dist_roads",
+            "dist_streams"
+          ]
+        }
+      },
+      "origin": "adopted verified legacy output; producer code/commit not reconstructed",
+      "outputs": {
+        "files": {
+          "models/xgb_model.pkl": {
+            "bytes": 234800,
+            "sha256": "916409223e7189ccff359b441aaf247fc5998ee0b988d1d73c79bcd968241dcb"
+          },
+          "outputs/figures/xgb_feature_importance.png": {
+            "bytes": 76618,
+            "sha256": "c8df1d04e7509258f45ad2ea0b3e576ce217707e7161e9f6e2bc5814bc4d649d"
+          }
+        },
+        "metadata_section": {
+          "name": "xgb",
+          "sha256": "c909ff2e7607d1c1de133cb655d46e470891acac77eef3ec669b19058a0f257c"
+        }
+      },
+      "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+    }
+  },
+  "validated_benchmark_commit": "d4ececf4a4325a8e4b92ea68cc8daba9156a87d6"
+}

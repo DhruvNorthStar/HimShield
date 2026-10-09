@@ -110,7 +110,7 @@ def check_files(section: str) -> None:
            f"missing: {', '.join(missing)}" if missing else "all present in outputs/figures/")
 
     optional = {
-        "prepared split (for section 7)": config.PROCESSED_DIR / "prepared.joblib",
+        "prepared split (for section 7)": config.PREPARED_PATH,
         "RF demo map": config.DEMO_MAP_HTML,
         "SVM demo map": config.DEMO_MAP_HTML.with_name(f"{config.DEMO_MAP_HTML.stem}_svm.html"),
     }
@@ -338,7 +338,7 @@ def check_reproducibility(section: str) -> None:
     import joblib
     from sklearn.metrics import roc_auc_score
 
-    path = config.PROCESSED_DIR / "prepared.joblib"
+    path = config.PREPARED_PATH
     meta = LOADED.get("metadata", {})
     if not path.exists():
         record(section, "test AUC recomputed", "WARN", "prepared.joblib missing; run python -m src.preprocess")

@@ -22,7 +22,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from src import config, viz
+from src import artifacts, config, viz
 
 RARE_CLASS_SHARE = 0.01     # categorical classes below this share are flagged
 HIGH_CORRELATION = 0.8      # pairs above this are flagged ahead of the VIF step
@@ -322,6 +322,7 @@ def plot_categorical_rates(df: pd.DataFrame):
 
 
 # ---------------------------------------------------------------------------
+@artifacts.protected_step("eda")
 def main() -> int:
     viz.apply_style()
     df = load()
@@ -352,7 +353,7 @@ def main() -> int:
 
     report_path = config.OUTPUTS_DIR / "eda_report.txt"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
+    artifacts.output_path(report_path).write_text(
         f"{config.data_source_banner()}\n\nMISSING VALUES\n{missing_report(df).to_string()}\n\n"
         f"CLASS SEPARATION\n{class_separation(df).to_string()}\n\nNOTES\n" +
         "\n".join(notes) + "\n", encoding="utf-8")

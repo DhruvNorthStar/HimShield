@@ -54,13 +54,13 @@ os.environ["GDAL_CACHEMAX"] = "256"
 
 import numpy as np  # noqa: E402
 
-from src import config  # noqa: E402
+from src import artifacts, config  # noqa: E402
 from src.demo_map import ZONE_COLOURS  # noqa: E402
 
 DEMO_SLUG = config.DEMO_DISTRICT.lower().replace(" ", "_")
-STATE_ZONES = config.PROCESSED_DIR / "susceptibility_uk_zones.tif"
-DEMO_ZONES = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_zones.tif"
-DEMO_PROBABILITY_PHASE2 = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_rf.tif"
+STATE_ZONES = config.DERIVED_DIR / "susceptibility_uk_zones.tif"
+DEMO_ZONES = config.DERIVED_DIR / f"susceptibility_{DEMO_SLUG}_zones.tif"
+DEMO_PROBABILITY_PHASE2 = config.DERIVED_DIR / f"susceptibility_{DEMO_SLUG}_rf.tif"
 OUTPUT_HTML = config.OUTPUTS_DIR / "susceptibility_map_uk.html"
 INVENTORY_POINTS = config.SHAPEFILE_DIR / "landslides.gpkg"      # Step 2d output, once the real inventory exists
 NASA_POINTS = config.RAW_LANDSLIDE_DIR / "global_landslide_catalog_NASA.shp"
@@ -458,6 +458,7 @@ def build_map(mode, zones, image, boundaries, landslides, stale):
 
 
 # ---------------------------------------------------------------------------
+@artifacts.protected_step("map")
 def main() -> int:
     parser = argparse.ArgumentParser(description="Uttarakhand susceptibility web map")
     parser.add_argument("--max-pixels", type=int, default=MAX_PIXELS,
@@ -504,8 +505,8 @@ def main() -> int:
     print("\n[3] Writing the map")
     fmap = build_map(source["mode"], zones, image, boundaries, landslides, stale)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fmap.save(str(args.out))
-    size_mb = args.out.stat().st_size / 1e6
+    fmap.save(str(artifacts.output_path(args.out)))
+    size_mb = artifacts.read_output(args.out).stat().st_size / 1e6
     print(f"    {args.out}  ({size_mb:.2f} MB) in {time.perf_counter() - started:.1f} s")
     if size_mb > SIZE_LIMIT_MB:
         print(f"    WARNING: {size_mb:.0f} MB is over the {SIZE_LIMIT_MB} MB target and may open slowly. "

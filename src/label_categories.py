@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src import config
+from src import artifacts, config
 
 NODATA_VALUES = (-9999, -9999.0, -3.4028234663852886e38)
 
@@ -67,6 +67,7 @@ def normalise_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
     return df.rename(columns=renames), renames
 
 
+@artifacts.protected_step("source-data")
 def main() -> int:
     parser = argparse.ArgumentParser(description="Clean the QGIS export into dataset.csv")
     parser.add_argument("csv", type=Path, help="CSV exported from QGIS (all_points)")

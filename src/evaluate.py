@@ -32,7 +32,7 @@ BOOTSTRAP_ROUNDS = 1000
 
 
 def load_everything():
-    bundle_path = config.PROCESSED_DIR / "prepared.joblib"
+    bundle_path = config.PREPARED_PATH
     for path in (bundle_path, config.SVM_MODEL_PATH, config.RF_MODEL_PATH):
         if not path.exists():
             raise SystemExit(f"{path} not found. Run preprocess, train_svm and train_rf first.")
@@ -308,6 +308,7 @@ def xgb_verdict(results: dict, pairwise: dict) -> list[str]:
     return lines
 
 
+@artifacts.protected_step("evaluate")
 def main() -> int:
     from sklearn.metrics import average_precision_score, classification_report, roc_auc_score
 
@@ -376,7 +377,7 @@ def main() -> int:
     print("=" * 78)
 
     report_path = config.OUTPUTS_DIR / "evaluation_report.txt"
-    with report_path.open("w", encoding="utf-8") as fh:
+    with artifacts.output_path(report_path).open("w", encoding="utf-8") as fh:
         fh.write(f"{config.data_source_banner()}\n\nHELD-OUT TEST SET: {len(y_test):,} rows\n\n")
         for name, text in reports.items():
             fh.write(f"--- {name} (threshold 0.5) ---\n{text}\n")
@@ -396,7 +397,7 @@ def main() -> int:
         "pairwise_auc_differences": {"Random Forest minus SVM (RBF)": comparison, **pairwise},
         "winner": max(results, key=lambda n: results[n]["auc"]),
         "phase2_winner": max(("SVM (RBF)", "Random Forest"), key=lambda n: results[n]["auc"]),
-        "figures": [f"outputs/figures/{n}.png" for n in figures],
+        "figures": [(config.FIGURES_DIR / f"{n}.png").relative_to(config.ROOT).as_posix() for n in figures],
     })
     print("Next: Step 8, the dashboard")
     return 0

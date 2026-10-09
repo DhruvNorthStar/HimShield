@@ -20,7 +20,7 @@ from pathlib import Path
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from src import config
+from src import artifacts, config
 
 # Class colours
 STABLE = "#0072B2"
@@ -92,7 +92,7 @@ def save_fig(fig, name: str, *, note: str | None = None) -> Path:
     if footer:
         fig.text(0.01, 0.005, footer, fontsize=7, color=MUTED, ha="left", va="bottom")
     path = config.FIGURES_DIR / f"{name}.png"
-    fig.savefig(path, dpi=150, bbox_inches="tight")
+    fig.savefig(artifacts.output_path(path), dpi=150, bbox_inches="tight")
     return path
 
 

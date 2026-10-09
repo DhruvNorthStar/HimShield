@@ -207,7 +207,7 @@ def write_scores(scores: np.ndarray, grid: dict, path) -> None:
     profile = {"driver": "GTiff", "height": grid["shape"][0], "width": grid["shape"][1], "count": 1,
                "dtype": "float32", "crs": grid["crs"], "transform": grid["transform"],
                "nodata": NODATA_SCORE, "compress": "deflate", "predictor": 3, "tiled": True}
-    with rasterio.open(path, "w", **profile) as dst:
+    with rasterio.open(artifacts.output_path(path), "w", **profile) as dst:
         dst.write(scores.astype(np.float32), 1)
 
 
@@ -275,10 +275,11 @@ def render_map(zones: np.ndarray, grid: dict, geometry, zone_rows: list[dict], l
         f'{rows}<div style="color:#52514e;margin-top:6px">Uncoloured: water or outside the district</div>'
         f'{warning}</div>')
     fmap.get_root().html.add_child(folium.Element(legend))
-    fmap.save(str(path))
+    fmap.save(str(artifacts.output_path(path)))
 
 
 # ---------------------------------------------------------------------------
+@artifacts.protected_step("demo_map")
 def main() -> int:
     parser = argparse.ArgumentParser(description="Step 9: susceptibility map for the demo district")
     parser.add_argument("--model", choices=sorted(MODELS), default="rf")
@@ -287,7 +288,7 @@ def main() -> int:
     suffix = "" if args.model == "rf" else f"_{args.model}"
     district_slug = config.DEMO_DISTRICT.lower().replace(" ", "_")
     html_path = config.DEMO_MAP_HTML.with_name(f"{config.DEMO_MAP_HTML.stem}{suffix}.html")
-    tif_path = config.PROCESSED_DIR / f"susceptibility_{district_slug}_{args.model}.tif"
+    tif_path = config.DERIVED_DIR / f"susceptibility_{district_slug}_{args.model}.tif"
 
     print(config.data_source_banner())
     for path in (model_path, config.SCALER_PATH, config.FEATURE_NAMES_PATH, config.DATASET_CSV):
@@ -385,8 +386,8 @@ def main() -> int:
     render_map(zones, grid, geometry, zone_rows, label, html_path)
     timings["render_map"] = time.perf_counter() - tick
     timings["total"] = time.perf_counter() - started
-    print(f"  {tif_path.relative_to(config.ROOT)}  ({tif_path.stat().st_size / 1e6:.1f} MB)")
-    print(f"  {html_path.relative_to(config.ROOT)}  ({html_path.stat().st_size / 1e6:.1f} MB)")
+    print(f"  {tif_path.relative_to(config.ROOT)}  ({artifacts.read_output(tif_path).stat().st_size / 1e6:.1f} MB)")
+    print(f"  {html_path.relative_to(config.ROOT)}  ({artifacts.read_output(html_path).stat().st_size / 1e6:.1f} MB)")
 
     # Projection for the whole state. Scoring time grows with the number of cells, so scale by area.
     import geopandas as gpd

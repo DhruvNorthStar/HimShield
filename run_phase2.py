@@ -1,44 +1,13 @@
 """
-Phase 2 master pipeline: from the aligned rasters and the GSI inventory to trained models, evaluation and the
-Rudraprayag map.
+Phase 2 pipeline using content/configuration fingerprints and verified artifacts.
 
-    python run_phase2.py              run whatever is out of date, in order, stopping at the first failure
-    python run_phase2.py --dry-run    show what would run and what would be skipped; runs nothing
-    python run_phase2.py --force      rerun every step even if its outputs are up to date
-
-Before it: the manual work. Download the raw data (docs/01_data_sourcing.md), build the 11 base rasters in QGIS and
-GRASS (docs/02_qgis_processing.md) and export NDVI from Google Earth Engine. This script starts from those files.
-
-Steps, in order:
-     1  src.warp_ndvi               NDVI export -> data/processed/ndvi.tif on the dem.tif grid
-     2  src.check_layers            always runs: every raster on the grid with sane values, or everything stops
-     3  src.clean_gsi               GSI inventory -> data/shapefiles/landslides.gpkg
-     4  src.make_stable_points      -> data/shapefiles/non_landslides.gpkg
-     5  src.extract_points          -> data/processed/dataset_raw.csv
-     6  src.label_categories        -> data/processed/dataset.csv
-     7  src.eda                     -> outputs/eda_report.txt and figures
-     8  src.preprocess              -> scaler, feature list, prepared split
-     9  src.train_svm               -> models/svm_model.pkl (about 10 min on the project laptop)
-    10  src.train_rf                -> models/rf_model.pkl (about 5 min)
-    11  src.evaluate                -> outputs/evaluation_report.txt and figures
-    12  src.near_road_check         -> metadata.json, near_road_check section
-    13  src.evaluate (again)        so the evaluation report includes the near-road AUCs
-    14  src.demo_map                -> outputs/demo_map_rudraprayag.html (Random Forest)
-
-When a step is up to date: all its outputs exist and the oldest output is newer than the newest input. A step's
-inputs are the files it reads plus its own script, so editing a script reruns that step and everything after it.
-src/config.py is not an input, so editing a comment there does not trigger retraining. If a step is going to run,
-every step that reads its outputs runs too. The SVM map is not part of the pipeline: run
-`python -m src.demo_map --model svm` separately (about 11 min).
-
-Exit codes:
-    0    finished: every step ran or was already up to date
-    1    could not start: wrong data source, or raw inputs that no step produces are missing
-    2    a step failed
-    130  interrupted with Ctrl+C
+Existing benchmark outputs are frozen. --dry-run writes nothing. --force cannot
+unlock benchmarks; explicitly selected experiments reuse verified shared source
+inputs and keep their models, split, reports and maps separate.
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -50,7 +19,9 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src import config  # noqa: E402
+from src import config, provenance  # noqa: E402
+
+FORCE_REBUILD = False
 
 P, S, M, O, F = config.PROCESSED_DIR, config.SHAPEFILE_DIR, config.MODELS_DIR, config.OUTPUTS_DIR, config.FIGURES_DIR
 SRC = ROOT / "src"
@@ -65,7 +36,7 @@ GSI_ZIP = config.RAW_LANDSLIDE_DIR / "GSI_Landslide_Inventory.shp.zip"
 NDVI_EXPORT = config.RAW_DIR / "ndvi" / "Uttarakhand_NDVI_2023_v3.tif"
 SOIL_LEGEND = config.RAW_SOIL_DIR / "soilgrids_wrb_legend.json"
 BOUNDARIES = [config.STATE_BOUNDARY, config.DISTRICT_BOUNDARIES]
-PREPARED = P / "prepared.joblib"
+PREPARED = config.PREPARED_PATH
 MODELS = [config.SVM_MODEL_PATH, config.RF_MODEL_PATH]
 EVAL_OUTPUTS = [O / "evaluation_report.txt", F / "roc_comparison.png", F / "confusion_matrices.png",
                 F / "precision_recall_comparison.png"]
@@ -121,7 +92,7 @@ STEPS = [
     Step("demo_map", "Rudraprayag map (Random Forest)", ["-m", "src.demo_map"],
          [config.RF_MODEL_PATH, config.SCALER_PATH, config.FEATURE_NAMES_PATH, config.REAL_DATASET_CSV,
           *ACTIVE_RASTERS, config.DISTRICT_BOUNDARIES, SRC / "demo_map.py"],
-         [config.DEMO_MAP_HTML, P / "susceptibility_rudraprayag_rf.tif"], (25, 90)),
+         [config.DEMO_MAP_HTML, config.DERIVED_DIR / "susceptibility_rudraprayag_rf.tif"], (25, 90)),
 ]
 
 
@@ -160,32 +131,21 @@ def produced_by() -> dict[str, str]:
 
 
 def decide(step: Step, force: bool, rerunning: set[str]) -> tuple[bool, str]:
-    """Should this step run, given the steps already planned to run before it?"""
     if step.always:
-        return True, "always runs"
-    if force:
-        return True, "--force"
-    missing = [label(o) for o in step.outputs if stamp(o) is None]
-    if missing:
-        return True, f"output missing: {missing[0]}"
-    upstream = [label(i) for i in step.inputs if label(i) in rerunning]
-    if upstream:
-        return True, f"input rebuilt by an earlier step: {upstream[0]}"
-    oldest_output = min(stamp(o) for o in step.outputs)
-    newer = [(stamp(i), label(i)) for i in step.inputs if stamp(i) is not None and stamp(i) > oldest_output]
-    if newer:
-        t, name = max(newer)
-        return True, f"{name} ({when(t)}) is newer than the output ({when(oldest_output)})"
-    return False, f"up to date (outputs {when(oldest_output)})"
+        return True, "read-only raster integrity check always runs"
+    key = "evaluate" if step.key == "evaluate_again" else step.key
+    upstream = any(label(item) in rerunning for item in step.inputs)
+    return provenance.decision(key, force, upstream)
 
 
 def plan(force: bool) -> list[tuple[Step, bool, str]]:
     rows, rerunning = [], set()
-    for step in STEPS:
-        will_run, reason = decide(step, force, rerunning)
-        if will_run:
-            rerunning.update(label(o) for o in step.outputs)
-        rows.append((step, will_run, reason))
+    with provenance.fingerprint_session():
+        for step in STEPS:
+            will_run, reason = decide(step, force, rerunning)
+            if will_run:
+                rerunning.update(label(output) for output in step.outputs)
+            rows.append((step, will_run, reason))
     return rows
 
 
@@ -215,7 +175,10 @@ def header(text: str) -> None:
 
 def run(step: Step) -> tuple[int, float]:
     started = time.perf_counter()
-    result = subprocess.run([sys.executable, *step.args], cwd=ROOT)
+    environment = os.environ.copy()
+    if FORCE_REBUILD or step.key == "evaluate_again":
+        environment["LSM_REBUILD"] = "1"
+    result = subprocess.run([sys.executable, *step.args], cwd=ROOT, env=environment)
     return result.returncode, time.perf_counter() - started
 
 
@@ -263,8 +226,10 @@ def print_results() -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Phase 2 in order, skipping what is up to date")
     parser.add_argument("--dry-run", action="store_true", help="show the plan and run nothing")
-    parser.add_argument("--force", action="store_true", help="rerun every step")
+    parser.add_argument("--force", action="store_true", help="request experiment rebuilds; benchmarks and source inputs remain locked")
     args = parser.parse_args()
+    global FORCE_REBUILD
+    FORCE_REBUILD = args.force
 
     header("Phase 2 pipeline" + ("  (DRY RUN: nothing will be run)" if args.dry_run else ""))
     print(config.data_source_banner())
@@ -282,7 +247,7 @@ def main() -> int:
     low = high = 0
     for n, (step, will_run, reason) in enumerate(rows, 1):
         estimate = span(*step.estimate) if will_run else "-"
-        print(f"  {n:>2}. {step.title:<46} {'RUN' if will_run else 'SKIP':<5} {estimate:<20} {reason}")
+        print(f"  {n:>2}. {step.title:<46} {'BLOCKED' if reason.startswith('BLOCKED') else ('RUN' if will_run else 'SKIP'):<7} {estimate:<20} {reason}")
         if will_run:
             low, high = low + step.estimate[0], high + step.estimate[1]
     print(f"\nEstimated total: {span(low, high)}" if high else "\nEverything is up to date.")
@@ -297,6 +262,11 @@ def main() -> int:
     if args.dry_run:
         print("\nDry run: nothing was run. Remove --dry-run to run the steps marked RUN.")
         return 0
+
+    blocked = [reason for _, will_run, reason in rows if will_run and reason.startswith("BLOCKED")]
+    if blocked:
+        print("\nNot started: " + blocked[0])
+        return 2
 
     records, started = [], time.perf_counter()
     remaining_low, remaining_high = low, high

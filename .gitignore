@@ -71,3 +71,7 @@ outputs/demo_map_*.html
 # raster is written to data/processed/, which is already ignored.
 outputs/susceptibility_map_uk.html
 outputs/figures/shap/
+
+# Experiments stay local; only the usage guide belongs in Git.
+outputs/experiments/*
+!outputs/experiments/README.md

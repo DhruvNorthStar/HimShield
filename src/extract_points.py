@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import rasterio
 
-from src import config
+from src import artifacts, config
 from src.check_layers import EXPECTED
 from src.demo_map import RASTERS, WATER_CODE
 
@@ -33,6 +33,7 @@ def column_name(feature: str) -> str:
     return "soil" if feature == "soil_type" else feature
 
 
+@artifacts.protected_step("source-data")
 def main() -> int:
     sys.stdout.reconfigure(encoding="ascii", errors="backslashreplace")
     for path in (LANDSLIDES, STABLE):

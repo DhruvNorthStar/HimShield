@@ -1,5 +1,10 @@
 # Landslide Susceptibility Mapping for Uttarakhand
 
+**Stage 3 artifact protection:** established scientific outputs are read-only to
+managed writers. Run the pipeline with --dry-run to inspect content-based build
+decisions. See [artifact protection and reproducibility](docs/artifact_protection.md)
+before attempting preprocessing, training or output replacement.
+
 A comparative study of Support Vector Machine and Random Forest for predicting landslide-prone terrain in Uttarakhand, India. BCA final-year PBL project.
 
 Given the terrain conditions at a location (slope, aspect, elevation, curvature, topographic wetness, rainfall, vegetation (NDVI), soil, land cover, and distance to roads and streams), the models score how likely that ground is to be landslide-prone. Positive samples are landslides from the Geological Survey of India (GSI) inventory. Negative samples are random points on terrain with no recorded landslide.

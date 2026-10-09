@@ -28,7 +28,7 @@ from src import artifacts, config, viz
 
 
 def load_prepared():
-    path = config.PROCESSED_DIR / "prepared.joblib"
+    path = config.PREPARED_PATH
     if not path.exists():
         raise SystemExit(f"{path} not found. Run `python -m src.preprocess` first.")
     return joblib.load(path)
@@ -65,6 +65,7 @@ def plot_importance(impurity: pd.Series, permutation: pd.Series, top_n: int = 15
     return fig
 
 
+@artifacts.protected_step("train_rf")
 def main() -> int:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.inspection import permutation_importance
@@ -126,7 +127,7 @@ def main() -> int:
     print(f"  {figure_path.relative_to(config.ROOT)}")
 
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(best, config.RF_MODEL_PATH)
+    joblib.dump(best, artifacts.output_path(config.RF_MODEL_PATH))
     artifacts.update_metadata("rf", {
         "best_params": {k: (v if v is not None else "None") for k, v in best_params.items()},
         "smote_inside_cv": True,

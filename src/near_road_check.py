@@ -35,9 +35,10 @@ def auc_interval(y: np.ndarray, s: np.ndarray, rounds: int = BOOTSTRAP_ROUNDS) -
     return float(np.percentile(values, 2.5)), float(np.percentile(values, 97.5))
 
 
+@artifacts.protected_step("near_road")
 def main() -> int:
     print(config.data_source_banner())
-    bundle = joblib.load(config.PROCESSED_DIR / "prepared.joblib")
+    bundle = joblib.load(config.PREPARED_PATH)
     X_test, y_test = bundle["X_test"], bundle["y_test"]
     models = {"SVM (RBF)": joblib.load(config.SVM_MODEL_PATH), "Random Forest": joblib.load(config.RF_MODEL_PATH)}
     if config.XGB_MODEL_PATH.exists():  # Phase 3 extension; absent on the Phase 2 branch

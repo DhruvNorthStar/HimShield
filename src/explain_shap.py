@@ -54,7 +54,7 @@ ADDITIVITY_TOLERANCE = 1e-6
 
 
 def load_inputs():
-    prepared = config.PROCESSED_DIR / "prepared.joblib"
+    prepared = config.PREPARED_PATH
     for path in (config.RF_MODEL_PATH, config.SCALER_PATH, config.FEATURE_NAMES_PATH, prepared):
         if not path.exists():
             raise SystemExit(f"{path} not found. Run Phase 2 Steps 4 to 6, then python src/verify_phase2.py.")
@@ -106,6 +106,7 @@ def save(fig, name: str, note: str) -> Path:
     return viz.save_fig(fig, f"shap/{name}", note=note)
 
 
+@artifacts.protected_step("shap")
 def main() -> int:
     parser = argparse.ArgumentParser(description="SHAP explanations for the Random Forest")
     parser.add_argument("--max-samples", type=int, default=MAX_SAMPLES,
@@ -203,7 +204,7 @@ def main() -> int:
         "shap_version": shap.__version__,
         "explainer": "TreeExplainer, tree_path_dependent, no background sample",
         "model": str(config.RF_MODEL_PATH.relative_to(config.ROOT)),
-        "rf_model_mtime": config.RF_MODEL_PATH.stat().st_mtime,  # run_phase3 reruns when the model is newer
+        "rf_model_mtime": config.RF_MODEL_PATH.stat().st_mtime,  # legacy informational field; freshness uses content hashes
         "sample": {"rows": int(len(X_sample)), "landslide": int(y_sample.sum()),
                    "stable": int((y_sample == 0).sum()), "from": "held-out test set", "seed": config.RANDOM_STATE},
         "base_value": round(float(base[0]), 6),
@@ -216,7 +217,7 @@ def main() -> int:
                              "rf_score": round(float(proba[pick]), 4)},
         "figures": [str(p.relative_to(config.ROOT)) for p in files],
     }
-    SUMMARY_PATH.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    artifacts.output_path(SUMMARY_PATH).write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"    {SUMMARY_PATH.relative_to(config.ROOT)}")
     if config.IS_SYNTHETIC:
         print(f"\n{config.SYNTHETIC_LABEL}: these explanations describe the simulated data, not Uttarakhand.")

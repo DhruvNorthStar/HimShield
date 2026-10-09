@@ -23,7 +23,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 
-from src import config
+from src import artifacts, config
 
 GSI_ZIP = config.RAW_LANDSLIDE_DIR / "GSI_Landslide_Inventory.shp.zip"
 GSI_LAYER = "GSI_Landslide_Inventory.shp"
@@ -39,6 +39,7 @@ def decimals(value: float) -> int:
     return len(text.split(".")[1].rstrip("0")) if "." in text else 0
 
 
+@artifacts.protected_step("source-data")
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     parser.add_argument("--out", type=Path, default=OUTPUT)
