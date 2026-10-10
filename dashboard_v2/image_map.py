@@ -7,9 +7,11 @@ from src import config
 from src.demo_map import ZONE_COLOURS
 
 
-def html(png: bytes, district: str) -> str:
-    # Only a PNG, public class names/colours and a district label cross this boundary.
-    return TEMPLATE.replace("__TITLE__", escape(district)).replace("__PNG__", base64.b64encode(png).decode("ascii")).replace(
+def html(png: bytes, district: str, display_png: bytes | None = None) -> str:
+    # Only styled/unmodified PNGs, class labels/colours and a district name cross this boundary.
+    return TEMPLATE.replace("__TITLE__", escape(district)).replace(
+        "__DISPLAY_PNG__", base64.b64encode(display_png if display_png is not None else png).decode("ascii")).replace(
+        "__PNG__", base64.b64encode(png).decode("ascii")).replace(
         "__COLOURS__", json.dumps(ZONE_COLOURS)).replace("__CLASSES__", json.dumps(config.RISK_ZONES))
 
 
@@ -33,16 +35,17 @@ footer{padding:10px}p{margin:5px 0;line-height:1.5}
 <script>
 'use strict';
 const colours=__COLOURS__, classes=__CLASSES__, canvas=document.getElementById('map'), ctx=canvas.getContext('2d');
-const image=new Image(), status=document.getElementById('status');
-let scale=1, fit=1, x=0, y=0, drag=null, origin=null, moved=false, pixels=null;
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(image,x,y,image.width*scale,image.height*scale);}
-function reset(){canvas.width=Math.max(1,Math.round(canvas.getBoundingClientRect().width));canvas.height=530;
+const image=new Image(), classImage=new Image(), status=document.getElementById('status');
+let scale=1, fit=1, x=0, y=0, drag=null, origin=null, moved=false, pixels=null, imageReady=false;
+function draw(){if(!imageReady||!pixels)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(image,x,y,image.width*scale,image.height*scale);}
+function reset(){if(!imageReady||!pixels)return;canvas.width=Math.max(1,Math.round(canvas.getBoundingClientRect().width));canvas.height=530;
  fit=Math.min(canvas.width/image.width,canvas.height/image.height);scale=fit;
  x=(canvas.width-image.width*scale)/2;y=(canvas.height-image.height*scale)/2;draw();}
-function zoom(factor){const next=Math.max(fit*0.5,Math.min(fit*16,scale*factor));
+function zoom(factor){if(!imageReady||!pixels)return;const next=Math.max(fit*0.5,Math.min(fit*16,scale*factor));
  const cx=canvas.width/2,cy=canvas.height/2;x=cx-(cx-x)*next/scale;y=cy-(cy-y)*next/scale;scale=next;draw();}
 function position(event){const r=canvas.getBoundingClientRect();return {x:(event.clientX-r.left)*canvas.width/r.width,y:(event.clientY-r.top)*canvas.height/r.height};}
-function inspect(p){const col=Math.floor((p.x-x)/scale),row=Math.floor((p.y-y)/scale);
+function inspect(p){if(!imageReady||!pixels){status.textContent='Loading the preview…';return;}
+ const col=Math.floor((p.x-x)/scale),row=Math.floor((p.y-y)/scale);
  if(col<0||row<0||col>=image.width||row>=image.height){status.textContent='Outside the preview.';return;}
  const i=(row*image.width+col)*4;if(!pixels[i+3]){status.textContent='Outside the district mask; no class assigned.';return;}
  const hex='#'+[pixels[i],pixels[i+1],pixels[i+2]].map(v=>v.toString(16).padStart(2,'0')).join('');
@@ -60,8 +63,10 @@ canvas.addEventListener('keydown',e=>{if(e.key==='+'||e.key==='=')zoom(1.2);else
  else if(e.key==='ArrowLeft')x+=30;else if(e.key==='ArrowRight')x-=30;
  else if(e.key==='ArrowUp')y+=30;else if(e.key==='ArrowDown')y-=30;else return;e.preventDefault();draw();});
 document.getElementById('plus').onclick=()=>zoom(1.2);document.getElementById('minus').onclick=()=>zoom(1/1.2);
-document.getElementById('reset').onclick=reset;window.addEventListener('resize',()=>{if(image.complete&&pixels)reset();});
-image.onload=()=>{const buffer=document.createElement('canvas');buffer.width=image.width;buffer.height=image.height;
- const raw=buffer.getContext('2d');raw.drawImage(image,0,0);pixels=raw.getImageData(0,0,image.width,image.height).data;reset();};
-image.src='data:image/png;base64,__PNG__';
+document.getElementById('reset').onclick=reset;window.addEventListener('resize',reset);
+image.onload=()=>{imageReady=true;if(pixels)reset();};
+classImage.onload=()=>{const buffer=document.createElement('canvas');buffer.width=classImage.width;buffer.height=classImage.height;
+ const raw=buffer.getContext('2d');raw.drawImage(classImage,0,0);pixels=raw.getImageData(0,0,classImage.width,classImage.height).data;if(imageReady)reset();};
+classImage.src='data:image/png;base64,__PNG__';
+image.src='data:image/png;base64,__DISPLAY_PNG__';
 </script></body></html>"""

@@ -78,7 +78,7 @@ failure stops official rendering. It is reported rather than repaired.
 
 ## Image-only interaction and resource bounds
 
-Official geometries stay in server memory. The browser receives only a PNG, district
+Official geometries stay in server memory. The browser receives only PNG images, a district
 label and five class names/colours. There is no GeoJSON, SVG boundary path, shapefile,
 geographic transform, polygon coordinate array, map service or external tile request.
 Raster silhouettes are still derived images; image-only display is not a grant of
@@ -87,10 +87,17 @@ redistribution rights and should not be published without resolving applicable t
 Interactive mode pans/zooms the PNG and inspects the class of a sampled display cell.
 Keyboard controls support arrows, plus/minus, Home and Enter to inspect the centre; buttons and class status have
 accessible labels. Static/offline mode displays the same image. NoData is gray;
-outside-mask pixels are transparent. No GPS coordinate lookup or site-level score
+outside-mask pixels are transparent apart from the boundary stroke and halo. No GPS coordinate lookup or site-level score
 is offered. A reduced preview samples original masked cells without averaging class
 codes; its actual display spacing is labelled. Thin features may be absent in that
 preview, while full-resolution statistics still include them.
+
+Both district display modes add a dark navy 2 px boundary stroke with a subtle light
+halo, including polygon holes. Rings are drawn into the PNG server-side, without
+vector exports or browser coordinate arrays. The stroke scales with image zoom.
+Interactive inspection reads a separate unstyled PNG so boundary styling cannot
+turn a scored cell into NoData or change its class. Counts, colours and thresholds
+are unchanged. The statewide and dedicated Rudraprayag products are unaffected.
 
 A shared lock serializes heavy raster operations; GDAL uses one thread and a 16 MiB
 cache. Coverage is cached once, server geometry once, and at most four previews of

@@ -105,7 +105,7 @@ class SourceAndMaskTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = self.fixture(folder, cells)
             result = dv.preview_raster(path, geom, max_pixels=6)
-            self.assertEqual(set(result), {"png", "width", "height", "display_cell_spacing_m", "render_seconds"})
+            self.assertEqual(set(result), {"png", "display_png", "width", "height", "display_cell_spacing_m", "render_seconds"})
             with Image.open(io.BytesIO(result["png"])) as image:
                 rgba = np.asarray(image)
                 self.assertEqual(image.info, {})
@@ -114,13 +114,40 @@ class SourceAndMaskTests(unittest.TestCase):
             reduced = dv.preview_raster(path, geom, max_pixels=3)
             self.assertLessEqual(max(reduced["width"], reduced["height"]), 3)
             self.assertEqual(reduced["display_cell_spacing_m"], 60)
-        payload = image_map.html(result["png"], "Almora")
+        payload = image_map.html(result["png"], "Almora", result["display_png"])
         self.assertIn("data:image/png;base64," + base64.b64encode(result["png"]).decode("ascii"), payload)
+        self.assertIn("data:image/png;base64," + base64.b64encode(result["display_png"]).decode("ascii"), payload)
         for forbidden in ("FeatureCollection", "Polygon", "L.geoJSON", "fetch(", "https://", "<svg", "__PNG__"):
             self.assertNotIn(forbidden, payload)
         self.assertIn(dv.ATTRIBUTION, payload)
         for control in ("pointerdown", "wheel", "keydown", "Zoom +", "role=\"status\""):
             self.assertIn(control, payload)
+
+    def test_boundary_has_dark_stroke_and_light_halo_without_changing_inspection_pixels(self):
+        cells = np.ones((60, 60), dtype="uint8")
+        cells[:, 30:] = 5
+        cells[30, 15] = 0
+        geom = box(0, -1680, 1800, 120).difference(box(810, -900, 990, -720))
+        with tempfile.TemporaryDirectory() as folder:
+            result = dv.preview_raster(self.fixture(folder, cells), geom, max_pixels=60)
+        with Image.open(io.BytesIO(result["png"])) as image:
+            raw = np.asarray(image)
+        with Image.open(io.BytesIO(result["display_png"])) as image:
+            styled = np.asarray(image)
+            self.assertEqual(image.info, {})
+        self.assertEqual(styled.shape, raw.shape)
+        self.assertEqual(raw[10, 10].tolist(), [212, 237, 218, 255])
+        self.assertEqual(raw[10, 45].tolist(), [103, 0, 13, 255])
+        self.assertEqual(raw[30, 15].tolist(), [216, 226, 236, 255])
+        self.assertFalse(raw[28:34, 27:33, 3].any())
+        for row, col in ((10, 10), (10, 45), (30, 15), (30, 29)):
+            np.testing.assert_array_equal(styled[row, col], raw[row, col])
+        navy = np.all(styled == [16, 42, 67, 255], axis=2)
+        self.assertGreater(int(navy.sum()), 100)
+        self.assertTrue(navy[:, :30].any())
+        self.assertTrue(navy[:, 30:].any())
+        dark = np.all(raw == [103, 0, 13, 255], axis=2) & ~navy
+        self.assertGreater(int(styled[dark, :3].sum(axis=1).max()), 500)  # Halo remains visible on dark zones.
 
     def test_dedicated_map_registry_never_substitutes_rudraprayag_for_other_districts(self):
         for district in dv.DISTRICTS:
@@ -241,6 +268,25 @@ class DistrictIntegrationTests(unittest.TestCase):
                     self.assertEqual(len(app.get("iframe")), 0)
                     self.assertIn(district, app.get("imgs")[0].proto.imgs[0].caption)
                     self.assertEqual(app.radio[0].disabled, offline)
+
+    def test_requested_districts_deliver_the_same_outline_in_both_modes(self):
+        app = self.app()
+        for district in ("Tehri Garhwal", "Chamoli", "Dehradun", "Rudraprayag"):
+            with self.subTest(district=district):
+                app = self.select(app, "Geographic scope", district)
+                if district == config.DEMO_DISTRICT:
+                    app = self.select(app, "Map product", dv.DERIVED)
+                expected = dv.preview(**self.source, district=district)
+                frame = app.get("iframe")[0].proto.srcdoc
+                self.assertIn(base64.b64encode(expected["display_png"]).decode("ascii"), frame)
+                self.assertIn(base64.b64encode(expected["png"]).decode("ascii"), frame)
+                self.assertIn("Navy outline", text(app))
+                app.radio[0].set_value(explorer.STATIC)
+                with patch.object(st, "image", wraps=st.image) as shown:
+                    app = self.run_app(app, offline=True)
+                    self.assertEqual(shown.call_args.args[0], expected["display_png"])
+                app.radio[0].set_value(explorer.INTERACTIVE)
+                app = self.run_app(app)
 
     def test_rudraprayag_dedicated_products_and_derived_product_are_distinct(self):
         app = self.select(self.app(), "Geographic scope", config.DEMO_DISTRICT)

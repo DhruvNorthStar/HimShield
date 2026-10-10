@@ -208,6 +208,24 @@ def coverage(root: str, raster: str, digest: str) -> dict:
         return scan_raster(raster, state, geoms)
 
 
+def boundary_image(rgba, geom, transform):
+    """Draw official rings into pixels server-side; never return vector coordinates."""
+    from PIL import Image, ImageDraw
+
+    overlay = Image.new("RGBA", (rgba.shape[1], rgba.shape[0]))
+    draw = ImageDraw.Draw(overlay)
+    inverse = ~transform
+    navy = tuple(int(ui.NAVY[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
+    polygons = geom.geoms if geom.geom_type == "MultiPolygon" else (geom,)
+    for polygon in polygons:
+        for ring in (polygon.exterior, *polygon.interiors):
+            # The affine uses pixel edges; Pillow line coordinates use centres.
+            points = [(col - .5, row - .5) for col, row in (inverse * point for point in ring.coords)]
+            draw.line(points, fill=(255, 255, 255, 190), width=4, joint="curve")
+            draw.line(points, fill=navy, width=2, joint="curve")
+    return Image.alpha_composite(Image.fromarray(rgba), overlay)
+
+
 def preview_raster(path: str, geom, max_pixels=PREVIEW_PIXELS) -> dict:
     """Sample actual masked source cells in bounded strips, never average class codes."""
     import rasterio
@@ -215,6 +233,7 @@ def preview_raster(path: str, geom, max_pixels=PREVIEW_PIXELS) -> dict:
     from rasterio.windows import Window, from_bounds
     from shapely.geometry import mapping
     from PIL import Image
+    from affine import Affine
 
     start = time.perf_counter()
     with rasterio.Env(GDAL_CACHEMAX=GDAL_CACHE_BYTES, GDAL_NUM_THREADS="1"), rasterio.open(path) as src:
@@ -225,6 +244,9 @@ def preview_raster(path: str, geom, max_pixels=PREVIEW_PIXELS) -> dict:
         if right <= left or bottom <= top:
             raise DistrictUnavailable("District lies outside the saved raster extent.")
         stride = max(1, math.ceil(max(right - left, bottom - top) / max_pixels))
+        # Keep preview pixel centres aligned with the exact source cells sampled below.
+        display_transform = src.transform * Affine.translation(
+            left + .5 - stride / 2, top + .5 - stride / 2) * Affine.scale(stride)
         rows, cols = np.arange(top, bottom, stride), np.arange(left, right, stride)
         grid = np.zeros((len(rows), len(cols)), dtype=np.uint8)
         selected = np.zeros(grid.shape, dtype=bool)
@@ -246,13 +268,16 @@ def preview_raster(path: str, geom, max_pixels=PREVIEW_PIXELS) -> dict:
         rgba[selected & (grid == value)] = [*(int(colour[i:i + 2], 16) for i in (1, 3, 5)), 255]
     stream = io.BytesIO()
     Image.fromarray(rgba).save(stream, format="PNG")
+    display = io.BytesIO()
+    boundary_image(rgba, geom, display_transform).save(display, format="PNG")
     # Deliberately no polygon, bounds, geographic transform or coordinate arrays.
-    return {"png": stream.getvalue(), "width": grid.shape[1], "height": grid.shape[0],
+    return {"png": stream.getvalue(), "display_png": display.getvalue(), "width": grid.shape[1], "height": grid.shape[0],
             "display_cell_spacing_m": 30 * stride, "render_seconds": time.perf_counter() - start}
 
 
 @st.cache_data(max_entries=4, show_spinner="Preparing a private raster-image preview…")
-def preview(root: str, raster: str, digest: str, district: str) -> dict:
+def preview(root: str, raster: str, digest: str, district: str, style_version="navy-outline-v1") -> dict:
+    # The style version invalidates cached unstyled previews in a running dashboard.
     if district not in DISTRICTS:
         raise DistrictUnavailable("Unknown official district.")
     _, geoms = boundaries(root, digest)
@@ -283,9 +308,11 @@ def page(scope: str, source: dict, use_static: bool) -> None:
         ui.caption(f"Official 2025 ABDB district ID {item['code']}. Local academic display only. {ATTRIBUTION}")
         ui.susceptibility_legend(config.RISK_ZONES, config.RISK_ZONE_BREAKS, ZONE_COLOURS)
         if use_static:
-            st.image(rendered["png"], caption=f"Random Forest · {scope}. Private static view derived from statewide RF.", width="stretch")
+            st.image(rendered["display_png"], caption=f"Random Forest · {scope}. Private static view derived from statewide RF.", width="stretch")
         else:
-            components.html(image_map.html(rendered["png"], scope), height=680)
+            components.html(image_map.html(rendered["png"], scope, rendered["display_png"]), height=680)
+        ui.caption("Navy outline: official district boundary, with a light halo for contrast. "
+                   "The 2 px preview stroke scales with image zoom; cell inspection uses the original unstyled classes.")
         ui.caption(f"30 m source grid; preview samples saved cells at {rendered['display_cell_spacing_m']} m spacing. "
                    "Zooming cannot add source detail. Gray = unscored NoData; blank = outside the masked view. "
                    "No GPS extraction, basemap or official vector coordinates are sent to the browser.")
