@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from dashboard_v2 import ui
+from dashboard_v2 import district_views, ui
 from src import config
 from src.demo_map import ZONE_COLOURS
 
@@ -21,6 +21,8 @@ def map_catalog(scope: str) -> dict:
             "raster": config.PROCESSED_DIR / "susceptibility_uk_zones.tif",
             "kind": "zones", "focus": "state", "metadata": None,
         }}
+    if scope != config.DEMO_DISTRICT:
+        return {}  # Other districts must never inherit Rudraprayag's dedicated files.
     slug = config.DEMO_DISTRICT.lower().replace(" ", "_")
     catalog = {name: {
         "html": config.DEMO_MAP_HTML.with_name(config.DEMO_MAP_HTML.stem + suffix + ".html"),
@@ -47,33 +49,62 @@ def saved_html(path: str, stamp: float) -> str:
 def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
          default_scope="Uttarakhand", route="explorer") -> None:
     ui.page_header("Susceptibility Explorer", "Explore saved susceptibility coverage by geographic scope and model.")
+    official, reason = district_views.availability()
+    scopes = ["Uttarakhand", *district_views.DISTRICTS] if official else ["Uttarakhand", config.DEMO_DISTRICT]
     # Legacy routes open the correct scope once, then allow normal selector changes.
     if st.session_state.get("explorer-route") != route or "explorer-scope" not in st.session_state:
         st.session_state["explorer-scope"] = default_scope
         st.session_state["explorer-route"] = route
+    if st.session_state["explorer-scope"] not in scopes:
+        st.session_state["explorer-scope"] = "Uttarakhand"
+        ui.availability("Previous district selection unavailable.", "Restored statewide coverage; no substitute boundary is used.")
     with ui.panel("explorer-controls"):
         left, middle, right = st.columns([1, 1, 1.3], gap="medium")
-        scope = left.selectbox("Geographic scope", ["Uttarakhand", config.DEMO_DISTRICT], key="explorer-scope")
-        catalog = available_maps(map_catalog(scope))
-        if not catalog:
+        scope = left.selectbox("Geographic scope", scopes, key="explorer-scope")
+        derived = bool(official and scope != "Uttarakhand" and scope != config.DEMO_DISTRICT)
+        if official and scope == config.DEMO_DISTRICT:
+            product = left.selectbox("Map product", [district_views.DEDICATED, district_views.DERIVED], key="explorer-product")
+            derived = product == district_views.DERIVED
+        catalog = {} if derived else available_maps(map_catalog(scope))
+        if not derived and not catalog:
             ui.availability("Map coverage unavailable.",
                             "No saved map or raster exists for this scope. Select another scope; nothing is generated.")
             return
-        if len(catalog) == 1:
+        if derived:
+            model = "Random Forest"
+            middle.markdown("**Map model**")
+            middle.markdown("Random Forest — district view derived from statewide RF")
+        elif len(catalog) == 1:
             model = next(iter(catalog))
             middle.markdown("**Map model**")
             coverage = "statewide" if scope == "Uttarakhand" else "district"
             middle.markdown(f"{model} — only available {coverage} model")
         else:
-            model = middle.selectbox("Map model", list(catalog), key="explorer-model-" + scope)
+            key, retained = "explorer-model-" + scope, "explorer-retained-model-" + scope
+            # Native widget cleanup removes a hidden model selector in the derived
+            # product. Preserve its last real choice in a separate non-widget key.
+            if key not in st.session_state or st.session_state[key] not in catalog:
+                candidate = st.session_state.get(retained)
+                st.session_state[key] = candidate if candidate in catalog else next(iter(catalog))
+            model = middle.selectbox("Map model", list(catalog), key=key)
+            st.session_state[retained] = model
         if offline:
             st.session_state["explorer-mode"] = STATIC
         mode = right.radio("Map view", [INTERACTIVE, STATIC], key="explorer-mode",
                            disabled=offline, horizontal=True)
         if scope == "Uttarakhand":
             ui.caption("Statewide coverage: saved Random Forest map only. SVM and XGBoost statewide maps are unavailable.")
+        elif derived:
+            ui.caption("Derived from the saved statewide RF classes using official 2025 district pixel-centre masks. "
+                       "No dedicated SVM or XGBoost map is available for this product.")
         else:
             ui.caption("Available saved district maps: " + ", ".join(catalog) + ". No saved XGBoost district map is available.")
+
+    if not official:
+        ui.caption("Optional official district views unavailable: " + reason + " Existing statewide and dedicated Rudraprayag products remain available.")
+    if derived:
+        district_views.page(scope, official, use_static=offline or mode == STATIC)
+        return
 
     item = catalog[model]
     summary = (p2.metadata().get(item["metadata"], {}) if item["metadata"]
@@ -129,3 +160,11 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
                                         "share_percent": st.column_config.NumberColumn("Share (%)", format="%.1f"),
                                         "area_km2": st.column_config.NumberColumn("Area (km²)", format="%.1f")})
             ui.caption("Saved full-resolution counts and areas. Shares refer to scored cells; displayed shares are rounded.")
+        if official and scope == "Uttarakhand":
+            try:
+                report = district_views.coverage(**official)
+                ui.caption(district_views.reconciliation_note(report))
+                ui.caption(f"Official-state NoData inside the raster rectangle: {report['coverage']['official_state_nodata']:,} cells. "
+                           + district_views.ATTRIBUTION)
+            except (OSError, ValueError) as error:
+                ui.availability("Official coverage check unavailable.", str(error), warning=True)

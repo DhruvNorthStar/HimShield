@@ -4,7 +4,7 @@ Launch from the repository root, using the activated `landslide` environment:
 
 ```powershell
 conda activate landslide
-python -m streamlit run dashboard_v2/app.py
+python -m streamlit run dashboard_v2/app.py --server.address=127.0.0.1
 ```
 
 ## Navigation and maps
@@ -28,8 +28,12 @@ addresses, and allow scope switching. They do not duplicate map content. The
 existing `/predict` address is retained. The default Overview page is `/`.
 This follows [Streamlit's navigation API](https://docs.streamlit.io/1.49.0/develop/api-reference/navigation/st.navigation).
 
-The explorer offers only **RF statewide**, and **RF/SVM in Rudraprayag**. A trained
-point model is not evidence that a susceptibility map exists. It reads saved HTML
+The original explorer products offer **RF statewide**, and **RF/SVM in Rudraprayag**.
+Optional local official district views now cover all 13 districts using masks of the
+saved statewide RF classes. Rudraprayag selects these as a separate product from its
+dedicated RF/SVM maps. See [local_district_views.md](local_district_views.md) for private
+inputs, loopback-only hosting, image-only interaction, coverage and rights limitations.
+A trained point model is not evidence that a susceptibility map exists. It reads saved HTML
 without rewriting it. Zone summaries come from district metadata or statewide
 raster tags, never web-display pixels. Source-cell counts, area and rounded shares
 are distinguished from reduced display cells. No new scientific data is calculated.
@@ -172,7 +176,8 @@ integer confusion counts keep their original units. Saved PNGs and the historica
 report are unchanged; captions explain their original 0–1 metric scale (0.90 = 90%).
 No metric, prediction, scientific figure or model artifact is overwritten.
 
-The 13-district source/alignment audit is in [district_boundary_audit.md](district_boundary_audit.md).
-New district views are pending the documented boundary-coverage decision. No derived
-GIS display assets have been created. Existing statewide and dedicated Rudraprayag
-maps remain functional.
+The historical source/alignment audit is in [district_boundary_audit.md](district_boundary_audit.md).
+The subsequent consistent 2025 ABDB release supports explicitly partial local district
+views. Reduced images are generated in memory, without new scientific outputs or vector
+exports. Public boundary publication/redistribution remains on hold. Existing statewide
+and dedicated Rudraprayag maps remain functional.

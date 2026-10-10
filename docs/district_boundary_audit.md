@@ -1,5 +1,12 @@
 # District-view feasibility audit
 
+This is the historical audit of the original fallback polygons. A subsequent
+consistent Survey of India 2025 release was validated separately and now supports
+the approved local-only extension described in [local_district_views.md](local_district_views.md).
+The fallback source comparisons below remain historical evidence; no benchmark
+boundary or raster was replaced. Public official-boundary publication/redistribution
+remains on hold.
+
 The existing geoBoundaries files contain all 13 district polygons. All geometries
 are valid and non-empty, and both boundary layers and the saved RF zones raster use
 EPSG:32644. However, this audit does **not** clear an unlabeled, complete district
