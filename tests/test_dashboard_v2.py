@@ -1,9 +1,11 @@
 """Read-only dashboard integration checks using existing saved artifacts, never fitting models."""
+import ast
 import json
 import os
+import sys
 from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import joblib
 import pandas as pd
@@ -11,7 +13,7 @@ import streamlit as st
 from streamlit.testing.v1 import AppTest
 from streamlit.util import calc_md5
 
-from dashboard_v2 import explorer, ui
+from dashboard_v2 import assessment, explainability, explorer, ui
 from src import config
 from src.preprocess import prepare_for_prediction
 
@@ -55,6 +57,57 @@ class DesignContractTests(unittest.TestCase):
         self.assertIn("st-key-himshield-panel-", ui.CSS)
         for fragment in ("nth-child", "@import", "https://", "animation:", "!important", "st-emotion"):
             self.assertNotIn(fragment, ui.CSS)
+
+    def test_input_groups_preserve_every_active_feature_once(self):
+        grouped = [name for group in assessment.INPUT_GROUPS.values() for name in group
+                   if name not in config.DROPPED_COLUMNS]
+        self.assertEqual(len(grouped), len(set(grouped)))
+        self.assertEqual(set(grouped), set(config.active_numeric_features() + config.active_categorical_features()))
+        self.assertEqual(list(assessment.INPUT_GROUPS),
+                         ["Terrain", "Vegetation & Rainfall", "Roads & Drainage", "Land Cover & Soil"])
+
+    def test_agreement_uses_only_actual_scores_and_available_thresholds(self):
+        same, decisions = assessment.agreement({"RF": 0.91, "SVM": 0.95, "XGB": 0.94}, {"RF": 0.5, "SVM": 0.9})
+        self.assertIn("All 3 assessed models", same)
+        self.assertIn("2 of 2 models", decisions)
+        different, decisions = assessment.agreement({"RF": 0.1, "SVM": 0.9}, {"RF": 0.5, "SVM": 0.5})
+        self.assertIn("classes differ", different)
+        self.assertIn("decisions differ", decisions)
+        _, decisions = assessment.agreement({"RF": 0.1, "SVM": 0.9}, {})
+        self.assertIn("unavailable", decisions)
+        self.assertIn("unavailable", assessment.agreement({"RF": 0.1}, {})[0])
+
+    def test_invalid_transformation_or_scores_are_not_displayed(self):
+        model = Mock()
+        transform = Mock(return_value=[[float("nan")]])
+        with self.assertRaises(ValueError):
+            assessment.score_conditions({"slope": 1}, ["slope"], Mock(), {"RF": model}, transform)
+        model.predict_proba.assert_not_called()
+        for score in (float("nan"), -0.01, 1.01):
+            with self.subTest(score=score):
+                model.predict_proba.return_value = pd.DataFrame([[0, score]]).to_numpy()
+                with self.assertRaises(ValueError):
+                    assessment.score_conditions({"slope": 1}, ["slope"], Mock(), {"RF": model},
+                                                Mock(return_value=[[1.0]]))
+
+    def test_percentage_chart_preserves_raw_scores_and_class_boundaries(self):
+        # Load just the presentation function, without launching the application.
+        from src import viz
+        from src.demo_map import ZONE_COLOURS
+        tree = ast.parse(APP.read_text(encoding="utf-8"))
+        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "probability_chart")
+        scope = {"config": config, "pd": pd, "viz": viz, "ZONE_COLOURS": ZONE_COLOURS,
+                 "INK": ui.TEXT, "MUTED": ui.SECONDARY}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), str(APP), "exec"), scope)
+        scores = {"Random Forest": 0.91, "SVM (RBF)": 0.4, "XGBoost": 1.0}
+        spec = scope["probability_chart"](scores, {"Random Forest": 0.5}).to_dict()
+        rows = next(rows for rows in spec["datasets"].values() if "score" in rows[0])
+        self.assertEqual({row["model"]: row["score"] for row in rows}, scores)
+        self.assertIsNone(next(row["threshold"] for row in rows if row["model"] == "XGBoost"))
+        bands = next(rows for rows in spec["datasets"].values() if "start" in rows[0])
+        self.assertEqual([row["end"] for row in bands], [*config.RISK_ZONE_BREAKS, 1.0])
+        self.assertEqual(spec["layer"][2]["encoding"]["x"]["axis"]["format"], ".0%")
+        self.assertEqual(spec["layer"][4]["encoding"]["text"]["format"], ".2%")
 
 
 @unittest.skipUnless(config.METADATA_PATH.is_file() and config.PREPARED_PATH.is_file()
@@ -137,6 +190,9 @@ class DashboardIntegrationTests(unittest.TestCase):
                     self.assertIn("does not extract terrain features from GPS", text)
                     self.assertIn(ui.THRESHOLD_NOTE, text)
                     self.assertIn(ui.SCORE_NOTE, text)
+                    self.assertNotIn(assessment.RESULT_KEY, app.session_state)
+                    app = self.rerun(next(x for x in app.button if x.label == "Assess Conditions").click())
+                    text = rendered_text(app)
                     for name, result in self.meta["evaluation"]["models"].items():
                         self.assertIn(f"Benchmark ROC-AUC (%) {result['auc']:.2%}", text)
                 if route == "explainability":
@@ -145,7 +201,7 @@ class DashboardIntegrationTests(unittest.TestCase):
                     self.assertEqual(values["Model baseline (expected output)"], "0.500")
                     self.assertIn("do not establish causes", text)
                     self.assertIn("does not prove robustness", text)
-                    self.assertGreaterEqual(len(app.get("imgs")), 5)
+                    self.assertEqual(len(app.get("imgs")), 1)
                 if route == "explorer":
                     self.assertIn("approximately 90 m display", text)
                     self.assertIn("not an exact 30 m", text)
@@ -202,6 +258,7 @@ class DashboardIntegrationTests(unittest.TestCase):
         app = self.render("predict")
         for label in ("Typical values", "A landslide point", "A stable point"):
             app = self.rerun(next(x for x in app.button if x.label == label).click())
+            app = self.rerun(next(x for x in app.button if x.label == "Assess Conditions").click())
             raw = {}
             for feature in config.active_numeric_features():
                 raw[feature] = (-1.0 if app.session_state["in_flat"] else float(app.session_state["in_aspect"])) \
@@ -210,9 +267,123 @@ class DashboardIntegrationTests(unittest.TestCase):
                 raw[feature] = app.session_state["in_" + feature]
             X = pd.DataFrame(prepare_for_prediction(pd.DataFrame([raw]), self.feature_names, self.scaler),
                              columns=self.feature_names)
-            actual = [x.value for x in app.metric if x.label == "Susceptibility score"]
-            expected = [f"{float(model.predict_proba(X)[0, 1]):.3f}" for model in self.models.values()]
+            actual = [x.value for x in app.metric if x.label == "Susceptibility score (%)"]
+            expected_scores = {name: float(model.predict_proba(X)[0, 1]) for name, model in self.models.items()}
+            self.assertEqual(app.session_state[assessment.RESULT_KEY]["raw"], raw)
+            self.assertEqual(app.session_state[assessment.RESULT_KEY]["scores"], expected_scores)
+            expected = [f"{score:.2%}" for score in expected_scores.values()]
             self.assertEqual(actual, expected, label)
+
+    def submit(self, app):
+        return self.rerun(next(x for x in app.button if x.label == "Assess Conditions").click())
+
+    def test_form_keeps_latest_submitted_conditions_until_resubmission(self):
+        app = self.render("predict")
+        self.assertEqual(len(app.get("form")), 1)
+        self.assertNotIn(assessment.RESULT_KEY, app.session_state)
+        self.assertFalse(any(x.label == "Susceptibility score (%)" for x in app.metric))
+        app = self.submit(app)
+        submitted = app.session_state[assessment.RESULT_KEY]
+        self.assertIn("3. Latest successful assessment", [x.value for x in app.subheader])
+        self.assertEqual(len(app.dataframe[0].value), len(submitted["raw"]))
+        slope = next(x for x in app.slider if x.key == "in_slope")
+        changed = slope.min if slope.value != slope.min else slope.max
+        app = self.rerun(slope.set_value(changed))
+        self.assertEqual(app.session_state[assessment.RESULT_KEY], submitted)
+        app = self.submit(app)
+        self.assertEqual(app.session_state[assessment.RESULT_KEY]["raw"]["slope"], changed)
+        current = app.session_state[assessment.RESULT_KEY]
+        app = self.rerun(next(x for x in app.button if x.label == "Typical values").click())
+        self.assertEqual(app.session_state[assessment.RESULT_KEY], current)
+        self.assertIn("does not update them until you submit", rendered_text(app))
+
+    def test_flat_aspect_can_change_with_one_submission_and_preserves_encoding(self):
+        app = self.render("predict")
+        next(x for x in app.checkbox if x.key == "in_flat").set_value(True)
+        app = self.submit(app)
+        self.assertEqual(app.session_state[assessment.RESULT_KEY]["raw"]["aspect"], -1.0)
+        self.assertFalse(next(x for x in app.slider if x.key == "in_aspect").disabled)
+        next(x for x in app.checkbox if x.key == "in_flat").set_value(False)
+        next(x for x in app.slider if x.key == "in_aspect").set_value(45.0)
+        app = self.submit(app)
+        self.assertEqual(app.session_state[assessment.RESULT_KEY]["raw"]["aspect"], 45.0)
+        raw = app.session_state[assessment.RESULT_KEY]["raw"]
+        X = pd.DataFrame(prepare_for_prediction(pd.DataFrame([raw]), self.feature_names, self.scaler),
+                         columns=self.feature_names)
+        self.assertEqual(app.session_state[assessment.RESULT_KEY]["scores"],
+                         {name: float(model.predict_proba(X)[0, 1]) for name, model in self.models.items()})
+
+    def test_invalid_or_incomplete_inputs_never_reach_models(self):
+        app = self.submit(self.render("predict"))
+        helpers = sys.modules["lsm_phase2_dashboard"]
+        original = dict(app.session_state[assessment.RESULT_KEY]["raw"])
+        frame = helpers.load_dataset(helpers.mtime(config.DATASET_CSV))
+        self.assertEqual(assessment.input_errors(original, frame, helpers), [])
+        cases = [{k: v for k, v in original.items() if k != "slope"},
+                 {**original, "slope": float("nan")}, {**original, "slope": float("inf")},
+                 {**original, "slope": True}, {**original, "aspect": 360.0},
+                 {**original, "ndvi": 100.0}, {**original, "lulc": "not a saved category"}]
+        previous = app.session_state[assessment.RESULT_KEY]
+        for raw in cases:
+            with self.subTest(raw=raw), patch.object(helpers, "read_inputs", return_value=raw), \
+                    patch.object(assessment, "score_conditions") as score:
+                app = next(x for x in app.button if x.label == "Assess Conditions").click().run(timeout=120)
+                self.assertFalse(list(app.exception))
+                self.assertTrue(list(app.error))
+                score.assert_not_called()
+                self.assertEqual(app.session_state[assessment.RESULT_KEY], previous)
+
+    def test_missing_models_allow_only_available_results(self):
+        original = Path.is_file
+        for absent in ({config.XGB_MODEL_PATH}, {config.SVM_MODEL_PATH}, {config.RF_MODEL_PATH}):
+            with self.subTest(absent=absent), patch.object(Path, "is_file", lambda path: False if path in absent else original(path)):
+                app = self.submit(self.render("predict"))
+                scores = app.session_state[assessment.RESULT_KEY]["scores"]
+                available = {name for name, attribute in assessment.MODEL_PATHS.items() if getattr(config, attribute) not in absent}
+                self.assertEqual(set(scores), available)
+                self.assertEqual([x.value for x in app.metric if x.label == "Susceptibility score (%)"].count("—"), 1)
+                self.assertIn("Some model results are unavailable", rendered_text(app))
+        absent = {getattr(config, attribute) for attribute in assessment.MODEL_PATHS.values()}
+        with patch.object(Path, "is_file", lambda path: False if path in absent else original(path)):
+            app = self.render("predict")
+        self.assertIn("No saved model could be loaded", rendered_text(app))
+        self.assertFalse(any(x.label == "Assess Conditions" for x in app.button))
+
+    def test_unavailable_preprocessing_and_incomplete_dataset_are_read_only(self):
+        original = Path.is_file
+        for absent in (config.SCALER_PATH, config.FEATURE_NAMES_PATH):
+            with self.subTest(absent=absent), patch.object(Path, "is_file", lambda path: False if path == absent else original(path)):
+                app = self.render("predict")
+            self.assertIn("Preprocessing unavailable", rendered_text(app))
+            self.assertFalse(any(x.label == "Assess Conditions" for x in app.button))
+        self.render("predict")
+        helpers = sys.modules["lsm_phase2_dashboard"]
+        for frame, message in ((None, "Assessment inputs unavailable"),
+                               (pd.DataFrame({"slope": [1.0]}), "Assessment inputs incomplete")):
+            with self.subTest(message=message), patch.object(helpers, "load_dataset", return_value=frame):
+                app = self.render("predict")
+            self.assertIn(message, rendered_text(app))
+            self.assertFalse(any(x.label == "Assess Conditions" for x in app.button))
+
+    def test_changed_model_availability_invalidates_previous_submission(self):
+        app = self.submit(self.render("predict"))
+        original = Path.is_file
+        with patch.object(Path, "is_file", lambda path: False if path == config.XGB_MODEL_PATH else original(path)):
+            app = self.rerun(app)
+        self.assertNotIn(assessment.RESULT_KEY, app.session_state)
+        self.assertIn("Submit a new assessment", rendered_text(app))
+
+    def test_missing_thresholds_do_not_invent_decisions(self):
+        self.render("predict")
+        helpers = sys.modules["lsm_phase2_dashboard"]
+        metadata = json.loads(json.dumps(self.meta))
+        for value in metadata["evaluation"]["models"].values():
+            value.pop("youden")
+        with patch.object(helpers, "metadata", return_value=metadata):
+            app = self.submit(self.render("predict"))
+        self.assertEqual(app.session_state[assessment.RESULT_KEY]["thresholds"], {})
+        self.assertIn("Retrospective benchmark threshold unavailable", rendered_text(app))
+        self.assertIn("Benchmark decision agreement unavailable", rendered_text(app))
 
     def test_explorer_scope_models_and_saved_summaries(self):
         app = self.render("explorer")
@@ -334,26 +505,48 @@ class DashboardIntegrationTests(unittest.TestCase):
         self.assertEqual(catalog["SVM (RBF)"]["kind"], "probability")
 
     def test_saved_explainability_figures_all_accessible(self):
-        with patch("streamlit.image", wraps=st.image) as image:
-            app = self.render("explainability")
-        shown = {str(call.args[0]) for call in image.call_args_list}
-        for name in ("shap_beeswarm", "shap_bar", "shap_force_high_risk"):
-            self.assertIn(str(config.FIGURES_DIR / "shap" / (name + ".png")), shown)
-        selector = next(x for x in app.selectbox if x.label == "Dependence factor")
-        self.assertEqual(len(selector.options), 3)
-        # Values are paths, displayed labels are readable feature names.
-        for path in sorted((config.FIGURES_DIR / "shap").glob("shap_dependence_*.png")):
+        app = self.render("explainability")
+        selector = next(x for x in app.selectbox if x.label == "Saved figure")
+        self.assertEqual(selector.options, [item[0] for item in explainability.FIGURES.values()])
+        for key, (_, model, _) in explainability.FIGURES.items():
             with patch("streamlit.image", wraps=st.image) as image:
-                app = self.select(app, "Dependence factor", path)
-            self.assertIn(str(path), {str(call.args[0]) for call in image.call_args_list})
-            self.assertEqual(len(app.get("imgs")), 5)
-        for model in ("Random Forest", "XGBoost"):
-            with patch("streamlit.image", wraps=st.image) as image:
-                app = self.select(app, "Feature-importance model", model)
-            name = "rf_feature_importance" if model == "Random Forest" else "xgb_feature_importance"
-            self.assertIn(str(config.FIGURES_DIR / (name + ".png")), {str(call.args[0]) for call in image.call_args_list})
-            self.assertIn("Saved " + model + " feature importance, not new SHAP values", rendered_text(app))
-            self.assertEqual(len(app.get("imgs")), 5)
+                app = self.select(app, "Saved figure", key)
+            self.assertEqual(image.call_count, 1)
+            self.assertEqual(str(image.call_args.args[0]), str(explainability.figure_path(key)))
+            self.assertIn("Figure model: " + model, rendered_text(app))
+            self.assertEqual(len(app.get("imgs")), 1)
+            if not key.startswith("shap_"):
+                self.assertIn("Saved " + model + " feature importance, not new SHAP values", rendered_text(app))
+
+    def test_explanation_glossary_ranking_and_sample_match_saved_metadata(self):
+        summary = json.loads((config.FIGURES_DIR / "shap/shap_summary.json").read_text(encoding="utf-8"))
+        app = self.render("explainability")
+        ranking, glossary = [x.value for x in app.dataframe]
+        self.assertEqual(dict(zip(ranking["Feature"], ranking["Mean |SHAP|"])), summary["mean_abs_shap"])
+        self.assertEqual(list(glossary["Feature"]), list(summary["mean_abs_shap"]))
+        self.assertTrue(all("Saved model feature;" not in explanation for explanation in glossary["Plain-English meaning"]))
+        self.assertIn("not measured soil moisture", explainability.feature_description("twi"))
+        self.assertIn("not the rainfall of a particular storm", explainability.feature_description("rainfall"))
+        self.assertIn("Encoded land-cover category", explainability.feature_description("lulc_Cropland"))
+        text = rendered_text(app)
+        for phrase in ("500 held-out test set locations, 166 landslide and 334 stable; seed 42",
+                       "baseline is **0.499661**", "no separate background sample", "not a measured landslide rate",
+                       "baseline + all feature contributions", "No explanations are calculated for the conditions"):
+            self.assertIn(phrase, text)
+        app = self.select(app, "Saved figure", "shap_force_high_risk")
+        text = rendered_text(app)
+        self.assertIn("test index **2214**", text)
+        self.assertIn("RF susceptibility score **100.00%**", text)
+        self.assertIn("not your submitted assessment", text)
+
+    def test_missing_selected_figure_has_honest_availability_state(self):
+        app = self.render("explainability")
+        missing = explainability.figure_path("shap_dependence_3_slope")
+        original = Path.is_file
+        with patch.object(Path, "is_file", lambda path: False if path == missing else original(path)):
+            app = self.select(app, "Saved figure", "shap_dependence_3_slope")
+        self.assertIn("Figure unavailable", rendered_text(app))
+        self.assertEqual(len(app.get("imgs")), 0)
 
     def test_missing_shap_summary_does_not_generate_outputs(self):
         missing = ROOT / ".git/nonexistent-dashboard-test-figures"
@@ -368,6 +561,25 @@ class DashboardIntegrationTests(unittest.TestCase):
         self.assertFalse(list(app.exception))
         self.assertEqual(app.title[0].value, "Landslide Susceptibility Mapping for Uttarakhand")
         self.assertNotIn("himshield-theme", rendered_text(app))
+
+    def test_phase2_all_pages_remain_functional(self):
+        for route in ("overview", "comparison", "predict", "map"):
+            with self.subTest(route=route):
+                app = AppTest.from_file(str(ROOT / "dashboard/app.py"), default_timeout=120)
+                if route != "overview":
+                    app._page_hash = calc_md5(route)
+                app.run(timeout=120)
+                self.assertFalse(list(app.exception), [x.message for x in app.exception])
+                self.assertFalse(list(app.error), [x.value for x in app.error])
+                self.assertNotIn("himshield-theme", rendered_text(app))
+                if route == "predict":
+                    raw = {name: app.session_state["in_" + name] for name in config.active_numeric_features() if name != "aspect"}
+                    raw["aspect"] = -1.0 if app.session_state["in_flat"] else app.session_state["in_aspect"]
+                    raw.update({name: app.session_state["in_" + name] for name in config.active_categorical_features()})
+                    X = pd.DataFrame(prepare_for_prediction(pd.DataFrame([raw]), self.feature_names, self.scaler),
+                                     columns=self.feature_names)
+                    expected = [f"{self.models[name].predict_proba(X)[0, 1]:.2f}" for name in ("SVM (RBF)", "Random Forest")]
+                    self.assertEqual([x.value for x in app.metric if x.label == "Landslide score"], expected)
 
 
 if __name__ == "__main__":

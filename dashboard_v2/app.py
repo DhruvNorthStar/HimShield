@@ -39,17 +39,14 @@ from src import config  # noqa: E402
 from src import viz  # noqa: E402
 from src.demo_map import ZONE_COLOURS  # noqa: E402
 from src.map_generator_full import POINT_FILL  # noqa: E402
-from dashboard_v2 import benchmark_pages, explorer, ui  # noqa: E402
+from dashboard_v2 import assessment, benchmark_pages, explainability, explorer, ui  # noqa: E402
 
 # Presentation colours; saved figures and scientific zone/model colours remain unchanged.
 INK = ui.TEXT
 MUTED = ui.SECONDARY
 
 PHASE2_APP = ROOT / "dashboard" / "app.py"
-SHAP_DIR = config.FIGURES_DIR / "shap"
-SHAP_SUMMARY = SHAP_DIR / "shap_summary.json"
 ONLINE_HOSTS = ("cdn.jsdelivr.net", "tile.openstreetmap.org")
-MODEL_NAMES = ["Random Forest", "SVM (RBF)"]  # plus "XGBoost" when its model exists (see model_names)
 
 
 # ---------------------------------------------------------------------------
@@ -194,201 +191,46 @@ def probability_chart(scores: dict, thresholds: dict):
     bands = pd.DataFrame({"zone": config.RISK_ZONES, "start": edges[:-1], "end": edges[1:],
                           "middle": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])]})
     bars = pd.DataFrame({"model": list(scores), "score": list(scores.values()),
-                         "threshold": [thresholds[m] for m in scores],
+                         "threshold": [thresholds.get(m) for m in scores],
                          "zone": [config.risk_zone(s) for s in scores.values()],
-                         "decision": ["flagged" if scores[m] >= thresholds[m] else "not flagged" for m in scores]})
-    x = alt.X("score:Q", scale=alt.Scale(domain=[0, 1]), title="Susceptibility score (model output, 0–1)",
-              axis=alt.Axis(values=edges, format=".1f", grid=False))
+                         "decision": [("meets benchmark threshold" if scores[m] >= thresholds[m] else "below benchmark threshold")
+                                      if m in thresholds else "threshold unavailable" for m in scores]})
+    x = alt.X("score:Q", scale=alt.Scale(domain=[0, 1]), title="Relative susceptibility score (%) — model output",
+              axis=alt.Axis(values=edges, format=".0%", grid=False))
     y = alt.Y("model:N", sort=list(scores), title=None, axis=alt.Axis(labelFontSize=13, labelPadding=8))
     band_layer = alt.Chart(bands).mark_rect(opacity=0.45).encode(
         x=alt.X("start:Q", scale=alt.Scale(domain=[0, 1])), x2="end:Q",
         color=alt.Color("zone:N", scale=alt.Scale(domain=config.RISK_ZONES, range=ZONE_COLOURS), legend=None),
-        tooltip=[alt.Tooltip("zone:N", title="Susceptibility class"), alt.Tooltip("start:Q", title="from", format=".1f"),
-                 alt.Tooltip("end:Q", title="to", format=".1f")])
+        tooltip=[alt.Tooltip("zone:N", title="Susceptibility class"), alt.Tooltip("start:Q", title="from", format=".0%"),
+                 alt.Tooltip("end:Q", title="to", format=".0%")])
     band_labels = alt.Chart(bands).mark_text(fontSize=11, color=MUTED, baseline="bottom").encode(
         x=alt.X("middle:Q", scale=alt.Scale(domain=[0, 1])), y=alt.value(-6), text="zone:N")
-    tooltip = [alt.Tooltip("model:N", title="Model"), alt.Tooltip("score:Q", title="Score", format=".3f"),
-               alt.Tooltip("zone:N", title="Class"), alt.Tooltip("threshold:Q", title="Retrospective Youden threshold", format=".2f"),
+    tooltip = [alt.Tooltip("model:N", title="Model"), alt.Tooltip("score:Q", title="Relative score (%)", format=".2%"),
+               alt.Tooltip("zone:N", title="Class"), alt.Tooltip("threshold:Q", title="Retrospective Youden threshold (%)", format=".2%"),
                alt.Tooltip("decision:N", title="Decision")]
     bar_layer = alt.Chart(bars).mark_bar(size=26, cornerRadiusEnd=4).encode(
         x=x, y=y, tooltip=tooltip,
         color=alt.Color("model:N", scale=alt.Scale(domain=list(viz.MODEL_COLORS), range=list(viz.MODEL_COLORS.values())),
                         legend=None))
     value_layer = alt.Chart(bars).mark_text(align="left", dx=6, fontSize=13, fontWeight="bold", color=INK).encode(
-        x="score:Q", y=y, text=alt.Text("score:Q", format=".2f"))
-    threshold_layer = alt.Chart(bars).mark_tick(color="#ffffff", thickness=3, size=40).encode(
+        x="score:Q", y=y, text=alt.Text("score:Q", format=".2%"))
+    threshold_layer = alt.Chart(bars).transform_filter(alt.datum.threshold != None).mark_tick(color="#ffffff", thickness=3, size=40).encode(
         x="threshold:Q", y=y, tooltip=[alt.Tooltip("model:N", title="Model"),
-                                        alt.Tooltip("threshold:Q", title="Retrospective Youden threshold", format=".2f")])
+                                        alt.Tooltip("threshold:Q", title="Retrospective Youden threshold (%)", format=".2%")])
     # resolve_scale(color="independent"): layers share one colour scale by default, so the bars' model colours
     # and the bands' zone colours would fight over it and the bars would vanish.
     return (band_layer + band_labels + bar_layer + threshold_layer + value_layer).resolve_scale(
         color="independent").properties(
-        height=50 * len(scores) + 50, padding={"top": 22, "left": 5, "right": 30, "bottom": 5}).configure_view(
+        height=50 * len(scores) + 50, padding={"top": 22, "left": 5, "right": 65, "bottom": 5}).configure_view(
         strokeWidth=0)
 
 
-@st.cache_resource
-def load_xgb(stamp: float):
-    import joblib
-
-    return joblib.load(config.XGB_MODEL_PATH)
-
-
-def model_names(ev: dict) -> list[str]:
-    """Random Forest and SVM always; XGBoost too once it is trained and evaluated (Phase 3 extension)."""
-    extra = ["XGBoost"] if config.XGB_MODEL_PATH.exists() and "XGBoost" in ev["models"] else []
-    return MODEL_NAMES + extra
-
-
 def page_predict_v2() -> None:
-    bundle, df, ev = p2.models(), p2.dataset(), p2.evaluation_section()
-    feature_names, scaler = bundle["feature_names"], bundle["scaler"]
-    names = model_names(ev)
-    if "XGBoost" in names:
-        bundle = {**bundle, "XGBoost": load_xgb(file_stamp(config.XGB_MODEL_PATH))}
-
-    ui.page_header("Location Assessment", "Manual terrain-condition assessment with " + ", ".join(names) + ".")
-    st.markdown("Set the feature values below. This interface does not extract terrain features from GPS "
-                "coordinates. Every saved model receives the same original prediction transformation; "
-                "the chart shows model outputs and the unchanged five susceptibility classes.")
-    ui.caption(ui.THRESHOLD_NOTE)
-
-    if "in_slope" not in st.session_state:
-        p2.set_inputs(p2.typical_row(df), df)
-    st.subheader("1. Choose a starting point")
-    buttons = st.columns(3)
-    buttons[0].button("Typical values", on_click=p2.load_example, args=("typical", df),
-                      help="Median of every number and the most common class")
-    buttons[1].button("A landslide point", on_click=p2.load_example, args=("landslide", df),
-                      help="A random landslide row from the dataset (most were used in training)")
-    buttons[2].button("A stable point", on_click=p2.load_example, args=("stable", df),
-                      help="A random stable row from the dataset (most were used in training)")
-
-    st.subheader("2. Enter terrain conditions")
-    ui.caption("All input groups contribute to the same assessment. Example points are demonstrations, not independent validation cases.")
-    groups = st.tabs(list(p2.INPUT_GROUPS))
-    for tab, (title, cols) in zip(groups, p2.INPUT_GROUPS.items()):
-        with tab, ui.panel("inputs-" + title.lower().replace(" ", "-")):
-            st.markdown(f"**{title}**")
-            for col in cols:
-                if col not in config.DROPPED_COLUMNS:
-                    p2.input_widget(col, df)
-
-    raw = pd.DataFrame([p2.read_inputs()])
-    X = pd.DataFrame(p2.prepare_for_prediction(raw, feature_names, scaler), columns=feature_names)
-    scores = {name: float(bundle[name].predict_proba(X)[0, 1]) for name in names}
-    thresholds = {name: ev["models"][name]["youden"]["threshold"] for name in names}
-
-    st.subheader("3. Review susceptibility scores")
-    st.altair_chart(probability_chart(scores, thresholds), use_container_width=True)
-    ui.caption("Bars: susceptibility scores. White tick: the retrospective, test-selected Youden threshold. "
-               "A bar passing its tick meets that benchmark decision rule. Bands: the five susceptibility classes.")
-
-    cards = st.columns(len(names), gap="medium")
-    for i, (column, name) in enumerate(zip(cards, names)):
-        score, threshold = scores[name], thresholds[name]
-        with column, ui.panel("prediction-" + str(i)):
-            st.markdown(f"**{name}**")
-            st.metric("Susceptibility score", f"{score:.3f}")
-            st.markdown(f"Susceptibility class: **{config.risk_zone(score)}**  \n"
-                        + ("**Above benchmark threshold**" if score >= threshold else "Below benchmark threshold")
-                        + f" (retrospective Youden: {threshold:.2f})  \n"
-                        + f"Benchmark ROC-AUC (%) {ui.percent(ev['models'][name]['auc'])}")
-
-    difference = scores["Random Forest"] - scores["SVM (RBF)"]
-    same = len({scores[n] >= thresholds[n] for n in names}) == 1
-    st.markdown(f"Random Forest minus SVM score (0–1 scale): **{difference:+.3f}**. " +
-                ("All models reach the same decision." if same else
-                 "**The benchmark decisions differ.** Outputs depend on the model and supplied conditions."))
-    ui.caption("All models use SMOTE-balanced training data; the SVM uses Platt scaling. " + ui.SCORE_NOTE)
-
-
-# ---------------------------------------------------------------------------
-# Page 5: Explainability
-# ---------------------------------------------------------------------------
-SHAP_NOTES = {
-    "shap_beeswarm": ("Every factor, every location",
-                      "Each dot is one held-out test location. Its position shows how far that factor pushed the "
-                      "susceptibility score up (right) or down (left); its colour shows whether the factor's value was "
-                      "high or low there. Factors are ordered by average effect."),
-    "shap_bar": ("Average effect",
-                 "Mean absolute SHAP value: how much each factor moves the score on average, whichever direction. "
-                 "It is the closest SHAP equivalent of feature importance."),
-    "shap_force_high_risk": ("One high-score example",
-                             "How a recorded landslide example got its high score: starting from the model baseline, "
-                             "red factors push it up and blue ones push it down, and together they add up within numerical tolerance "
-                             "to the model's score for that location."),
-}
+    assessment.page(p2, probability_chart, file_stamp)
 
 
 def page_explainability() -> None:
-    ui.page_header("Explainability", "Saved Random Forest SHAP explanations for held-out test locations.")
-    st.markdown("SHAP attributes the susceptibility score to model-associated feature contributions. "
-                "Contributions plus the model baseline reproduce the output within the saved numerical error. "
-                "These associations do not establish causes of landslides.")
-    if not SHAP_SUMMARY.exists():
-        ui.availability("Explanations unavailable.", "No saved SHAP summary is available. Explanations are not computed here.")
-        return
-    summary = json.loads(SHAP_SUMMARY.read_text(encoding="utf-8"))
-    if config.RF_MODEL_PATH.exists() and summary.get("rf_model_mtime", 0) < config.RF_MODEL_PATH.stat().st_mtime:
-        ui.availability("SHAP timestamp warning.", "The model file has a newer modification time. "
-                        "Timestamp order alone does not establish model identity; verify provenance before interpretation.", warning=True)
-
-    sample = summary["sample"]
-    cols = st.columns(4)
-    ui.metric_card(cols[0], "shap-count", "Locations explained", f"{sample['rows']:,}",
-                   help=f"{sample['landslide']} landslide and {sample['stable']} stable, from the held-out test set")
-    ui.metric_card(cols[1], "shap-baseline", "Model baseline (expected output)", f"{summary['base_value']:.3f}",
-                   help="TreeExplainer expected model output, not the observed landslide prevalence or mean of these 500 scores")
-    ui.metric_card(cols[2], "shap-error", "Largest additivity error", f"{summary['additivity_max_error']:.1e}",
-                   help="Contributions plus model baseline minus the saved model output")
-    ui.metric_card(cols[3], "shap-time", "Computation time", f"{summary['timing_seconds']['explain']:.0f} s")
-    ui.caption(ui.SCORE_NOTE + " Saved plots retain their original feature names and terminology.")
-
-    permutation = list(p2.metadata().get("rf", {}).get("feature_importance_permutation", {}))
-    ranking = pd.DataFrame([{"SHAP rank": i, "Factor": factor, "Mean |SHAP|": value,
-                             "Permutation rank (Step 6)": permutation.index(factor) + 1 if factor in permutation else None}
-                            for i, (factor, value) in enumerate(summary["mean_abs_shap"].items(), start=1)]).head(12)
-
-    figures = {Path(f).stem: ROOT / f for f in summary["figures"]}
-    tab_names = [SHAP_NOTES["shap_beeswarm"][0], SHAP_NOTES["shap_bar"][0], "Dependence (top 3)",
-                 SHAP_NOTES["shap_force_high_risk"][0], "Ranking table", "Model feature importance"]
-    tabs = st.tabs(tab_names)
-    for tab, key in zip(tabs[:2], ["shap_beeswarm", "shap_bar"]):
-        with tab:
-            ui.figure(figures.get(key, SHAP_DIR / f"{key}.png"))
-            ui.caption(SHAP_NOTES[key][1])
-    with tabs[2]:
-        st.markdown("Feature values versus SHAP contributions for the three strongest factors. These are "
-                    "associations in the saved Random Forest outputs, not causal effects or calibrated event probabilities.")
-        dependence = [p for k, p in figures.items() if k.startswith("shap_dependence_")]
-        if dependence:
-            chosen = st.selectbox("Dependence factor", dependence,
-                                  format_func=lambda path: path.stem.split("_", 3)[-1].replace("_", " "))
-            ui.figure(chosen)
-        else:
-            ui.availability("Dependence figures unavailable.", "No saved dependence plots are available.")
-    with tabs[3]:
-        point = summary.get("force_plot_point", {})
-        if "shap_force_high_risk" in figures and figures["shap_force_high_risk"].exists():
-            st.image(str(figures["shap_force_high_risk"]))
-        st.markdown(SHAP_NOTES["shap_force_high_risk"][1] +
-                    (f" This location scored {point['rf_score']:.3f}." if point else ""))
-    with tabs[4]:
-        st.dataframe(ranking, hide_index=True,
-                     column_config={"Mean |SHAP|": st.column_config.NumberColumn(format="%.4f")})
-        ui.caption("Two different summaries of the same model. Agreement does not prove robustness or causality. "
-                   "Permutation importance measures lost AUC; SHAP measures movement of model output.")
-    with tabs[5]:
-        model = st.selectbox("Feature-importance model", ["Random Forest", "XGBoost"])
-        name = "rf_feature_importance" if model == "Random Forest" else "xgb_feature_importance"
-        ui.figure(config.FIGURES_DIR / f"{name}.png")
-        ui.caption(f"Saved {model} feature importance, not new SHAP values. "
-                   "Importance depends on its calculation method and does not establish causality.")
-    st.caption(f"Random Forest only: TreeExplainer gives exact SHAP values for tree models "
-               f"({summary['timing_seconds']['explain']:.0f} s for {sample['rows']:,} locations here); the RBF SVM "
-               f"would need an approximate, much slower method, not run in this project. "
-               f"SHAP {summary['shap_version']}, {summary['explainer']}.")
+    explainability.page(p2)
 
 
 # ---------------------------------------------------------------------------
