@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "experiment_id": "spatialcv-10km-buffer2km-v1",
+  "benchmark_checkpoint": "a401bb5758c5c4f6423f72628b318ef8429ff58e",
+  "seed": 42,
+  "outer_folds": 5,
+  "inner_folds": 3,
+  "crs": "EPSG:32644",
+  "cell_size_m": 30,
+  "block_size_m": 10000,
+  "block_origin_m": [0, 0],
+  "buffer_m": 2000,
+  "inner_strategy": "buffered_spatial_for_both_protocols",
+  "protocols": ["spatial", "random_control"],
+  "models": ["svm", "rf", "xgb"],
+  "numeric_features": ["slope", "aspect", "elevation", "curvature", "twi", "rainfall", "ndvi", "dist_roads", "dist_streams"],
+  "categorical_features": ["soil_type", "lulc"],
+  "excluded_lulc": ["Water", "Permanent water bodies", "Water bodies"],
+  "preprocessing": {"rare_min_rows": 50, "vif_threshold": 10, "smote_k": 5},
+  "grids": {
+    "svm": {"C": [10, 100], "gamma": [0.001, 0.01]},
+    "rf": {"n_estimators": [300], "max_depth": [10, null], "min_samples_split": [2, 10]},
+    "xgb": {"n_estimators": [100], "max_depth": [3, 5], "learning_rate": [0.05, 0.1], "subsample": [0.8]}
+  },
+  "pilot_params": {
+    "svm": {"C": 100, "gamma": 0.01},
+    "rf": {"n_estimators": 300, "max_depth": null, "min_samples_split": 2},
+    "xgb": {"n_estimators": 100, "max_depth": 5, "learning_rate": 0.1, "subsample": 0.8}
+  },
+  "resources": {
+    "workers": 1,
+    "native_threads": 1,
+    "svm_cache_mb": 256,
+    "max_memory_mb": 2048,
+    "minimum_free_memory_mb": 3072,
+    "minimum_free_disk_mb": 2048,
+    "max_job_seconds": 600,
+    "pilot_total_seconds": 600,
+    "maximum_input_rows": 20000
+  }
+}

@@ -80,6 +80,9 @@ def argument(flag: str, default=None):
 def environment_versions(step: str) -> dict:
     from importlib.metadata import PackageNotFoundError, version
     packages = ["numpy", "pandas", "scikit-learn", "joblib"]
+    if step.startswith("spatial_"):
+        packages += ["imbalanced-learn", "scipy", "statsmodels", "xgboost", "rasterio",
+                     "geopandas", "pyproj", "shapely", "psutil", "threadpoolctl"]
     if step in {"preprocess", "train_svm", "train_rf", "xgb"}:
         packages += ["imbalanced-learn", "scipy", "statsmodels"]
     if step in {"xgb", "evaluate", "near_road"}:
@@ -99,6 +102,9 @@ def environment_versions(step: str) -> dict:
 
 
 def options(step: str) -> dict:
+    if step.startswith("spatial_"):
+        from src.run_spatial_experiment import step_options
+        return step_options(step)
     if step == "shap":
         return {"max_samples": max(1, min(int(argument("--max-samples", 500)), 500))}
     if step == "map":
@@ -188,6 +194,12 @@ def specifications() -> dict:
 
 
 def specification(step: str) -> dict:
+    if step.startswith("spatial_") and config.EXPERIMENT_DIR:
+        from src.run_spatial_experiment import spatial_specifications
+        definitions = spatial_specifications()
+        if step not in definitions:
+            raise ValueError("Unknown spatial experiment step: " + step)
+        return definitions[step]
     if step not in specifications():
         raise ValueError("Declare a dependency/output specification before writing a new step: " + step)
     return specifications()[step]
