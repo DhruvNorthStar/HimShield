@@ -1,22 +1,21 @@
 """
-Phase 3 dashboard: the Phase 2 dashboard extended to six pages.
+HimShield: six-page dashboard of the preserved landslide susceptibility benchmark.
 
     streamlit run dashboard_v2/app.py
 
 Pages:
-    1 Overview          Phase 2, unchanged (its own function)
-    2 Model Comparison  Phase 2, unchanged (its own function)
-    3 Predict           upgraded: Random Forest and SVM side by side, scores as bars on one axis with the
-                        risk-zone bands and each model's tuned threshold
-    4 Rudraprayag Map   Phase 2 page when online; a static copy of the map when offline
+    1 Overview          dataset, original benchmark workflow and validation limitations
+    2 Model Comparison  existing evaluation results and retrospective benchmark thresholds
+    3 Predict           saved models and unchanged manual feature inputs
+    4 Rudraprayag Map   saved interactive map or a static copy when offline
     5 Explainability    SHAP figures from src/explain_shap.py
     6 Full State Map    outputs/susceptibility_map_uk.html from src/map_generator_full.py, with the
                         Rudraprayag fallback until the state raster exists; a static copy when offline
 
 Reuse, not copies: dashboard/app.py ends with a bare `main()` call, so importing it would launch the whole
 Phase 2 app. load_phase2_dashboard() reads that file, leaves out only that final call, and runs the rest
-as a module, so every Phase 2 page, loader and widget helper is used as it is, including its
-@st.cache_resource model loading. dashboard/app.py itself is not changed.
+as a module. Its loaders, prediction transformation and widget helpers are reused unchanged;
+HimShield owns its presentation labels. dashboard/app.py itself is not changed.
 
 Offline (college wifi): everything is local except the interactive web maps, which load Leaflet from CDNs
 and draw basemap tiles from the internet. A quick connection test decides; offline, both map pages show a
@@ -45,10 +44,11 @@ from src import config  # noqa: E402
 from src import viz  # noqa: E402
 from src.demo_map import ZONE_COLOURS  # noqa: E402
 from src.map_generator_full import POINT_FILL  # noqa: E402
+from dashboard_v2 import benchmark_pages, ui  # noqa: E402
 
-# Scheme 4 tokens shared with the figures and maps: text ink, muted label grey.
-INK = "#222222"
-MUTED = "#52514e"
+# Presentation colours; saved figures and scientific zone/model colours remain unchanged.
+INK = ui.TEXT
+MUTED = ui.SECONDARY
 
 PHASE2_APP = ROOT / "dashboard" / "app.py"
 SHAP_DIR = config.FIGURES_DIR / "shap"
@@ -203,7 +203,7 @@ def raster_summary(path: Path) -> dict:
 # Page 3: Predict, upgraded
 # ---------------------------------------------------------------------------
 def probability_chart(scores: dict, thresholds: dict):
-    """Both scores on one 0 to 1 axis, over the five zone bands, with each model's tuned threshold."""
+    """Saved-model scores, unchanged class breaks and retrospective threshold markers."""
     import altair as alt
 
     edges = [0.0, *config.RISK_ZONE_BREAKS, 1.0]
@@ -213,18 +213,18 @@ def probability_chart(scores: dict, thresholds: dict):
                          "threshold": [thresholds[m] for m in scores],
                          "zone": [config.risk_zone(s) for s in scores.values()],
                          "decision": ["flagged" if scores[m] >= thresholds[m] else "not flagged" for m in scores]})
-    x = alt.X("score:Q", scale=alt.Scale(domain=[0, 1]), title="Landslide score (0 safer, 1 riskier)",
+    x = alt.X("score:Q", scale=alt.Scale(domain=[0, 1]), title="Susceptibility score (model output, 0–1)",
               axis=alt.Axis(values=edges, format=".1f", grid=False))
     y = alt.Y("model:N", sort=list(scores), title=None, axis=alt.Axis(labelFontSize=13, labelPadding=8))
     band_layer = alt.Chart(bands).mark_rect(opacity=0.45).encode(
         x=alt.X("start:Q", scale=alt.Scale(domain=[0, 1])), x2="end:Q",
         color=alt.Color("zone:N", scale=alt.Scale(domain=config.RISK_ZONES, range=ZONE_COLOURS), legend=None),
-        tooltip=[alt.Tooltip("zone:N", title="Risk zone"), alt.Tooltip("start:Q", title="from", format=".1f"),
+        tooltip=[alt.Tooltip("zone:N", title="Susceptibility class"), alt.Tooltip("start:Q", title="from", format=".1f"),
                  alt.Tooltip("end:Q", title="to", format=".1f")])
     band_labels = alt.Chart(bands).mark_text(fontSize=11, color=MUTED, baseline="bottom").encode(
         x=alt.X("middle:Q", scale=alt.Scale(domain=[0, 1])), y=alt.value(-6), text="zone:N")
     tooltip = [alt.Tooltip("model:N", title="Model"), alt.Tooltip("score:Q", title="Score", format=".3f"),
-               alt.Tooltip("zone:N", title="Zone"), alt.Tooltip("threshold:Q", title="Tuned threshold", format=".2f"),
+               alt.Tooltip("zone:N", title="Class"), alt.Tooltip("threshold:Q", title="Retrospective Youden threshold", format=".2f"),
                alt.Tooltip("decision:N", title="Decision")]
     bar_layer = alt.Chart(bars).mark_bar(size=26, cornerRadiusEnd=4).encode(
         x=x, y=y, tooltip=tooltip,
@@ -234,7 +234,7 @@ def probability_chart(scores: dict, thresholds: dict):
         x="score:Q", y=y, text=alt.Text("score:Q", format=".2f"))
     threshold_layer = alt.Chart(bars).mark_tick(color="#ffffff", thickness=3, size=40).encode(
         x="threshold:Q", y=y, tooltip=[alt.Tooltip("model:N", title="Model"),
-                                        alt.Tooltip("threshold:Q", title="Tuned threshold", format=".2f")])
+                                        alt.Tooltip("threshold:Q", title="Retrospective Youden threshold", format=".2f")])
     # resolve_scale(color="independent"): layers share one colour scale by default, so the bars' model colours
     # and the bands' zone colours would fight over it and the bars would vanish.
     return (band_layer + band_labels + bar_layer + threshold_layer + value_layer).resolve_scale(
@@ -257,33 +257,33 @@ def model_names(ev: dict) -> list[str]:
 
 
 def page_comparison_v2() -> None:
-    """The Phase 2 comparison page (it already shows every evaluated model), then the XGBoost gaps."""
-    p2.page_comparison()
+    """Present the saved comparison without changing its metrics or calculations."""
+    benchmark_pages.comparison(p2)
     ev = p2.evaluation_section()
     pairwise = ev.get("pairwise_auc_differences", {})
     if "XGBoost" not in ev["models"] or len(pairwise) < 3:
         return
-    st.subheader("Phase 3 extension: XGBoost against both Phase 2 models")
-    st.caption("Same split, SMOTE inside each fold and 5-fold CV on AUC as SVM and Random Forest; the grid was "
+    st.subheader("Saved three-model AUC comparisons")
+    ui.caption("Same random split, SMOTE inside each CV training fold and 5-fold CV on AUC; the grid was "
                "fixed in src/config.py before training. Gaps are bootstrap means over 1,000 resamples of the "
                "test set, with 95% intervals.")
     cols = st.columns(len(pairwise))
-    for col, (label, d) in zip(cols, pairwise.items()):
-        col.metric(label, f"{d['mean_difference']:+.3f}", help=f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}")
+    for i, (col, (label, d)) in enumerate(zip(cols, pairwise.items())):
+        ui.metric_card(col, "pair-" + str(i), label, f"{d['mean_difference']:+.3f}",
+                       help=f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}")
         col.caption(f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}: "
-                    + ("excludes zero, a real difference." if d["separable"] else "includes zero, not separable."))
+                    + ("excludes zero in this bootstrap comparison." if d["separable"] else "includes zero; inconclusive difference."))
     best = ev["winner"]
     others = [n for n in ev["models"] if n != best]
     beats = [label for label, d in pairwise.items()
              if label.startswith(best) and d["separable"] and d["mean_difference"] > 0]
-    loses = [label for label, d in pairwise.items() if label.endswith(best) and not d["separable"]]
     verdict = f"**{best}** has the highest test AUC ({ev['models'][best]['auc']:.4f})"
     if len(beats) == len(others):
         verdict += ", and its lead over both other models excludes zero."
     else:
         close = [label for label, d in pairwise.items() if best in label and not d["separable"]]
         verdict += (f", but it cannot be separated from the runner-up ({'; '.join(close)}: the interval includes "
-                    "zero), so the honest reading is that the top models perform alike on this test set."
+                    "zero). This does not establish equivalence or conclusive superiority."
                     if close else ".")
     st.info(verdict)
 
@@ -295,9 +295,11 @@ def page_predict_v2() -> None:
     if "XGBoost" in names:
         bundle = {**bundle, "XGBoost": load_xgb(file_stamp(config.XGB_MODEL_PATH))}
 
-    st.title("Predict: " + (", ".join(names[:-1]) + " and " + names[-1]) + " side by side")
-    st.markdown("Set the conditions at one location. Every model scores it through the same preprocessing as "
-                "training, and the chart puts the scores on one scale, over the five risk zones.")
+    ui.page_header("Predict", "Manual terrain-condition assessment with " + ", ".join(names) + ".")
+    st.markdown("Set the feature values below. This interface does not extract terrain features from GPS "
+                "coordinates. Every saved model receives the same original prediction transformation; "
+                "the chart shows model outputs and the unchanged five susceptibility classes.")
+    ui.caption(ui.THRESHOLD_NOTE)
 
     if "in_slope" not in st.session_state:
         p2.set_inputs(p2.typical_row(df), df)
@@ -311,7 +313,7 @@ def page_predict_v2() -> None:
 
     groups = st.columns(len(p2.INPUT_GROUPS), gap="medium")
     for column, (title, cols) in zip(groups, p2.INPUT_GROUPS.items()):
-        with column.container(border=True):
+        with column, ui.panel("inputs-" + title.lower().replace(" ", "-")):
             st.markdown(f"**{title}**")
             for col in cols:
                 if col not in config.DROPPED_COLUMNS:
@@ -322,46 +324,64 @@ def page_predict_v2() -> None:
     scores = {name: float(bundle[name].predict_proba(X)[0, 1]) for name in names}
     thresholds = {name: ev["models"][name]["youden"]["threshold"] for name in names}
 
-    st.subheader("Scores")
+    st.subheader("Susceptibility scores")
     st.altair_chart(probability_chart(scores, thresholds), use_container_width=True)
-    st.caption("Bars: each model's landslide score. White tick: that model's tuned (Youden) threshold; a bar that "
-               "passes its tick is flagged as landslide-prone. Coloured bands: the five risk zones.")
+    ui.caption("Bars: susceptibility scores. White tick: the retrospective, test-selected Youden threshold. "
+               "A bar passing its tick meets that benchmark decision rule. Bands: the five susceptibility classes.")
 
     cards = st.columns(len(names), gap="medium")
-    for column, name in zip(cards, names):
+    for i, (column, name) in enumerate(zip(cards, names)):
         score, threshold = scores[name], thresholds[name]
-        with column.container(border=True):
+        with column, ui.panel("prediction-" + str(i)):
             st.markdown(f"**{name}**")
-            st.metric("Landslide score", f"{score:.3f}", label_visibility="collapsed")
-            st.markdown(f"Risk zone: **{config.risk_zone(score)}**  \n"
-                        + ("**Flagged as landslide-prone**" if score >= threshold else "Not flagged")
-                        + f" at its tuned threshold of {threshold:.2f}  \n"
+            st.metric("Susceptibility score", f"{score:.3f}")
+            st.markdown(f"Susceptibility class: **{config.risk_zone(score)}**  \n"
+                        + ("**Above benchmark threshold**" if score >= threshold else "Below benchmark threshold")
+                        + f" (retrospective Youden: {threshold:.2f})  \n"
                         + f"Test AUC {ev['models'][name]['auc']:.3f}")
 
     difference = scores["Random Forest"] - scores["SVM (RBF)"]
     same = len({scores[n] >= thresholds[n] for n in names}) == 1
     st.markdown(f"Random Forest minus SVM: **{difference:+.3f}**. " +
                 ("All models reach the same decision." if same else
-                 "**The models disagree on this location**, which usually means it sits near the boundary "
-                 "between the classes."))
-    st.caption("Scores rank ground from safer to riskier. Both models were trained on classes balanced by SMOTE, "
-               "and the SVM's scores come from Platt scaling, so a score is not the literal chance that a "
-               "landslide will happen here.")
+                 "**The benchmark decisions differ.** Outputs depend on the model and supplied conditions."))
+    ui.caption("All models use SMOTE-balanced training data; the SVM uses Platt scaling. " + ui.SCORE_NOTE)
 
 
 # ---------------------------------------------------------------------------
 # Page 4: Rudraprayag map
 # ---------------------------------------------------------------------------
 def page_rudraprayag_v2() -> None:
+    ui.page_header(f"{config.DEMO_DISTRICT} susceptibility map", "Explore the saved district map and susceptibility classes.")
+    ui.caption("Source grid: 30 m. The displayed map is a visualization of saved model outputs. " + ui.SCORE_NOTE)
     if not is_offline():
-        p2.page_map()
+        import streamlit.components.v1 as components
+
+        if not config.DEMO_MAP_HTML.exists():
+            ui.availability("District map unavailable.", "The saved interactive map is missing; no output is rebuilt here.")
+            return
+        demo = p2.metadata().get("demo_map", {})
+        if demo:
+            st.markdown(f"**Model:** {demo.get('model', '-')}")
+            cols = st.columns(3)
+            ui.metric_card(cols[0], "district-cells", "Cells scored", f"{demo.get('cells_scored', 0):,}",
+                           help="30 m source cells, water excluded")
+            ui.metric_card(cols[1], "district-time", "Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
+            projected = demo.get("projection_full_state", {}).get("predict_minutes")
+            if projected is not None:
+                ui.metric_card(cols[2], "district-projection", "Whole state, projected", f"{projected:.0f} min",
+                               help="Historical linear projection from the district run; actual statewide output is on Full State Map")
+            if demo.get("zones"):
+                st.dataframe(pd.DataFrame(demo["zones"]), hide_index=True,
+                             column_config={"share_percent": st.column_config.NumberColumn("share %", format="%.1f"),
+                                            "area_km2": st.column_config.NumberColumn("area km²", format="%.1f")})
+        components.html(config.DEMO_MAP_HTML.read_text(encoding="utf-8"), height=640)
         return
-    st.title(f"{config.DEMO_DISTRICT} susceptibility map")
     offline_notice("Rudraprayag map")
     source = (DEMO_PROBABILITY_PHASE2, "probability") if DEMO_PROBABILITY_PHASE2.exists() else (
         (DEMO_ZONES, "zones") if DEMO_ZONES.exists() else (None, None))
     if source[0] is None:
-        st.info("The demo map has not been built yet. Run `python -m src.demo_map`.")
+        ui.availability("District raster unavailable.", "No saved raster is available for the static view.")
         return
     zones = p2.metadata().get("demo_map", {}).get("zones")
     if zones:
@@ -375,39 +395,41 @@ def page_rudraprayag_v2() -> None:
 SHAP_NOTES = {
     "shap_beeswarm": ("Every factor, every location",
                       "Each dot is one held-out test location. Its position shows how far that factor pushed the "
-                      "landslide score up (right) or down (left); its colour shows whether the factor's value was "
+                      "susceptibility score up (right) or down (left); its colour shows whether the factor's value was "
                       "high or low there. Factors are ordered by average effect."),
     "shap_bar": ("Average effect",
                  "Mean absolute SHAP value: how much each factor moves the score on average, whichever direction. "
                  "It is the closest SHAP equivalent of feature importance."),
-    "shap_force_high_risk": ("One high-risk location",
-                             "How a single landslide location got its high score: starting from the average score, "
+    "shap_force_high_risk": ("One high-score example",
+                             "How a recorded landslide example got its high score: starting from the model baseline, "
                              "red factors push it up and blue ones push it down, and together they add up exactly "
                              "to the model's score for that location."),
 }
 
 
 def page_explainability() -> None:
-    st.title("Explainability: what drives the Random Forest")
-    st.markdown("SHAP splits each prediction into one contribution per factor. The contributions add up exactly "
-                "to the model's score, so the explanation is checked against the prediction itself.")
+    ui.page_header("Explainability", "Saved Random Forest SHAP explanations for held-out test locations.")
+    st.markdown("SHAP attributes the susceptibility score to model-associated feature contributions. "
+                "Contributions plus the model baseline reproduce the output within the saved numerical error. "
+                "These associations do not establish causes of landslides.")
     if not SHAP_SUMMARY.exists():
-        st.info("No SHAP results yet. From the repo root run `python src/explain_shap.py` (about 30 seconds), "
-                "then reload this page.")
+        ui.availability("Explanations unavailable.", "No saved SHAP summary is available. Explanations are not computed here.")
         return
     summary = json.loads(SHAP_SUMMARY.read_text(encoding="utf-8"))
     if config.RF_MODEL_PATH.exists() and summary.get("rf_model_mtime", 0) < config.RF_MODEL_PATH.stat().st_mtime:
-        st.warning("These SHAP results were computed for an older Random Forest. Rerun `python src/explain_shap.py`.")
+        ui.availability("SHAP timestamp warning.", "The model file has a newer modification time. "
+                        "Timestamp order alone does not establish model identity; verify provenance before interpretation.", warning=True)
 
     sample = summary["sample"]
     cols = st.columns(4)
-    cols[0].metric("Locations explained", f"{sample['rows']:,}",
+    ui.metric_card(cols[0], "shap-count", "Locations explained", f"{sample['rows']:,}",
                    help=f"{sample['landslide']} landslide and {sample['stable']} stable, from the held-out test set")
-    cols[1].metric("Average score", f"{summary['base_value']:.3f}",
-                   help="The starting point every explanation adds contributions to")
-    cols[2].metric("Largest additivity error", f"{summary['additivity_max_error']:.1e}",
-                   help="How far contributions plus the average score differ from the model's own score")
-    cols[3].metric("Computation time", f"{summary['timing_seconds']['explain']:.0f} s")
+    ui.metric_card(cols[1], "shap-baseline", "Model baseline (expected output)", f"{summary['base_value']:.3f}",
+                   help="TreeExplainer expected model output, not the observed landslide prevalence or mean of these 500 scores")
+    ui.metric_card(cols[2], "shap-error", "Largest additivity error", f"{summary['additivity_max_error']:.1e}",
+                   help="Contributions plus model baseline minus the saved model output")
+    ui.metric_card(cols[3], "shap-time", "Computation time", f"{summary['timing_seconds']['explain']:.0f} s")
+    ui.caption(ui.SCORE_NOTE + " Saved plots retain their original feature names and terminology.")
 
     permutation = list(p2.metadata().get("rf", {}).get("feature_importance_permutation", {}))
     ranking = pd.DataFrame([{"SHAP rank": i, "Factor": factor, "Mean |SHAP|": value,
@@ -427,8 +449,8 @@ def page_explainability() -> None:
             with right:
                 st.markdown(SHAP_NOTES[key][1])
     with tabs[2]:
-        st.markdown("How the score changes across each of the three strongest factors. The shape shows where "
-                    "risk rises or falls, for example a peak at a middle range of slope.")
+        st.markdown("Feature values versus SHAP contributions for the three strongest factors. These are "
+                    "associations in the saved Random Forest outputs, not causal effects or calibrated event probabilities.")
         dependence = [p for k, p in figures.items() if k.startswith("shap_dependence_")]
         for column, path in zip(st.columns(max(1, len(dependence))), dependence):
             with column:
@@ -442,8 +464,8 @@ def page_explainability() -> None:
     with tabs[4]:
         st.dataframe(ranking, hide_index=True,
                      column_config={"Mean |SHAP|": st.column_config.NumberColumn(format="%.4f")})
-        st.caption("Two independent ways of ranking factors. Where they agree, the ranking is robust; where they "
-                   "differ, remember permutation importance measures lost AUC while SHAP measures score movement.")
+        ui.caption("Two different summaries of the same model. Agreement does not prove robustness or causality. "
+                   "Permutation importance measures lost AUC; SHAP measures movement of model output.")
     st.caption(f"Random Forest only: TreeExplainer gives exact SHAP values for tree models "
                f"({summary['timing_seconds']['explain']:.0f} s for {sample['rows']:,} locations here); the RBF SVM "
                f"would need an approximate, much slower method, not run in this project. "
@@ -456,23 +478,25 @@ def page_explainability() -> None:
 def page_state_map() -> None:
     import streamlit.components.v1 as components
 
-    st.title("Full state susceptibility map")
+    ui.page_header("Full state susceptibility map", "Saved Random Forest susceptibility coverage for Uttarakhand.")
+    ui.caption("Source grid: 30 m. The current saved statewide web-map overlay uses approximately 90 m display "
+               "cells; clicks report the displayed class, not an exact 30 m site assessment. Static views also "
+               "reduce resolution for display. " + ui.SCORE_NOTE)
     state_ready = STATE_ZONES.exists()
     if state_ready:
         summary = raster_summary(STATE_ZONES)
     else:
         summary = raster_summary(DEMO_ZONES)
-        st.warning("**Full state map pending: showing Rudraprayag demo only.** Build the state raster (about 8 "
-                   "minutes; close other programs first), then the web map:", icon=":material/pending:")
-        st.code("python src/predict_raster_full.py --state --yes\npython src/map_generator_full.py", language="bash")
+        ui.availability("Full state map pending: showing Rudraprayag only.",
+                        "The statewide raster is unavailable. No raster generation is triggered here.", warning=True)
 
     if summary:
         cols = st.columns(4)
-        cols[0].metric("Area", summary.get("area", "-"))
-        cols[1].metric("Cells scored", f"{summary.get('cells_scored', 0):,}", help="30 m cells, water excluded")
-        cols[2].metric("Scoring time", f"{summary.get('timing_seconds', {}).get('predict', 0):.0f} s")
+        ui.metric_card(cols[0], "state-area", "Area", summary.get("area", "-"))
+        ui.metric_card(cols[1], "state-cells", "Cells scored", f"{summary.get('cells_scored', 0):,}", help="30 m source cells, water excluded")
+        ui.metric_card(cols[2], "state-time", "Scoring time", f"{summary.get('timing_seconds', {}).get('predict', 0):.0f} s")
         peak = summary.get("memory_bytes", {}).get("peak")
-        cols[3].metric("Peak memory", f"{peak / 1e9:.2f} GB" if peak else "-")
+        ui.metric_card(cols[3], "state-memory", "Peak memory", f"{peak / 1e9:.2f} GB" if peak else "-")
         if summary.get("zones"):
             st.dataframe(pd.DataFrame(summary["zones"]), hide_index=True,
                          column_config={"share_percent": st.column_config.NumberColumn("share %", format="%.1f"),
@@ -489,20 +513,23 @@ def page_state_map() -> None:
         return
 
     if not STATE_MAP_HTML.exists():
-        st.info("The web map has not been built yet. Run `python src/map_generator_full.py`, then reload.")
+        ui.availability("Interactive map unavailable.", "The saved web map is missing. No map is regenerated here.")
         return
     if state_ready and file_stamp(STATE_MAP_HTML) < file_stamp(STATE_ZONES):
-        st.warning("The web map is older than the state raster. Rerun `python src/map_generator_full.py`.")
-    st.caption(f"`outputs/susceptibility_map_uk.html`, {STATE_MAP_HTML.stat().st_size / 1e6:.2f} MB. Click anywhere "
-               "for the district and risk zone; use the layer control to switch layers and basemaps.")
+        ui.availability("Map timestamp warning.", "The raster has a newer modification time. "
+                        "Verify artifact provenance before interpreting freshness.", warning=True)
+    ui.caption(f"Saved interactive map, {STATE_MAP_HTML.stat().st_size / 1e6:.2f} MB. Click for the district and "
+               "displayed susceptibility class; use the layer control to switch layers and basemaps. "
+               "Original legend wording is retained inside the preserved map artifact.")
     components.html(STATE_MAP_HTML.read_text(encoding="utf-8"), height=700)
 
 
 # ---------------------------------------------------------------------------
 def main() -> None:
-    st.set_page_config(page_title=f"{p2.PROJECT_NAME} (Phase 3)", page_icon="⛰️", layout="wide")
+    st.set_page_config(page_title="HimShield | Landslide Susceptibility", page_icon=":material/shield:", layout="wide")
+    ui.install()
     pages = st.navigation([
-        st.Page(p2.page_overview, title="Overview", icon=":material/landscape:", url_path="overview", default=True),
+        st.Page(lambda: benchmark_pages.overview(p2), title="Overview", icon=":material/landscape:", url_path="overview", default=True),
         st.Page(page_comparison_v2, title="Model Comparison", icon=":material/compare_arrows:", url_path="comparison"),
         st.Page(page_predict_v2, title="Predict", icon=":material/tune:", url_path="predict"),
         st.Page(page_rudraprayag_v2, title=f"{config.DEMO_DISTRICT} Map", icon=":material/map:", url_path="map"),
@@ -520,13 +547,16 @@ def main() -> None:
                        icon=":material/science:")
     elif trained_on and trained_on != config.DATA_SOURCE:
         st.error(f"The saved models were trained on **{trained_on}** data, but the project is set to "
-                 f"**{config.DATA_SOURCE}**. Rerun Steps 4 to 7 before trusting anything here.")
+                 f"**{config.DATA_SOURCE}**. Resolve the data-source mismatch before interpreting results.")
 
     with st.sidebar:
-        st.caption("Phase 3 preview (phase3-preparation branch)")
+        ui.sidebar_brand()
         st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
         st.caption("Connection: **offline**, maps shown as static copies" if is_offline()
                    else "Connection: **online**, interactive maps")
+        with st.expander("Saved model availability"):
+            ui.model_availability({"SVM": config.SVM_MODEL_PATH, "Random Forest": config.RF_MODEL_PATH,
+                                   "XGBoost": config.XGB_MODEL_PATH})
 
     pages.run()
 
