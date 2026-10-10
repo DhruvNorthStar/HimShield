@@ -30,8 +30,8 @@ def overview(p2, explorer_page, methodology_page) -> None:
         results = ev.get("models", {})
         if results:
             for i, (col, (name, result)) in enumerate(zip(st.columns(len(results)), results.items())):
-                ui.metric_card(col, f"overview-model-{i}", name + ": test AUC", f"{result['auc']:.3f}",
-                               help=f"Average precision {result['average_precision']:.3f}; original random held-out split")
+                ui.metric_card(col, f"overview-model-{i}", name + ": ROC-AUC (%)", ui.percent(result["auc"]),
+                               help=f"Average precision {ui.percent(result['average_precision'])}; original random held-out split. ROC-AUC is not accuracy.")
             ui.caption("Highest observed AUC does not establish conclusive superiority. See Model Comparison for the saved intervals and threshold context.")
         else:
             ui.availability("Benchmark unavailable.", "No saved evaluation is available; no model is fitted here.")
@@ -110,7 +110,7 @@ def methodology(p2) -> None:
             within = next((v for k, v in near.items() if k.startswith("within")), None)
             if within:
                 road += (f" Within {meta['near_road_check']['split_m'] / 1000:g} km of a road, "
-                         f"RF AUC = {within['Random Forest']['auc']:.3f} and SVM AUC = {within['SVM (RBF)']['auc']:.3f}. "
+                         f"RF ROC-AUC = {ui.percent(within['Random Forest']['auc'])} and SVM ROC-AUC = {ui.percent(within['SVM (RBF)']['auc'])}. "
                          "This subgroup diagnostic does not remove survey bias or establish regional independence.")
             else:
                 road += " No saved near-road subgroup diagnostic is available."
@@ -134,43 +134,51 @@ def comparison(p2) -> None:
                "Not resampled or used for hyperparameter search. Retrospective threshold selection does use test labels.")
     cols = st.columns(len(names))
     for i, (col, name) in enumerate(zip(cols, names)):
-        ui.metric_card(col, f"model-{i}", f"{name}: test AUC", f"{results[name]['auc']:.3f}",
-                       help=f"Average precision {results[name]['average_precision']:.3f}")
+        ui.metric_card(col, f"model-{i}", f"{name}: ROC-AUC (%)", ui.percent(results[name]["auc"]),
+                       help=f"Average precision {ui.percent(results[name]['average_precision'])}; ROC-AUC measures ranking, not accuracy")
     if gap["separable"]:
         pair_winner = ev.get("phase2_winner", ev["winner"])
         st.info(f"**{pair_winner} has the higher AUC in the RF/SVM comparison.** The existing 95% bootstrap "
-                f"interval for RF minus SVM is {gap['ci_low']:+.3f} to {gap['ci_high']:+.3f}. "
+                f"interval for RF minus SVM is {ui.percentage_points(gap['ci_low'])} to {ui.percentage_points(gap['ci_high'])}. "
                 "This comparison is conditional on the random test set and its sampling limitations.")
     else:
         st.info(f"**RF and SVM are not distinguishable by this bootstrap comparison.** "
-                f"The interval {gap['ci_low']:+.3f} to {gap['ci_high']:+.3f} includes zero.")
+                f"The interval {ui.percentage_points(gap['ci_low'])} to {ui.percentage_points(gap['ci_high'])} includes zero.")
     pairwise = ev.get("pairwise_auc_differences", {})
     close = [label for label, d in pairwise.items() if "XGBoost" in label and "Random Forest" in label and not d["separable"]]
     if close:
         d = pairwise[close[0]]
-        st.info(f"XGBoost versus Random Forest: saved AUC gap {d['mean_difference']:+.4f}, "
-                f"95% bootstrap interval {d['ci_low']:+.4f} to {d['ci_high']:+.4f}. It includes zero. "
+        st.info(f"XGBoost versus Random Forest: saved mean ROC-AUC gap {ui.percentage_points(d['mean_difference'])}, "
+                f"95% bootstrap interval {ui.percentage_points(d['ci_low'])} to {ui.percentage_points(d['ci_high'])}. It includes zero. "
                 "This does not establish equivalence or conclusive superiority.")
     if pairwise:
         with st.expander("All saved pairwise AUC intervals"):
-            ui.caption("Bootstrap comparisons conditional on this random test set, not spatial validation.")
+            ui.caption("Bootstrap comparisons conditional on this random test set, not spatial validation. "
+                       "Gaps and intervals use percentage points (pp); they are not relative percentage improvements.")
             for label, d in pairwise.items():
-                st.markdown(f"**{label}:** {d['mean_difference']:+.4f}; 95% interval "
-                            f"{d['ci_low']:+.4f} to {d['ci_high']:+.4f}; {d['rounds']:,} bootstrap resamples.")
+                st.markdown(f"**{label}:** {ui.percentage_points(d['mean_difference'])}; 95% interval "
+                            f"{ui.percentage_points(d['ci_low'])} to {ui.percentage_points(d['ci_high'])}; {d['rounds']:,} bootstrap resamples.")
     with ui.panel("threshold-metrics"):
         st.subheader("Metrics at a chosen threshold")
         choice = st.radio("Threshold", ["0.5, the usual default", "Youden's J, retrospective benchmark threshold"],
                           horizontal=True)
         key = "default" if choice.startswith("0.5") else "youden"
+        percent_fields = {"accuracy", "precision", "recall", "specificity", "f1"}
         table = pd.DataFrame(
-            {name: [f"{results[name]['auc']:.3f}", f"{results[name]['average_precision']:.3f}"]
-                   + [fmt.format(results[name][key][field]) for _, field, fmt in p2.METRIC_ROWS] for name in names},
-            index=["AUC (no threshold)", "Average precision (no threshold)"] + [r[0] for r in p2.METRIC_ROWS])
+            {name: [ui.percent(results[name]["auc"]), ui.percent(results[name]["average_precision"])]
+                   + [ui.percent(results[name][key][field]) if field in percent_fields
+                      else fmt.format(results[name][key][field]) for _, field, fmt in p2.METRIC_ROWS] for name in names},
+            index=["ROC-AUC (%) — threshold independent", "Average precision (%) — threshold independent"]
+                  + [label + " (%)" if field in percent_fields else
+                     "Threshold (score, 0–1)" if field == "threshold" else label for label, field, _ in p2.METRIC_ROWS])
         st.table(table)
         baseline = 1 - ev["test_positives"] / ev["test_rows"]
         ui.caption(f"Always predicting the sampled stable class gives {baseline:.0%} accuracy. "
-                   "AUC and average precision do not depend on the selected threshold. " + ui.THRESHOLD_NOTE)
+                   "ROC-AUC (%) measures ranking; Accuracy (%) measures correct decisions at the selected threshold. "
+                   "ROC-AUC and average precision do not depend on the threshold. Scores and thresholds remain on 0–1. " + ui.THRESHOLD_NOTE)
     st.subheader("Saved evaluation figures")
+    ui.caption("Saved figures retain their original axes and annotations: 0.90 on a 0–1 metric axis equals 90%. "
+               "Confusion matrices show integer counts.")
     notes = {
         "ROC curves": ("roc_comparison", "True-positive against false-positive rate across thresholds. "
                        "Model colours and line styles are preserved."),
@@ -191,27 +199,25 @@ def comparison(p2) -> None:
         rows = []
         if svm:
             rows.append({"Model": "SVM, RBF kernel", "Best parameters": p2.params_text(svm["best_params"]),
-                         "CV AUC": svm["best_cv_auc"], "Test AUC": results["SVM (RBF)"]["auc"],
+                         "CV ROC-AUC (%)": ui.percent(svm["best_cv_auc"]), "Test ROC-AUC (%)": ui.percent(results["SVM (RBF)"]["auc"]),
                          "Grid search (s)": svm["timing_seconds"]["rbf_grid"]})
             linear = svm.get("linear_comparison")
             if linear:
                 rows.append({"Model": "SVM, linear kernel (comparison only)",
-                             "Best parameters": p2.params_text(linear["best_params"]), "CV AUC": linear["best_cv_auc"],
-                             "Test AUC": linear["test_auc"], "Grid search (s)": svm["timing_seconds"]["linear_grid"]})
+                             "Best parameters": p2.params_text(linear["best_params"]), "CV ROC-AUC (%)": ui.percent(linear["best_cv_auc"]),
+                             "Test ROC-AUC (%)": ui.percent(linear["test_auc"]), "Grid search (s)": svm["timing_seconds"]["linear_grid"]})
         if rf:
             rows.append({"Model": "Random Forest", "Best parameters": p2.params_text(rf["best_params"]),
-                         "CV AUC": rf["best_cv_auc"], "Test AUC": results["Random Forest"]["auc"],
+                         "CV ROC-AUC (%)": ui.percent(rf["best_cv_auc"]), "Test ROC-AUC (%)": ui.percent(results["Random Forest"]["auc"]),
                          "Grid search (s)": rf["timing_seconds"]["grid_search"]})
         xgb = meta.get("xgb", {})
         if xgb and "XGBoost" in results:
             rows.append({"Model": "XGBoost", "Best parameters": p2.params_text(xgb["best_params"]),
-                         "CV AUC": xgb["best_cv_auc"], "Test AUC": results["XGBoost"]["auc"],
+                         "CV ROC-AUC (%)": ui.percent(xgb["best_cv_auc"]), "Test ROC-AUC (%)": ui.percent(results["XGBoost"]["auc"]),
                          "Grid search (s)": xgb["timing_seconds"]["grid_search"]})
         if rows:
             st.dataframe(pd.DataFrame(rows), hide_index=True,
-                         column_config={"CV AUC": st.column_config.NumberColumn(format="%.3f"),
-                                        "Test AUC": st.column_config.NumberColumn(format="%.3f"),
-                                        "Grid search (s)": st.column_config.NumberColumn(format="%.1f")})
+                         column_config={"Grid search (s)": st.column_config.NumberColumn(format="%.1f")})
             ui.caption("Original CV uses training-fold SMOTE, but preprocessing decisions and the outer-training "
                        "scaler are reused. Agreement with test AUC does not establish absence of leakage or spatial independence.")
     report = config.OUTPUTS_DIR / "evaluation_report.txt"
@@ -220,5 +226,6 @@ def comparison(p2) -> None:
         if "VERDICT" in text:
             with st.expander("Original saved evaluation report"):
                 ui.caption("Historical report, preserved verbatim. Phase labels and interpretive wording below "
-                           "belong to the original report; apply the benchmark limitations stated above.")
+                           "belong to the original report; apply the benchmark limitations stated above. "
+                           "Original 0–1 metric values in this report correspond to percentages in the dashboard (0.90 = 90%).")
                 st.text(text.split("VERDICT", 1)[1].strip())

@@ -59,8 +59,13 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
             ui.availability("Map coverage unavailable.",
                             "No saved map or raster exists for this scope. Select another scope; nothing is generated.")
             return
-        model = middle.selectbox("Map model", list(catalog), key="explorer-model-" + scope,
-                                 disabled=len(catalog) == 1)
+        if len(catalog) == 1:
+            model = next(iter(catalog))
+            middle.markdown("**Map model**")
+            coverage = "statewide" if scope == "Uttarakhand" else "district"
+            middle.markdown(f"{model} — only available {coverage} model")
+        else:
+            model = middle.selectbox("Map model", list(catalog), key="explorer-model-" + scope)
         if offline:
             st.session_state["explorer-mode"] = STATIC
         mode = right.radio("Map view", [INTERACTIVE, STATIC], key="explorer-mode",
@@ -68,7 +73,7 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
         if scope == "Uttarakhand":
             ui.caption("Statewide coverage: saved Random Forest map only. SVM and XGBoost statewide maps are unavailable.")
         else:
-            ui.caption("District coverage: saved Random Forest and SVM maps. No saved XGBoost district map is available.")
+            ui.caption("Available saved district maps: " + ", ".join(catalog) + ". No saved XGBoost district map is available.")
 
     item = catalog[model]
     summary = (p2.metadata().get(item["metadata"], {}) if item["metadata"]

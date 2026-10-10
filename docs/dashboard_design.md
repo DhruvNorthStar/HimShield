@@ -14,7 +14,7 @@ The six visible navigation choices are:
 | Page | Address | Purpose |
 | --- | --- | --- |
 | Overview | `/` | Compact real statistics, three-model benchmark and explorer entry |
-| Susceptibility Explorer | `/explorer` | Saved maps, scope/model/view selectors and real coverage summaries |
+| Susceptibility Explorer | `/explorer` | Saved maps, scope/model/view controls and real coverage summaries |
 | Model Comparison | `/comparison` | Saved metrics, thresholds, pairwise intervals and evaluation figures |
 | Location Assessment | `/predict` | Existing manual feature inputs and all three saved models |
 | Explainability | `/explainability` | Existing RF SHAP figures and RF/XGBoost importance figures |
@@ -120,3 +120,26 @@ Stage 5C, so screenshots and mobile/browser certification remain unavailable.
 No dependencies are added. Shared Phase 2 code/settings and scientific artifacts
 remain unchanged. Rollback: revert only the Stage 5C presentation commit; do not
 reset user QGIS or development-data changes and do not restore scientific outputs.
+
+## Browser-feedback refinements
+
+Uttarakhand shows the fixed text **Random Forest — only available statewide model**
+instead of a disabled dropdown. Rudraprayag offers the RF/SVM maps that actually
+exist; changing back to Uttarakhand restores RF coverage.
+
+Benchmark ROC-AUC, average precision, accuracy, precision, recall, specificity and
+F1 use two-decimal percentages in live cards/tables/tooltips. For example 0.9404 is
+94.04%, not 0.94% or 9404%. ROC-AUC measures ranking and is clearly distinct from
+accuracy. AUC differences and confidence limits use percentage points (pp), not
+relative percent improvements. Tuning details and the near-road diagnostic follow
+the same display conventions.
+
+Manual susceptibility scores, decision thresholds, SHAP values, correlations and
+integer confusion counts keep their original units. Saved PNGs and the historical
+report are unchanged; captions explain their original 0–1 metric scale (0.90 = 90%).
+No metric, prediction, scientific figure or model artifact is overwritten.
+
+The 13-district source/alignment audit is in [district_boundary_audit.md](district_boundary_audit.md).
+New district views are pending the documented boundary-coverage decision. No derived
+GIS display assets have been created. Existing statewide and dedicated Rudraprayag
+maps remain functional.

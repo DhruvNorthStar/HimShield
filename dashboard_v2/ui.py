@@ -28,6 +28,17 @@ SCORE_NOTE = (
     "occurring. Low susceptibility does not guarantee safety."
 )
 
+
+def percent(value: float) -> str:
+    """Format one original 0–1 classification metric; never change its stored value."""
+    return f"{value:.2%}"
+
+
+def percentage_points(value: float) -> str:
+    """Differences between 0–1 metrics use percentage points, not relative percent change."""
+    return f"{value * 100:+.2f} pp"
+
+
 # :has gates even the application background to this dashboard's own marker.
 # Other selectors address owned key classes or semantic headings. No Emotion
 # class names, nth-child selectors, widget internals or shared theme mutation.

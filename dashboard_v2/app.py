@@ -293,11 +293,11 @@ def page_predict_v2() -> None:
             st.markdown(f"Susceptibility class: **{config.risk_zone(score)}**  \n"
                         + ("**Above benchmark threshold**" if score >= threshold else "Below benchmark threshold")
                         + f" (retrospective Youden: {threshold:.2f})  \n"
-                        + f"Test AUC {ev['models'][name]['auc']:.3f}")
+                        + f"Benchmark ROC-AUC (%) {ui.percent(ev['models'][name]['auc'])}")
 
     difference = scores["Random Forest"] - scores["SVM (RBF)"]
     same = len({scores[n] >= thresholds[n] for n in names}) == 1
-    st.markdown(f"Random Forest minus SVM: **{difference:+.3f}**. " +
+    st.markdown(f"Random Forest minus SVM score (0–1 scale): **{difference:+.3f}**. " +
                 ("All models reach the same decision." if same else
                  "**The benchmark decisions differ.** Outputs depend on the model and supplied conditions."))
     ui.caption("All models use SMOTE-balanced training data; the SVM uses Platt scaling. " + ui.SCORE_NOTE)

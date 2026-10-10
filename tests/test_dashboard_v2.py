@@ -37,6 +37,13 @@ def contrast(first, second):
 
 
 class DesignContractTests(unittest.TestCase):
+    def test_percentage_and_percentage_point_units(self):
+        for value, expected in ((0.9404, "94.04%"), (0.9604, "96.04%"), (0.9616, "96.16%"),
+                                (0, "0.00%"), (1, "100.00%")):
+            self.assertEqual(ui.percent(value), expected)
+        self.assertEqual(ui.percentage_points(0.0012), "+0.12 pp")
+        self.assertEqual(ui.percentage_points(-0.0005), "-0.05 pp")
+
     def test_text_palette_contrast(self):
         for colour in (ui.NAVY, ui.TEAL, ui.TEXT, ui.SECONDARY):
             for background in (ui.SURFACE, ui.BACKGROUND):
@@ -125,11 +132,13 @@ class DashboardIntegrationTests(unittest.TestCase):
                     self.assertEqual(len(app.get("imgs")), 0)
                     self.assertEqual(len(app.get("page_link")), 8)
                     for name, result in self.meta["evaluation"]["models"].items():
-                        self.assertEqual(next(x.value for x in app.metric if x.label == name + ": test AUC"), f"{result['auc']:.3f}")
+                        self.assertEqual(next(x.value for x in app.metric if x.label == name + ": ROC-AUC (%)"), f"{result['auc']:.2%}")
                 if route == "predict":
                     self.assertIn("does not extract terrain features from GPS", text)
                     self.assertIn(ui.THRESHOLD_NOTE, text)
                     self.assertIn(ui.SCORE_NOTE, text)
+                    for name, result in self.meta["evaluation"]["models"].items():
+                        self.assertIn(f"Benchmark ROC-AUC (%) {result['auc']:.2%}", text)
                 if route == "explainability":
                     values = {x.label: x.value for x in app.metric}
                     self.assertEqual(values["Locations explained"], "500")
@@ -156,16 +165,38 @@ class DashboardIntegrationTests(unittest.TestCase):
         for name in ("roc_comparison", "precision_recall_comparison", "confusion_matrices", "rf_feature_importance"):
             self.assertIn(str(config.FIGURES_DIR / (name + ".png")), shown)
         for name, result in self.meta["evaluation"]["models"].items():
-            self.assertEqual(next(x.value for x in app.metric if x.label == name + ": test AUC"), f"{result['auc']:.3f}")
+            self.assertEqual(next(x.value for x in app.metric if x.label == name + ": ROC-AUC (%)"), f"{result['auc']:.2%}")
+            self.assertIn(f"Average precision {result['average_precision']:.2%}",
+                          next(x.proto.help for x in app.metric if x.label == name + ": ROC-AUC (%)"))
         self.assertIn("does not establish equivalence or conclusive superiority", rendered_text(app))
         for choice, key in (("0.5, the usual default", "default"),
                             ("Youden's J, retrospective benchmark threshold", "youden")):
             app = self.rerun(app.radio[0].set_value(choice))
             for name, result in self.meta["evaluation"]["models"].items():
-                self.assertEqual(app.table[0].value.loc["Accuracy", name], f"{result[key]['accuracy']:.3f}")
+                table = app.table[0].value
+                self.assertEqual(table.loc["ROC-AUC (%) — threshold independent", name], f"{result['auc']:.2%}")
+                self.assertEqual(table.loc["Average precision (%) — threshold independent", name], f"{result['average_precision']:.2%}")
+                for label, field in (("Accuracy", "accuracy"), ("Precision: share of flags that are real", "precision"),
+                                     ("Recall: share of landslides caught", "recall"),
+                                     ("Specificity: share of stable ground cleared", "specificity"), ("F1", "f1")):
+                    self.assertEqual(table.loc[label + " (%)", name], f"{result[key][field]:.2%}")
+                self.assertEqual(table.loc["Threshold (score, 0–1)", name], f"{result[key]['threshold']:.2f}")
+                for label, field in (("Landslides caught", "true_positives"), ("Landslides missed", "false_negatives"),
+                                     ("False alarms", "false_positives"), ("Stable ground cleared", "true_negatives")):
+                    self.assertEqual(table.loc[label, name], f"{result[key][field]:,}")
             self.assertIn("Saved counts at threshold 0.5", rendered_text(app))
             self.assertEqual(len(app.table), 1)
             self.assertEqual(len(app.get("imgs")), 4)
+        tuning = app.dataframe[0].value
+        self.assertIn("CV ROC-AUC (%)", tuning.columns)
+        self.assertIn("Test ROC-AUC (%)", tuning.columns)
+        self.assertNotIn("CV AUC", tuning.columns)
+        self.assertTrue(tuning["CV ROC-AUC (%)"].str.endswith("%").all())
+        self.assertTrue(tuning["Test ROC-AUC (%)"].str.endswith("%").all())
+        text = rendered_text(app)
+        self.assertIn("+0.12 pp", text)
+        self.assertIn("-0.05 pp", text)
+        self.assertIn("0.90 on a 0–1 metric axis equals 90%", text)
 
     def test_prediction_examples_match_saved_models(self):
         app = self.render("predict")
@@ -185,8 +216,10 @@ class DashboardIntegrationTests(unittest.TestCase):
 
     def test_explorer_scope_models_and_saved_summaries(self):
         app = self.render("explorer")
-        self.assertEqual(next(x.options for x in app.selectbox if x.label == "Map model"), ["Random Forest"])
+        self.assertFalse(any(x.label == "Map model" for x in app.selectbox))
+        self.assertIn("Random Forest — only available statewide model", rendered_text(app))
         self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
+
         import rasterio
         with rasterio.open(config.PROCESSED_DIR / "susceptibility_uk_zones.tif") as raster:
             self.assert_coverage(app, json.loads(raster.tags()["PHASE3_SUMMARY"]))
@@ -198,8 +231,20 @@ class DashboardIntegrationTests(unittest.TestCase):
             self.assert_coverage(app, self.meta[key])
             self.assertIn(model, app.subheader[0].value)
         app = self.select(app, "Geographic scope", "Uttarakhand")
-        self.assertEqual(next(x.value for x in app.selectbox if x.label == "Map model"), "Random Forest")
+        self.assertFalse(any(x.label == "Map model" for x in app.selectbox))
+        self.assertIn("Random Forest — only available statewide model", rendered_text(app))
         self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
+
+    def test_single_remaining_district_map_is_labelled_honestly(self):
+        original = Path.is_file
+        unavailable = {config.OUTPUTS_DIR / "demo_map_rudraprayag_svm.html",
+                       config.PROCESSED_DIR / "susceptibility_rudraprayag_svm.tif"}
+        with patch.object(Path, "is_file", lambda path: False if path in unavailable else original(path)):
+            app = self.render("map")
+        self.assertFalse(any(x.label == "Map model" for x in app.selectbox))
+        self.assertIn("Random Forest — only available district model", rendered_text(app))
+        self.assertIn("Available saved district maps: Random Forest.", rendered_text(app))
+        self.assert_html(app, config.DEMO_MAP_HTML)
 
     def test_legacy_links_open_correct_scope_and_allow_switching(self):
         for route, scope in (("map", config.DEMO_DISTRICT), ("state-map", "Uttarakhand")):
@@ -228,21 +273,36 @@ class DashboardIntegrationTests(unittest.TestCase):
             self.assertEqual(app.query_params["offline"], ["1"])
 
     def test_all_three_maps_static_and_forced_offline(self):
+        from src import map_generator_full as mg
+
         for offline in (False, True):
             with self.subTest(offline=offline):
+                rendered_maps = {}
                 app = self.render("explorer", offline=offline)
                 if not offline:
                     app = self.rerun(app.radio[0].set_value(explorer.STATIC))
                 for scope, model in (("Uttarakhand", "Random Forest"),
                                      (config.DEMO_DISTRICT, "Random Forest"), (config.DEMO_DISTRICT, "SVM (RBF)")):
-                    app = self.select(app, "Geographic scope", scope, offline=offline)
-                    app = self.select(app, "Map model", model, offline=offline)
+                    # Check the raster actually read, rather than just its caption.
+                    st.cache_data.clear()
+                    with patch.object(mg, "read_zones", wraps=mg.read_zones) as raster_read, \
+                            patch("streamlit.image", wraps=st.image) as image:
+                        app = self.select(app, "Geographic scope", scope, offline=offline)
+                        if scope != "Uttarakhand":
+                            app = self.select(app, "Map model", model, offline=offline)
+                    source = explorer.map_catalog(scope)[model]
+                    self.assertEqual(raster_read.call_args.args[0],
+                                     {"path": source["raster"], "kind": source["kind"]})
+                    rendered_maps[scope, model] = image.call_args.args[0]
+                    self.assertTrue(rendered_maps[scope, model].startswith(b"\x89PNG\r\n\x1a\n"))
                     self.assertEqual(len(app.get("imgs")), 1)
                     self.assertEqual(len(app.get("iframe")), 0)
                     self.assertIn(model + " · " + scope, app.get("imgs")[0].proto.imgs[0].caption)
                     if offline:
                         self.assertTrue(any("Offline:" in str(x.value) for x in app.info))
                         self.assertTrue(app.radio[0].disabled)
+                self.assertNotEqual(rendered_maps[config.DEMO_DISTRICT, "Random Forest"],
+                                    rendered_maps[config.DEMO_DISTRICT, "SVM (RBF)"])
 
     def test_interactive_static_switch_restores_saved_map(self):
         app = self.render("map")
