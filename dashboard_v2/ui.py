@@ -3,6 +3,8 @@
 No shared Streamlit settings, model inputs or saved artifacts are changed here.
 Containers use Streamlit's documented key classes rather than generated CSS names.
 """
+from html import escape
+
 import streamlit as st
 
 NAVY = "#102A43"
@@ -58,6 +60,12 @@ CSS = f"""
 .himshield-wordmark {{ color: {NAVY}; font-size: 1.65rem; font-weight: 750; }}
 .himshield-tagline {{ color: {SECONDARY}; font-size: .9rem; line-height: 1.5; }}
 .himshield-brand {{ border-left: 3px solid {TEAL}; padding-left: .8rem; margin-bottom: 1rem; }}
+.himshield-legend {{
+  display: flex; flex-wrap: wrap; gap: .65rem 1.25rem; list-style: none; padding: 0;
+  color: {TEXT}; font-size: .9rem;
+}}
+.himshield-legend li {{ display: flex; align-items: center; gap: .5rem; }}
+.himshield-swatch {{ width: 1rem; height: 1rem; border: 1px solid {SECONDARY}; border-radius: .2rem; }}
 @media (max-width: 640px) {{
   [class*="st-key-himshield-panel-"] {{ padding: .75rem; }}
   .st-key-himshield-header h1 {{ font-size: 1.8rem; }}
@@ -123,3 +131,15 @@ def figure(path, caption: str | None = None) -> None:
         st.image(str(path), caption=caption)
     else:
         availability("Figure unavailable.", "The saved figure is missing. No scientific output is regenerated here.")
+
+
+def susceptibility_legend(names, breaks, colours) -> None:
+    """Text and ranges accompany the existing scientific colours, including boundary equality."""
+    edges = [0.0, *breaks, 1.0]
+    items = []
+    for i, (name, colour) in enumerate(zip(names, colours)):
+        interval = f"{edges[i]:.1f} ≤ score {'≤' if i == len(names) - 1 else '<'} {edges[i + 1]:.1f}"
+        items.append(f'<li><span class="himshield-swatch" style="background:{escape(colour, quote=True)}" '
+                     f'aria-hidden="true"></span><span>{escape(name)} · {escape(interval)}</span></li>')
+    st.markdown('<ul class="himshield-legend" aria-label="Susceptibility classes">'
+                + ''.join(items) + '</ul>', unsafe_allow_html=True)

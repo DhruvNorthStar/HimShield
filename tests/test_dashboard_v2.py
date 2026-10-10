@@ -11,15 +11,16 @@ import streamlit as st
 from streamlit.testing.v1 import AppTest
 from streamlit.util import calc_md5
 
-from dashboard_v2 import ui
+from dashboard_v2 import explorer, ui
 from src import config
 from src.preprocess import prepare_for_prediction
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "dashboard_v2/app.py"
-PAGES = {"overview": "HimShield", "comparison": "Model comparison", "predict": "Predict",
-         "map": "Rudraprayag susceptibility map", "explainability": "Explainability",
-         "state-map": "Full state susceptibility map"}
+PAGES = {"overview": "HimShield", "explorer": "Susceptibility Explorer",
+         "comparison": "Model Comparison", "predict": "Location Assessment",
+         "explainability": "Explainability", "methodology": "Methodology & Validation"}
+NAVIGATION = ["Overview", *list(PAGES.values())[1:]]
 
 
 def rendered_text(app):
@@ -62,7 +63,7 @@ class DashboardIntegrationTests(unittest.TestCase):
                       (("Random Forest", config.RF_MODEL_PATH), ("SVM (RBF)", config.SVM_MODEL_PATH),
                        ("XGBoost", config.XGB_MODEL_PATH))}
 
-    def render(self, route, *, offline=False):
+    def render(self, route, *, offline=False, query_offline=False):
         # Callable pages in Streamlit 1.49 use the URL-path hash; public
         # AppTest.switch_page accepts file pages, not these existing functions.
         with patch.dict(os.environ, {"LSM_OFFLINE": "1" if offline else "0"}), patch("socket.create_connection"):
@@ -72,11 +73,34 @@ class DashboardIntegrationTests(unittest.TestCase):
             app = AppTest.from_file(str(APP), default_timeout=120)
             if route != "overview":
                 app._page_hash = calc_md5(route)
+            if query_offline:
+                app.query_params["offline"] = "1"
             app.run(timeout=120)
         self.assertFalse(list(app.exception), [x.message for x in app.exception])
         self.assertFalse(list(app.error), [x.value for x in app.error])
-        self.assertEqual([x.value for x in app.title], [PAGES[route]])
+        self.assertEqual([x.value for x in app.title], [PAGES.get(route, "Susceptibility Explorer")])
         return app
+
+    def rerun(self, element, *, offline=False):
+        with patch.dict(os.environ, {"LSM_OFFLINE": "1" if offline else "0"}), patch("socket.create_connection"):
+            app = element.run(timeout=120)
+        self.assertFalse(list(app.exception), [x.message for x in app.exception])
+        self.assertFalse(list(app.error), [x.value for x in app.error])
+        return app
+
+    def select(self, app, label, value, *, offline=False):
+        return self.rerun(next(x for x in app.selectbox if x.label == label).set_value(value), offline=offline)
+
+    def assert_html(self, app, path):
+        self.assertEqual(len(app.get("iframe")), 1)
+        self.assertEqual(app.get("iframe")[0].proto.srcdoc, path.read_text(encoding="utf-8"))
+
+    def assert_coverage(self, app, summary):
+        self.assertEqual(next(x.value for x in app.metric if x.label == "Cells scored"), f"{summary['cells_scored']:,}")
+        actual = app.dataframe[0].value
+        expected = pd.DataFrame(summary["zones"])
+        pd.testing.assert_frame_equal(actual, expected)
+        self.assertEqual(sum(actual["cells"]), summary["cells_scored"])
 
     def test_all_six_pages_and_labels(self):
         for route in PAGES:
@@ -87,6 +111,9 @@ class DashboardIntegrationTests(unittest.TestCase):
                 self.assertNotIn("phase3-preparation", text)
                 self.assertNotIn("Phase 3 preview", text)
                 self.assertNotIn("Both models", text)
+                self.assertEqual([x.proto.label for x in app.sidebar.get("page_link")], NAVIGATION)
+                self.assertEqual([x.proto.page_script_hash for x in app.sidebar.get("page_link")],
+                                 [calc_md5(path) for path in PAGES])
                 if route == "overview":
                     values = {x.label: x.value for x in app.metric}
                     self.assertEqual(values["Sample points"], "15,189")
@@ -94,9 +121,11 @@ class DashboardIntegrationTests(unittest.TestCase):
                     self.assertEqual(values["Stable points"], "10,126")
                     self.assertEqual(values["Model inputs"], "23")
                     self.assertIn("15,169", text)
-                    self.assertIn("whole eligible dataset", text)
-                    self.assertIn("outer-training scaler", text)
-                    self.assertGreaterEqual(len(app.get("imgs")), 5)
+                    self.assertNotIn("whole eligible dataset", text)
+                    self.assertEqual(len(app.get("imgs")), 0)
+                    self.assertEqual(len(app.get("page_link")), 8)
+                    for name, result in self.meta["evaluation"]["models"].items():
+                        self.assertEqual(next(x.value for x in app.metric if x.label == name + ": test AUC"), f"{result['auc']:.3f}")
                 if route == "predict":
                     self.assertIn("does not extract terrain features from GPS", text)
                     self.assertIn(ui.THRESHOLD_NOTE, text)
@@ -107,32 +136,41 @@ class DashboardIntegrationTests(unittest.TestCase):
                     self.assertEqual(values["Model baseline (expected output)"], "0.500")
                     self.assertIn("do not establish causes", text)
                     self.assertIn("does not prove robustness", text)
-                    self.assertGreaterEqual(len(app.get("imgs")), 6)
-                if route == "state-map":
+                    self.assertGreaterEqual(len(app.get("imgs")), 5)
+                if route == "explorer":
                     self.assertIn("approximately 90 m display", text)
                     self.assertIn("not an exact 30 m", text)
                     self.assertEqual(next(x.value for x in app.metric if x.label == "Cells scored"), "58,945,876")
+                if route == "methodology":
+                    self.assertIn("whole eligible dataset", text)
+                    self.assertIn("outer-training scaler", text)
+                    self.assertIn("Spatial validation infrastructure ready, performance results pending", text)
+                    self.assertIn("Road-survey bias", text)
+                    self.assertIn(ui.SCORE_NOTE, text)
+                    self.assertGreaterEqual(len(app.get("imgs")), 5)
 
     def test_comparison_keeps_saved_metrics_and_threshold_views(self):
-        app = self.render("comparison")
+        with patch("streamlit.image", wraps=st.image) as image:
+            app = self.render("comparison")
+        shown = {str(call.args[0]) for call in image.call_args_list}
+        for name in ("roc_comparison", "precision_recall_comparison", "confusion_matrices", "rf_feature_importance"):
+            self.assertIn(str(config.FIGURES_DIR / (name + ".png")), shown)
         for name, result in self.meta["evaluation"]["models"].items():
             self.assertEqual(next(x.value for x in app.metric if x.label == name + ": test AUC"), f"{result['auc']:.3f}")
         self.assertIn("does not establish equivalence or conclusive superiority", rendered_text(app))
         for choice, key in (("0.5, the usual default", "default"),
                             ("Youden's J, retrospective benchmark threshold", "youden")):
-            app.radio[0].set_value(choice).run(timeout=120)
-            self.assertFalse(list(app.exception))
-            self.assertFalse(list(app.error))
+            app = self.rerun(app.radio[0].set_value(choice))
             for name, result in self.meta["evaluation"]["models"].items():
                 self.assertEqual(app.table[0].value.loc["Accuracy", name], f"{result[key]['accuracy']:.3f}")
             self.assertIn("Saved counts at threshold 0.5", rendered_text(app))
+            self.assertEqual(len(app.table), 1)
+            self.assertEqual(len(app.get("imgs")), 4)
 
     def test_prediction_examples_match_saved_models(self):
         app = self.render("predict")
         for label in ("Typical values", "A landslide point", "A stable point"):
-            next(x for x in app.button if x.label == label).click().run(timeout=120)
-            self.assertFalse(list(app.exception))
-            self.assertFalse(list(app.error))
+            app = self.rerun(next(x for x in app.button if x.label == label).click())
             raw = {}
             for feature in config.active_numeric_features():
                 raw[feature] = (-1.0 if app.session_state["in_flat"] else float(app.session_state["in_aspect"])) \
@@ -145,19 +183,120 @@ class DashboardIntegrationTests(unittest.TestCase):
             expected = [f"{float(model.predict_proba(X)[0, 1]):.3f}" for model in self.models.values()]
             self.assertEqual(actual, expected, label)
 
-    def test_both_maps_keep_exact_html_and_offline_fallbacks(self):
-        for route, path in (("map", config.DEMO_MAP_HTML), ("state-map", config.OUTPUTS_DIR / "susceptibility_map_uk.html")):
-            with self.subTest(route=route, mode="interactive"):
+    def test_explorer_scope_models_and_saved_summaries(self):
+        app = self.render("explorer")
+        self.assertEqual(next(x.options for x in app.selectbox if x.label == "Map model"), ["Random Forest"])
+        self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
+        import rasterio
+        with rasterio.open(config.PROCESSED_DIR / "susceptibility_uk_zones.tif") as raster:
+            self.assert_coverage(app, json.loads(raster.tags()["PHASE3_SUMMARY"]))
+        app = self.select(app, "Geographic scope", config.DEMO_DISTRICT)
+        self.assertEqual(next(x.options for x in app.selectbox if x.label == "Map model"), ["Random Forest", "SVM (RBF)"])
+        for model, key, suffix in (("Random Forest", "demo_map", ""), ("SVM (RBF)", "demo_map_svm", "_svm")):
+            app = self.select(app, "Map model", model)
+            self.assert_html(app, config.DEMO_MAP_HTML.with_name(config.DEMO_MAP_HTML.stem + suffix + ".html"))
+            self.assert_coverage(app, self.meta[key])
+            self.assertIn(model, app.subheader[0].value)
+        app = self.select(app, "Geographic scope", "Uttarakhand")
+        self.assertEqual(next(x.value for x in app.selectbox if x.label == "Map model"), "Random Forest")
+        self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
+
+    def test_legacy_links_open_correct_scope_and_allow_switching(self):
+        for route, scope in (("map", config.DEMO_DISTRICT), ("state-map", "Uttarakhand")):
+            with self.subTest(route=route):
                 app = self.render(route)
-                self.assertTrue(any(x.proto.srcdoc == path.read_text(encoding="utf-8") for x in app.get("iframe")))
-                self.assertGreaterEqual(len(app.dataframe), 1)
-            with self.subTest(route=route, mode="offline"):
-                app = self.render(route, offline=True)
-                self.assertGreaterEqual(len(app.get("imgs")), 1)
-                self.assertTrue(any("Offline:" in str(x.value) for x in app.info))
+                self.assertEqual(next(x.value for x in app.selectbox if x.label == "Geographic scope"), scope)
+                other = "Uttarakhand" if scope == config.DEMO_DISTRICT else config.DEMO_DISTRICT
+                app = self.select(app, "Geographic scope", other)
+                self.assertEqual(next(x.value for x in app.selectbox if x.label == "Geographic scope"), other)
+
+    def test_legacy_scope_restored_after_visiting_another_page(self):
+        for route, scope in (("map", config.DEMO_DISTRICT), ("state-map", "Uttarakhand")):
+            app = self.render(route)
+            app._page_hash = calc_md5("comparison")
+            app = self.rerun(app)
+            app._page_hash = calc_md5(route)
+            app = self.rerun(app)
+            self.assertEqual(next(x.value for x in app.selectbox if x.label == "Geographic scope"), scope)
+
+    def test_offline_query_works_on_legacy_links(self):
+        for route in ("map", "state-map"):
+            app = self.render(route, query_offline=True)
+            self.assertEqual(len(app.get("imgs")), 1)
+            self.assertEqual(len(app.get("iframe")), 0)
+            self.assertTrue(app.radio[0].disabled)
+            self.assertEqual(app.query_params["offline"], ["1"])
+
+    def test_all_three_maps_static_and_forced_offline(self):
+        for offline in (False, True):
+            with self.subTest(offline=offline):
+                app = self.render("explorer", offline=offline)
+                if not offline:
+                    app = self.rerun(app.radio[0].set_value(explorer.STATIC))
+                for scope, model in (("Uttarakhand", "Random Forest"),
+                                     (config.DEMO_DISTRICT, "Random Forest"), (config.DEMO_DISTRICT, "SVM (RBF)")):
+                    app = self.select(app, "Geographic scope", scope, offline=offline)
+                    app = self.select(app, "Map model", model, offline=offline)
+                    self.assertEqual(len(app.get("imgs")), 1)
+                    self.assertEqual(len(app.get("iframe")), 0)
+                    self.assertIn(model + " · " + scope, app.get("imgs")[0].proto.imgs[0].caption)
+                    if offline:
+                        self.assertTrue(any("Offline:" in str(x.value) for x in app.info))
+                        self.assertTrue(app.radio[0].disabled)
+
+    def test_interactive_static_switch_restores_saved_map(self):
+        app = self.render("map")
+        app = self.select(app, "Map model", "SVM (RBF)")
+        app = self.rerun(app.radio[0].set_value(explorer.STATIC))
+        self.assertEqual(len(app.get("imgs")), 1)
+        app = self.rerun(app.radio[0].set_value(explorer.INTERACTIVE))
+        self.assert_html(app, config.OUTPUTS_DIR / "demo_map_rudraprayag_svm.html")
+        self.assertEqual(len(app.get("imgs")), 0)
+
+    def test_missing_html_falls_back_without_generating_artifacts(self):
+        original = Path.is_file
+        missing = config.OUTPUTS_DIR / "susceptibility_map_uk.html"
+        with patch.object(Path, "is_file", lambda path: False if path == missing else original(path)):
+            app = self.render("explorer")
+        self.assertEqual(len(app.get("imgs")), 1)
+        self.assertEqual(len(app.get("iframe")), 0)
+        self.assertIn("Interactive map unavailable", rendered_text(app))
+
+    def test_rf_zones_fallback_keeps_svm_source_separate(self):
+        original = Path.is_file
+        slug = config.DEMO_DISTRICT.lower().replace(" ", "_")
+        missing = config.PROCESSED_DIR / f"susceptibility_{slug}_rf.tif"
+        with patch.object(Path, "is_file", lambda path: False if path == missing else original(path)):
+            catalog = explorer.map_catalog(config.DEMO_DISTRICT)
+        self.assertEqual(catalog["Random Forest"]["raster"], config.PROCESSED_DIR / f"susceptibility_{slug}_zones.tif")
+        self.assertEqual(catalog["Random Forest"]["kind"], "zones")
+        self.assertEqual(catalog["SVM (RBF)"]["raster"], config.PROCESSED_DIR / f"susceptibility_{slug}_svm.tif")
+        self.assertEqual(catalog["SVM (RBF)"]["kind"], "probability")
+
+    def test_saved_explainability_figures_all_accessible(self):
+        with patch("streamlit.image", wraps=st.image) as image:
+            app = self.render("explainability")
+        shown = {str(call.args[0]) for call in image.call_args_list}
+        for name in ("shap_beeswarm", "shap_bar", "shap_force_high_risk"):
+            self.assertIn(str(config.FIGURES_DIR / "shap" / (name + ".png")), shown)
+        selector = next(x for x in app.selectbox if x.label == "Dependence factor")
+        self.assertEqual(len(selector.options), 3)
+        # Values are paths, displayed labels are readable feature names.
+        for path in sorted((config.FIGURES_DIR / "shap").glob("shap_dependence_*.png")):
+            with patch("streamlit.image", wraps=st.image) as image:
+                app = self.select(app, "Dependence factor", path)
+            self.assertIn(str(path), {str(call.args[0]) for call in image.call_args_list})
+            self.assertEqual(len(app.get("imgs")), 5)
+        for model in ("Random Forest", "XGBoost"):
+            with patch("streamlit.image", wraps=st.image) as image:
+                app = self.select(app, "Feature-importance model", model)
+            name = "rf_feature_importance" if model == "Random Forest" else "xgb_feature_importance"
+            self.assertIn(str(config.FIGURES_DIR / (name + ".png")), {str(call.args[0]) for call in image.call_args_list})
+            self.assertIn("Saved " + model + " feature importance, not new SHAP values", rendered_text(app))
+            self.assertEqual(len(app.get("imgs")), 5)
 
     def test_missing_shap_summary_does_not_generate_outputs(self):
-        missing = ROOT / ".git/stage5b-verification/nonexistent-figures"
+        missing = ROOT / ".git/nonexistent-dashboard-test-figures"
         self.assertFalse(missing.exists())
         with patch.object(config, "FIGURES_DIR", missing):
             app = self.render("explainability")

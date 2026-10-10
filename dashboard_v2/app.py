@@ -3,14 +3,9 @@ HimShield: six-page dashboard of the preserved landslide susceptibility benchmar
 
     streamlit run dashboard_v2/app.py
 
-Pages:
-    1 Overview          dataset, original benchmark workflow and validation limitations
-    2 Model Comparison  existing evaluation results and retrospective benchmark thresholds
-    3 Predict           saved models and unchanged manual feature inputs
-    4 Rudraprayag Map   saved interactive map or a static copy when offline
-    5 Explainability    SHAP figures from src/explain_shap.py
-    6 Full State Map    outputs/susceptibility_map_uk.html from src/map_generator_full.py, with the
-                        Rudraprayag fallback until the state raster exists; a static copy when offline
+Pages: Overview, Susceptibility Explorer, Model Comparison, Location Assessment,
+Explainability, Methodology & Validation. Legacy /map and /state-map routes open
+this same explorer in the district and statewide scopes, respectively.
 
 Reuse, not copies: dashboard/app.py ends with a bare `main()` call, so importing it would launch the whole
 Phase 2 app. load_phase2_dashboard() reads that file, leaves out only that final call, and runs the rest
@@ -18,7 +13,7 @@ as a module. Its loaders, prediction transformation and widget helpers are reuse
 HimShield owns its presentation labels. dashboard/app.py itself is not changed.
 
 Offline (college wifi): everything is local except the interactive web maps, which load Leaflet from CDNs
-and draw basemap tiles from the internet. A quick connection test decides; offline, both map pages show a
+and draw basemap tiles from the internet. A quick connection test decides; offline, the explorer shows a
 static map drawn locally from the same rasters, boundaries and landslide points instead of an empty frame.
 Force offline mode to test it with LSM_OFFLINE=1, or by adding ?offline=1 to the page address.
 """
@@ -44,7 +39,7 @@ from src import config  # noqa: E402
 from src import viz  # noqa: E402
 from src.demo_map import ZONE_COLOURS  # noqa: E402
 from src.map_generator_full import POINT_FILL  # noqa: E402
-from dashboard_v2 import benchmark_pages, ui  # noqa: E402
+from dashboard_v2 import benchmark_pages, explorer, ui  # noqa: E402
 
 # Presentation colours; saved figures and scientific zone/model colours remain unchanged.
 INK = ui.TEXT
@@ -53,11 +48,6 @@ MUTED = ui.SECONDARY
 PHASE2_APP = ROOT / "dashboard" / "app.py"
 SHAP_DIR = config.FIGURES_DIR / "shap"
 SHAP_SUMMARY = SHAP_DIR / "shap_summary.json"
-STATE_MAP_HTML = config.OUTPUTS_DIR / "susceptibility_map_uk.html"
-DEMO_SLUG = config.DEMO_DISTRICT.lower().replace(" ", "_")
-STATE_ZONES = config.PROCESSED_DIR / "susceptibility_uk_zones.tif"
-DEMO_ZONES = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_zones.tif"
-DEMO_PROBABILITY_PHASE2 = config.PROCESSED_DIR / f"susceptibility_{DEMO_SLUG}_rf.tif"
 ONLINE_HOSTS = ("cdn.jsdelivr.net", "tile.openstreetmap.org")
 MODEL_NAMES = ["Random Forest", "SVM (RBF)"]  # plus "XGBoost" when its model exists (see model_names)
 
@@ -110,14 +100,8 @@ def is_offline() -> bool:
     return forced or not internet_reachable()
 
 
-def offline_notice(what: str) -> None:
-    st.info(f"**Offline:** the interactive {what} needs internet for its map library and basemap tiles, so "
-            "this is a static copy drawn on this computer from the same rasters, boundaries and landslide "
-            "points. It shows no basemap and cannot be clicked.", icon=":material/wifi_off:")
-
-
 @st.cache_data(show_spinner="Drawing a static copy of the map (works offline)...")
-def static_map_png(zones_path: str, kind: str, focus: str, stamp: float) -> bytes:
+def static_map_png(zones_path: str, kind: str, focus: str, stamp: float, model: str) -> bytes:
     """A matplotlib rendering of zones, district and state boundaries, and landslide points."""
     import matplotlib
     matplotlib.use("Agg")
@@ -174,7 +158,7 @@ def static_map_png(zones_path: str, kind: str, focus: str, stamp: float) -> byte
         # Outside the map, to the right: inside, it covered the southern districts.
         ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1.0), fontsize=7.5, frameon=False,
                   borderaxespad=0)
-    title = "Landslide susceptibility, Random Forest: " + ("Uttarakhand" if focus == "state" else focus)
+    title = f"Landslide susceptibility, {model}: " + ("Uttarakhand" if focus == "state" else focus)
     ax.set_title(title, loc="left", fontsize=11, fontweight="semibold")
     footer = "Static offline copy: no basemap. "
     if config.IS_SYNTHETIC:
@@ -256,38 +240,6 @@ def model_names(ev: dict) -> list[str]:
     return MODEL_NAMES + extra
 
 
-def page_comparison_v2() -> None:
-    """Present the saved comparison without changing its metrics or calculations."""
-    benchmark_pages.comparison(p2)
-    ev = p2.evaluation_section()
-    pairwise = ev.get("pairwise_auc_differences", {})
-    if "XGBoost" not in ev["models"] or len(pairwise) < 3:
-        return
-    st.subheader("Saved three-model AUC comparisons")
-    ui.caption("Same random split, SMOTE inside each CV training fold and 5-fold CV on AUC; the grid was "
-               "fixed in src/config.py before training. Gaps are bootstrap means over 1,000 resamples of the "
-               "test set, with 95% intervals.")
-    cols = st.columns(len(pairwise))
-    for i, (col, (label, d)) in enumerate(zip(cols, pairwise.items())):
-        ui.metric_card(col, "pair-" + str(i), label, f"{d['mean_difference']:+.3f}",
-                       help=f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}")
-        col.caption(f"95% interval {d['ci_low']:+.3f} to {d['ci_high']:+.3f}: "
-                    + ("excludes zero in this bootstrap comparison." if d["separable"] else "includes zero; inconclusive difference."))
-    best = ev["winner"]
-    others = [n for n in ev["models"] if n != best]
-    beats = [label for label, d in pairwise.items()
-             if label.startswith(best) and d["separable"] and d["mean_difference"] > 0]
-    verdict = f"**{best}** has the highest test AUC ({ev['models'][best]['auc']:.4f})"
-    if len(beats) == len(others):
-        verdict += ", and its lead over both other models excludes zero."
-    else:
-        close = [label for label, d in pairwise.items() if best in label and not d["separable"]]
-        verdict += (f", but it cannot be separated from the runner-up ({'; '.join(close)}: the interval includes "
-                    "zero). This does not establish equivalence or conclusive superiority."
-                    if close else ".")
-    st.info(verdict)
-
-
 def page_predict_v2() -> None:
     bundle, df, ev = p2.models(), p2.dataset(), p2.evaluation_section()
     feature_names, scaler = bundle["feature_names"], bundle["scaler"]
@@ -295,7 +247,7 @@ def page_predict_v2() -> None:
     if "XGBoost" in names:
         bundle = {**bundle, "XGBoost": load_xgb(file_stamp(config.XGB_MODEL_PATH))}
 
-    ui.page_header("Predict", "Manual terrain-condition assessment with " + ", ".join(names) + ".")
+    ui.page_header("Location Assessment", "Manual terrain-condition assessment with " + ", ".join(names) + ".")
     st.markdown("Set the feature values below. This interface does not extract terrain features from GPS "
                 "coordinates. Every saved model receives the same original prediction transformation; "
                 "the chart shows model outputs and the unchanged five susceptibility classes.")
@@ -303,7 +255,8 @@ def page_predict_v2() -> None:
 
     if "in_slope" not in st.session_state:
         p2.set_inputs(p2.typical_row(df), df)
-    buttons = st.columns([1, 1, 1, 3])
+    st.subheader("1. Choose a starting point")
+    buttons = st.columns(3)
     buttons[0].button("Typical values", on_click=p2.load_example, args=("typical", df),
                       help="Median of every number and the most common class")
     buttons[1].button("A landslide point", on_click=p2.load_example, args=("landslide", df),
@@ -311,9 +264,11 @@ def page_predict_v2() -> None:
     buttons[2].button("A stable point", on_click=p2.load_example, args=("stable", df),
                       help="A random stable row from the dataset (most were used in training)")
 
-    groups = st.columns(len(p2.INPUT_GROUPS), gap="medium")
-    for column, (title, cols) in zip(groups, p2.INPUT_GROUPS.items()):
-        with column, ui.panel("inputs-" + title.lower().replace(" ", "-")):
+    st.subheader("2. Enter terrain conditions")
+    ui.caption("All input groups contribute to the same assessment. Example points are demonstrations, not independent validation cases.")
+    groups = st.tabs(list(p2.INPUT_GROUPS))
+    for tab, (title, cols) in zip(groups, p2.INPUT_GROUPS.items()):
+        with tab, ui.panel("inputs-" + title.lower().replace(" ", "-")):
             st.markdown(f"**{title}**")
             for col in cols:
                 if col not in config.DROPPED_COLUMNS:
@@ -324,7 +279,7 @@ def page_predict_v2() -> None:
     scores = {name: float(bundle[name].predict_proba(X)[0, 1]) for name in names}
     thresholds = {name: ev["models"][name]["youden"]["threshold"] for name in names}
 
-    st.subheader("Susceptibility scores")
+    st.subheader("3. Review susceptibility scores")
     st.altair_chart(probability_chart(scores, thresholds), use_container_width=True)
     ui.caption("Bars: susceptibility scores. White tick: the retrospective, test-selected Youden threshold. "
                "A bar passing its tick meets that benchmark decision rule. Bands: the five susceptibility classes.")
@@ -349,47 +304,6 @@ def page_predict_v2() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Page 4: Rudraprayag map
-# ---------------------------------------------------------------------------
-def page_rudraprayag_v2() -> None:
-    ui.page_header(f"{config.DEMO_DISTRICT} susceptibility map", "Explore the saved district map and susceptibility classes.")
-    ui.caption("Source grid: 30 m. The displayed map is a visualization of saved model outputs. " + ui.SCORE_NOTE)
-    if not is_offline():
-        import streamlit.components.v1 as components
-
-        if not config.DEMO_MAP_HTML.exists():
-            ui.availability("District map unavailable.", "The saved interactive map is missing; no output is rebuilt here.")
-            return
-        demo = p2.metadata().get("demo_map", {})
-        if demo:
-            st.markdown(f"**Model:** {demo.get('model', '-')}")
-            cols = st.columns(3)
-            ui.metric_card(cols[0], "district-cells", "Cells scored", f"{demo.get('cells_scored', 0):,}",
-                           help="30 m source cells, water excluded")
-            ui.metric_card(cols[1], "district-time", "Prediction time", f"{demo.get('timing_seconds', {}).get('predict', 0):.0f} s")
-            projected = demo.get("projection_full_state", {}).get("predict_minutes")
-            if projected is not None:
-                ui.metric_card(cols[2], "district-projection", "Whole state, projected", f"{projected:.0f} min",
-                               help="Historical linear projection from the district run; actual statewide output is on Full State Map")
-            if demo.get("zones"):
-                st.dataframe(pd.DataFrame(demo["zones"]), hide_index=True,
-                             column_config={"share_percent": st.column_config.NumberColumn("share %", format="%.1f"),
-                                            "area_km2": st.column_config.NumberColumn("area km²", format="%.1f")})
-        components.html(config.DEMO_MAP_HTML.read_text(encoding="utf-8"), height=640)
-        return
-    offline_notice("Rudraprayag map")
-    source = (DEMO_PROBABILITY_PHASE2, "probability") if DEMO_PROBABILITY_PHASE2.exists() else (
-        (DEMO_ZONES, "zones") if DEMO_ZONES.exists() else (None, None))
-    if source[0] is None:
-        ui.availability("District raster unavailable.", "No saved raster is available for the static view.")
-        return
-    zones = p2.metadata().get("demo_map", {}).get("zones")
-    if zones:
-        st.dataframe(pd.DataFrame(zones), hide_index=True)
-    st.image(static_map_png(str(source[0]), source[1], config.DEMO_DISTRICT, file_stamp(source[0])))
-
-
-# ---------------------------------------------------------------------------
 # Page 5: Explainability
 # ---------------------------------------------------------------------------
 SHAP_NOTES = {
@@ -402,7 +316,7 @@ SHAP_NOTES = {
                  "It is the closest SHAP equivalent of feature importance."),
     "shap_force_high_risk": ("One high-score example",
                              "How a recorded landslide example got its high score: starting from the model baseline, "
-                             "red factors push it up and blue ones push it down, and together they add up exactly "
+                             "red factors push it up and blue ones push it down, and together they add up within numerical tolerance "
                              "to the model's score for that location."),
 }
 
@@ -438,23 +352,22 @@ def page_explainability() -> None:
 
     figures = {Path(f).stem: ROOT / f for f in summary["figures"]}
     tab_names = [SHAP_NOTES["shap_beeswarm"][0], SHAP_NOTES["shap_bar"][0], "Dependence (top 3)",
-                 SHAP_NOTES["shap_force_high_risk"][0], "Ranking table"]
+                 SHAP_NOTES["shap_force_high_risk"][0], "Ranking table", "Model feature importance"]
     tabs = st.tabs(tab_names)
     for tab, key in zip(tabs[:2], ["shap_beeswarm", "shap_bar"]):
         with tab:
-            left, right = st.columns([3, 2], gap="large")
-            with left:
-                if key in figures and figures[key].exists():
-                    st.image(str(figures[key]))
-            with right:
-                st.markdown(SHAP_NOTES[key][1])
+            ui.figure(figures.get(key, SHAP_DIR / f"{key}.png"))
+            ui.caption(SHAP_NOTES[key][1])
     with tabs[2]:
         st.markdown("Feature values versus SHAP contributions for the three strongest factors. These are "
                     "associations in the saved Random Forest outputs, not causal effects or calibrated event probabilities.")
         dependence = [p for k, p in figures.items() if k.startswith("shap_dependence_")]
-        for column, path in zip(st.columns(max(1, len(dependence))), dependence):
-            with column:
-                st.image(str(path))
+        if dependence:
+            chosen = st.selectbox("Dependence factor", dependence,
+                                  format_func=lambda path: path.stem.split("_", 3)[-1].replace("_", " "))
+            ui.figure(chosen)
+        else:
+            ui.availability("Dependence figures unavailable.", "No saved dependence plots are available.")
     with tabs[3]:
         point = summary.get("force_plot_point", {})
         if "shap_force_high_risk" in figures and figures["shap_force_high_risk"].exists():
@@ -466,6 +379,12 @@ def page_explainability() -> None:
                      column_config={"Mean |SHAP|": st.column_config.NumberColumn(format="%.4f")})
         ui.caption("Two different summaries of the same model. Agreement does not prove robustness or causality. "
                    "Permutation importance measures lost AUC; SHAP measures movement of model output.")
+    with tabs[5]:
+        model = st.selectbox("Feature-importance model", ["Random Forest", "XGBoost"])
+        name = "rf_feature_importance" if model == "Random Forest" else "xgb_feature_importance"
+        ui.figure(config.FIGURES_DIR / f"{name}.png")
+        ui.caption(f"Saved {model} feature importance, not new SHAP values. "
+                   "Importance depends on its calculation method and does not establish causality.")
     st.caption(f"Random Forest only: TreeExplainer gives exact SHAP values for tree models "
                f"({summary['timing_seconds']['explain']:.0f} s for {sample['rows']:,} locations here); the RBF SVM "
                f"would need an approximate, much slower method, not run in this project. "
@@ -473,69 +392,33 @@ def page_explainability() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Page 6: Full state map
-# ---------------------------------------------------------------------------
-def page_state_map() -> None:
-    import streamlit.components.v1 as components
-
-    ui.page_header("Full state susceptibility map", "Saved Random Forest susceptibility coverage for Uttarakhand.")
-    ui.caption("Source grid: 30 m. The current saved statewide web-map overlay uses approximately 90 m display "
-               "cells; clicks report the displayed class, not an exact 30 m site assessment. Static views also "
-               "reduce resolution for display. " + ui.SCORE_NOTE)
-    state_ready = STATE_ZONES.exists()
-    if state_ready:
-        summary = raster_summary(STATE_ZONES)
-    else:
-        summary = raster_summary(DEMO_ZONES)
-        ui.availability("Full state map pending: showing Rudraprayag only.",
-                        "The statewide raster is unavailable. No raster generation is triggered here.", warning=True)
-
-    if summary:
-        cols = st.columns(4)
-        ui.metric_card(cols[0], "state-area", "Area", summary.get("area", "-"))
-        ui.metric_card(cols[1], "state-cells", "Cells scored", f"{summary.get('cells_scored', 0):,}", help="30 m source cells, water excluded")
-        ui.metric_card(cols[2], "state-time", "Scoring time", f"{summary.get('timing_seconds', {}).get('predict', 0):.0f} s")
-        peak = summary.get("memory_bytes", {}).get("peak")
-        ui.metric_card(cols[3], "state-memory", "Peak memory", f"{peak / 1e9:.2f} GB" if peak else "-")
-        if summary.get("zones"):
-            st.dataframe(pd.DataFrame(summary["zones"]), hide_index=True,
-                         column_config={"share_percent": st.column_config.NumberColumn("share %", format="%.1f"),
-                                        "area_km2": st.column_config.NumberColumn("area km²", format="%.1f")})
-
-    if is_offline():
-        offline_notice("state map")
-        if state_ready:
-            st.image(static_map_png(str(STATE_ZONES), "zones", "state", file_stamp(STATE_ZONES)))
-        elif DEMO_ZONES.exists():
-            st.image(static_map_png(str(DEMO_ZONES), "zones", "state", file_stamp(DEMO_ZONES)))
-        else:
-            st.image(static_map_png("", "", "state", 0.0))
-        return
-
-    if not STATE_MAP_HTML.exists():
-        ui.availability("Interactive map unavailable.", "The saved web map is missing. No map is regenerated here.")
-        return
-    if state_ready and file_stamp(STATE_MAP_HTML) < file_stamp(STATE_ZONES):
-        ui.availability("Map timestamp warning.", "The raster has a newer modification time. "
-                        "Verify artifact provenance before interpreting freshness.", warning=True)
-    ui.caption(f"Saved interactive map, {STATE_MAP_HTML.stat().st_size / 1e6:.2f} MB. Click for the district and "
-               "displayed susceptibility class; use the layer control to switch layers and basemaps. "
-               "Original legend wording is retained inside the preserved map artifact.")
-    components.html(STATE_MAP_HTML.read_text(encoding="utf-8"), height=700)
-
-
-# ---------------------------------------------------------------------------
 def main() -> None:
     st.set_page_config(page_title="HimShield | Landslide Susceptibility", page_icon=":material/shield:", layout="wide")
     ui.install()
-    pages = st.navigation([
-        st.Page(lambda: benchmark_pages.overview(p2), title="Overview", icon=":material/landscape:", url_path="overview", default=True),
-        st.Page(page_comparison_v2, title="Model Comparison", icon=":material/compare_arrows:", url_path="comparison"),
-        st.Page(page_predict_v2, title="Predict", icon=":material/tune:", url_path="predict"),
-        st.Page(page_rudraprayag_v2, title=f"{config.DEMO_DISTRICT} Map", icon=":material/map:", url_path="map"),
+
+    def show_explorer(default_scope="Uttarakhand", route="explorer"):
+        explorer.page(p2, static_map_png, raster_summary, file_stamp, is_offline(),
+                      default_scope=default_scope, route=route)
+
+    explorer_page = st.Page(show_explorer, title="Susceptibility Explorer", icon=":material/map:", url_path="explorer")
+    methodology_page = st.Page(lambda: benchmark_pages.methodology(p2), title="Methodology & Validation",
+                               icon=":material/science:", url_path="methodology")
+    visible_pages = [
+        st.Page(lambda: benchmark_pages.overview(p2, explorer_page, methodology_page), title="Overview",
+                icon=":material/landscape:", url_path="overview", default=True),
+        explorer_page,
+        st.Page(lambda: benchmark_pages.comparison(p2), title="Model Comparison", icon=":material/compare_arrows:", url_path="comparison"),
+        st.Page(page_predict_v2, title="Location Assessment", icon=":material/tune:", url_path="predict"),
         st.Page(page_explainability, title="Explainability", icon=":material/insights:", url_path="explainability"),
-        st.Page(page_state_map, title="Full State Map", icon=":material/public:", url_path="state-map"),
-    ])
+        methodology_page,
+    ]
+    # Native page links expose exactly six choices. Register legacy addresses as
+    # aliases without duplicating content or hiding menu entries through CSS.
+    aliases = [
+        st.Page(lambda: show_explorer(config.DEMO_DISTRICT, "map"), title="District map alias", url_path="map"),
+        st.Page(lambda: show_explorer("Uttarakhand", "state-map"), title="State map alias", url_path="state-map"),
+    ]
+    pages = st.navigation(visible_pages + aliases, position="hidden")
 
     meta = p2.metadata()
     trained_on = meta.get("data_source")
@@ -551,9 +434,12 @@ def main() -> None:
 
     with st.sidebar:
         ui.sidebar_brand()
+        for page in visible_pages:
+            st.page_link(page, use_container_width=True)
+        st.divider()
         st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
         st.caption("Connection: **offline**, maps shown as static copies" if is_offline()
-                   else "Connection: **online**, interactive maps")
+                   else "Connection: **online**, interactive or static map views")
         with st.expander("Saved model availability"):
             ui.model_availability({"SVM": config.SVM_MODEL_PATH, "Random Forest": config.RF_MODEL_PATH,
                                    "XGBoost": config.XGB_MODEL_PATH})

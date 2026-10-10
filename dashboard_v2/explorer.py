@@ -1,0 +1,126 @@
+"""Read-only presentation of existing maps. No prediction or GIS generation entry points."""
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
+
+from dashboard_v2 import ui
+from src import config
+from src.demo_map import ZONE_COLOURS
+
+INTERACTIVE = "Interactive map"
+STATIC = "Static / offline map"
+
+
+def map_catalog(scope: str) -> dict:
+    """Explicit saved-map registry: point-model availability does not imply map coverage."""
+    if scope == "Uttarakhand":
+        return {"Random Forest": {
+            "html": config.OUTPUTS_DIR / "susceptibility_map_uk.html",
+            "raster": config.PROCESSED_DIR / "susceptibility_uk_zones.tif",
+            "kind": "zones", "focus": "state", "metadata": None,
+        }}
+    slug = config.DEMO_DISTRICT.lower().replace(" ", "_")
+    catalog = {name: {
+        "html": config.DEMO_MAP_HTML.with_name(config.DEMO_MAP_HTML.stem + suffix + ".html"),
+        "raster": config.PROCESSED_DIR / f"susceptibility_{slug}_{model}.tif",
+        "kind": "probability", "focus": config.DEMO_DISTRICT, "metadata": "demo_map" + suffix,
+    } for name, model, suffix in (("Random Forest", "rf", ""), ("SVM (RBF)", "svm", "_svm"))}
+    # Retain the existing RF zones fallback; never substitute an RF raster for SVM.
+    rf_zones = config.PROCESSED_DIR / f"susceptibility_{slug}_zones.tif"
+    if not catalog["Random Forest"]["raster"].is_file() and rf_zones.is_file():
+        catalog["Random Forest"].update(raster=rf_zones, kind="zones")
+    return catalog
+
+
+def available_maps(catalog: dict) -> dict:
+    return {name: item for name, item in catalog.items()
+            if item["html"].is_file() or item["raster"].is_file()}
+
+
+@st.cache_data(show_spinner=False)
+def saved_html(path: str, stamp: float) -> str:
+    return Path(path).read_text(encoding="utf-8")
+
+
+def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
+         default_scope="Uttarakhand", route="explorer") -> None:
+    ui.page_header("Susceptibility Explorer", "Explore saved susceptibility coverage by geographic scope and model.")
+    # Legacy routes open the correct scope once, then allow normal selector changes.
+    if st.session_state.get("explorer-route") != route or "explorer-scope" not in st.session_state:
+        st.session_state["explorer-scope"] = default_scope
+        st.session_state["explorer-route"] = route
+    with ui.panel("explorer-controls"):
+        left, middle, right = st.columns([1, 1, 1.3], gap="medium")
+        scope = left.selectbox("Geographic scope", ["Uttarakhand", config.DEMO_DISTRICT], key="explorer-scope")
+        catalog = available_maps(map_catalog(scope))
+        if not catalog:
+            ui.availability("Map coverage unavailable.",
+                            "No saved map or raster exists for this scope. Select another scope; nothing is generated.")
+            return
+        model = middle.selectbox("Map model", list(catalog), key="explorer-model-" + scope,
+                                 disabled=len(catalog) == 1)
+        if offline:
+            st.session_state["explorer-mode"] = STATIC
+        mode = right.radio("Map view", [INTERACTIVE, STATIC], key="explorer-mode",
+                           disabled=offline, horizontal=True)
+        if scope == "Uttarakhand":
+            ui.caption("Statewide coverage: saved Random Forest map only. SVM and XGBoost statewide maps are unavailable.")
+        else:
+            ui.caption("District coverage: saved Random Forest and SVM maps. No saved XGBoost district map is available.")
+
+    item = catalog[model]
+    summary = (p2.metadata().get(item["metadata"], {}) if item["metadata"]
+               else raster_summary(item["raster"]))
+    use_static = offline or mode == STATIC or not item["html"].is_file()
+    if offline:
+        st.info("**Offline:** the static view uses local rasters, boundaries and landslide points. "
+                "It needs no basemap connection and cannot be clicked.")
+    elif mode == STATIC:
+        ui.caption("Static view: local coverage without internet tiles or clickable features. Choose Interactive map to explore layers.")
+    elif use_static:
+        ui.availability("Interactive map unavailable.", "Showing the saved raster as a static view instead.", warning=True)
+    with ui.panel("explorer-map"):
+        st.subheader(f"{scope} · {model}")
+        ui.susceptibility_legend(config.RISK_ZONES, config.RISK_ZONE_BREAKS, ZONE_COLOURS)
+        if use_static:
+            if item["raster"].is_file():
+                st.image(static_map_png(str(item["raster"]), item["kind"], item["focus"],
+                                        file_stamp(item["raster"]), model),
+                         caption=f"{model} · {scope}. Static display of the saved raster; resolution reduced for display.",
+                         use_container_width=True)
+            else:
+                ui.availability("Static raster unavailable.",
+                                "This view needs the saved raster. The existing interactive map remains available when online.")
+        else:
+            ui.caption("Use the map's layer control and click to inspect the saved geographic information and class. "
+                       "Internet access is required for map libraries and basemap tiles.")
+            components.html(saved_html(str(item["html"]), file_stamp(item["html"])), height=700)
+        if scope == "Uttarakhand":
+            ui.caption("Source grid: 30 m. The statewide web overlay uses approximately 90 m display cells. "
+                       "A click reports the display class, not an exact 30 m site assessment.")
+        else:
+            ui.caption("Source grid: 30 m. The saved district overlay visualizes model outputs; "
+                       "display reduction and resampling do not provide a site survey.")
+        ui.caption(ui.SCORE_NOTE + " Water and unavailable source cells are excluded; blank coverage is not a low class. "
+                   "The preserved interactive map retains its original legend wording.")
+
+    with ui.panel("explorer-summary"):
+        st.subheader("Saved coverage summary")
+        if not summary:
+            ui.availability("Summary unavailable.", "No saved run summary accompanies this view. Coverage statistics are not invented.")
+            return
+        cols = st.columns(3)
+        ui.metric_card(cols[0], "coverage-cells", "Cells scored", f"{summary.get('cells_scored', 0):,}",
+                       help="Saved count on the 30 m source grid; not the number of web display cells")
+        ui.metric_card(cols[1], "coverage-water", "Water cells excluded", f"{summary.get('cells_water_skipped', 0):,}")
+        seconds = summary.get("timing_seconds", {}).get("predict")
+        ui.metric_card(cols[2], "coverage-time", "Saved scoring time", f"{seconds:.0f} s" if seconds is not None else "—",
+                       help="Historical computation time, not time to load this page or a future runtime estimate")
+        if summary.get("zones"):
+            st.dataframe(pd.DataFrame(summary["zones"]), hide_index=True, use_container_width=True,
+                         column_config={"zone": "Susceptibility class", "cells": st.column_config.NumberColumn("Source cells", format="%d"),
+                                        "share_percent": st.column_config.NumberColumn("Share (%)", format="%.1f"),
+                                        "area_km2": st.column_config.NumberColumn("Area (km²)", format="%.1f")})
+            ui.caption("Saved full-resolution counts and areas. Shares refer to scored cells; displayed shares are rounded.")

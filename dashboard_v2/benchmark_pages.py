@@ -6,33 +6,54 @@ from dashboard_v2 import ui
 from src import config
 
 
-def overview(p2) -> None:
+def overview(p2, explorer_page, methodology_page) -> None:
     meta, df = p2.metadata(), p2.dataset()
     prep, ev = meta.get("preprocessing", {}), meta.get("evaluation", {})
-    ui.page_header("HimShield", "Landslide susceptibility mapping and model comparison for Uttarakhand, India.")
+    ui.page_header("HimShield", "Landslide susceptibility analytics for Uttarakhand, India.")
     if config.IS_SYNTHETIC:
         p2.synthetic_banner()
-    names = ", ".join(ev.get("models", {})) or "the saved models"
-    st.markdown(f"Explore **{names}**, terrain conditions and saved susceptibility maps. "
-                "The original results use a stratified random split; they do not measure performance "
-                "in a geographically independent region.")
+    st.markdown("Explore terrain conditions, compare three saved models and inspect susceptibility coverage. "
+                "HimShield supports research and screening; it does not replace a site investigation or forecast a landslide event.")
     positives = int((df[config.TARGET] == 1).sum())
-    cols = st.columns(5)
-    ui.metric_card(cols[0], "samples", "Sample points", f"{len(df):,}",
-                   help=f"{prep.get('rows_used', len(df)):,} retained after excluding water points")
-    ui.metric_card(cols[1], "positive", "Landslide points", f"{positives:,}")
-    ui.metric_card(cols[2], "negative", "Stable points", f"{len(df) - positives:,}",
-                   help="Sampled locations with no recorded landslide, not proof of safety")
-    ui.metric_card(cols[3], "features", "Model inputs", f"{len(prep.get('kept_features', [])) or '-'}",
-                   help="The stored encoded feature schema used by the benchmark models")
-    if ev:
-        winner = ev["winner"]
-        ui.metric_card(cols[4], "auc", "Highest benchmark AUC", f"{ev['models'][winner]['auc']:.3f}",
-                       help=f"{winner}; highest observed AUC does not establish superiority. See the saved pairwise intervals.")
-    ui.caption(f"Dataset rows: {len(df):,}. Retained modelling samples: {prep.get('rows_used', len(df)):,}. "
-               "The cards above describe the input dataset; exclusions are reflected in the modelling sample count.")
+    cols = st.columns(4)
+    for col, key, label, value, help_text in zip(cols,
+            ("samples", "positive", "negative", "features"),
+            ("Sample points", "Landslide points", "Stable points", "Model inputs"),
+            (f"{len(df):,}", f"{positives:,}", f"{len(df) - positives:,}", str(len(prep.get("kept_features", [])) or "—")),
+            ("Input dataset, before water exclusions", "Recorded landslide samples",
+             "Sampled points with no recorded landslide; not proof of safety", "Stored encoded benchmark feature schema")):
+        ui.metric_card(col, key, label, value, help=help_text)
+    ui.caption(f"Retained modelling samples: {prep.get('rows_used', len(df)):,}. "
+               "Sample counts above describe the input dataset; water exclusions reduce the modelling count.")
+    with ui.panel("overview-benchmark"):
+        st.subheader("Three-model benchmark")
+        results = ev.get("models", {})
+        if results:
+            for i, (col, (name, result)) in enumerate(zip(st.columns(len(results)), results.items())):
+                ui.metric_card(col, f"overview-model-{i}", name + ": test AUC", f"{result['auc']:.3f}",
+                               help=f"Average precision {result['average_precision']:.3f}; original random held-out split")
+            ui.caption("Highest observed AUC does not establish conclusive superiority. See Model Comparison for the saved intervals and threshold context.")
+        else:
+            ui.availability("Benchmark unavailable.", "No saved evaluation is available; no model is fitted here.")
+    left, right = st.columns(2, gap="large")
+    with left, ui.panel("overview-explore"):
+        st.subheader("Explore susceptibility")
+        st.markdown("**Uttarakhand:** Random Forest coverage.  \n**Rudraprayag:** Random Forest and SVM coverage. "
+                    "Interactive and static map views use existing saved artifacts.")
+        st.page_link(explorer_page, label="Open Susceptibility Explorer", icon=":material/map:")
+    with right, ui.panel("overview-validation"):
+        st.subheader("Understand the evidence")
+        st.markdown("The original benchmark uses a random split. Spatial-validation infrastructure is ready; "
+                    "performance results are pending. Review source data, preprocessing and sampling limitations.")
+        st.page_link(methodology_page, label="Read Methodology & Validation", icon=":material/science:")
     ui.caption(ui.SCORE_NOTE)
 
+
+def methodology(p2) -> None:
+    meta, df = p2.metadata(), p2.dataset()
+    ui.page_header("Methodology & Validation", "Data provenance, original preprocessing and the limits of the existing benchmark.")
+    st.info("Spatial validation infrastructure ready, performance results pending. "
+            "No spatial-validation model has been trained and no geographically independent performance is displayed.")
     left, right = st.columns([1.1, 1], gap="large")
     with left, ui.panel("factors"):
         st.subheader("Conditioning factors")
@@ -64,7 +85,7 @@ def overview(p2) -> None:
         st.markdown("Uttarakhand: 13 districts, about 53,400 km², from the Terai plains to the high Himalaya. "
                     "Factors are aligned to a 30 m grid in UTM zone 44N (EPSG:32644); alignment does not "
                     "give coarse source data a native 30 m resolution. "
-                    f"Both the statewide and **{config.DEMO_DISTRICT}** maps remain available in the navigation.")
+                    f"Both the statewide and **{config.DEMO_DISTRICT}** maps remain available in Susceptibility Explorer.")
     with st.expander("Exploratory analysis figures"):
         tabs = st.tabs(["Class balance", "Distributions", "Categories", "Correlations", "Missing values"])
         for tab, name in zip(tabs, ["eda_class_balance", "eda_distributions_by_class",
@@ -95,21 +116,26 @@ def overview(p2) -> None:
                 road += " No saved near-road subgroup diagnostic is available."
             items.append(road)
         st.markdown("\n".join(items))
+    with ui.panel("methodology-interpretation"):
+        st.subheader("Scores, uncertainty and use")
+        st.markdown(ui.SCORE_NOTE)
+        ui.caption("Model disagreement and the saved bootstrap intervals describe uncertainty within this benchmark. "
+                   "They do not account for every inventory omission, sampling bias or change in geography. "
+                   "A terrain-condition assessment is manual input analysis; it is neither a GPS feature extraction "
+                   "nor a real-time rainfall warning. Geographically independent performance remains unmeasured.")
 
 
 def comparison(p2) -> None:
     meta, ev = p2.metadata(), p2.evaluation_section()
     results, gap = ev["models"], ev["auc_difference_rf_minus_svm"]
     names = list(results)
-    ui.page_header("Model comparison", "Compare the existing saved benchmark results; no model is fitted here.")
+    ui.page_header("Model Comparison", "Compare the existing saved benchmark results; no model is fitted here.")
     ui.caption(f"Random held-out test set: {ev['test_rows']:,} points, {ev['test_positives']:,} recorded landslides. "
                "Not resampled or used for hyperparameter search. Retrospective threshold selection does use test labels.")
-    cols = st.columns(len(names) + 1)
+    cols = st.columns(len(names))
     for i, (col, name) in enumerate(zip(cols, names)):
         ui.metric_card(col, f"model-{i}", f"{name}: test AUC", f"{results[name]['auc']:.3f}",
                        help=f"Average precision {results[name]['average_precision']:.3f}")
-    ui.metric_card(cols[-1], "gap", "AUC gap, RF minus SVM", f"{gap['mean_difference']:+.3f}",
-                   help=f"95% interval {gap['ci_low']:+.3f} to {gap['ci_high']:+.3f}; {gap['rounds']:,} bootstrap resamples")
     if gap["separable"]:
         pair_winner = ev.get("phase2_winner", ev["winner"])
         st.info(f"**{pair_winner} has the higher AUC in the RF/SVM comparison.** The existing 95% bootstrap "
@@ -118,6 +144,19 @@ def comparison(p2) -> None:
     else:
         st.info(f"**RF and SVM are not distinguishable by this bootstrap comparison.** "
                 f"The interval {gap['ci_low']:+.3f} to {gap['ci_high']:+.3f} includes zero.")
+    pairwise = ev.get("pairwise_auc_differences", {})
+    close = [label for label, d in pairwise.items() if "XGBoost" in label and "Random Forest" in label and not d["separable"]]
+    if close:
+        d = pairwise[close[0]]
+        st.info(f"XGBoost versus Random Forest: saved AUC gap {d['mean_difference']:+.4f}, "
+                f"95% bootstrap interval {d['ci_low']:+.4f} to {d['ci_high']:+.4f}. It includes zero. "
+                "This does not establish equivalence or conclusive superiority.")
+    if pairwise:
+        with st.expander("All saved pairwise AUC intervals"):
+            ui.caption("Bootstrap comparisons conditional on this random test set, not spatial validation.")
+            for label, d in pairwise.items():
+                st.markdown(f"**{label}:** {d['mean_difference']:+.4f}; 95% interval "
+                            f"{d['ci_low']:+.4f} to {d['ci_high']:+.4f}; {d['rounds']:,} bootstrap resamples.")
     with ui.panel("threshold-metrics"):
         st.subheader("Metrics at a chosen threshold")
         choice = st.radio("Threshold", ["0.5, the usual default", "Youden's J, retrospective benchmark threshold"],
@@ -144,39 +183,37 @@ def comparison(p2) -> None:
     }
     for tab, (figure, note) in zip(st.tabs(list(notes)), notes.values()):
         with tab, ui.panel("figure-" + figure):
-            left, right = st.columns([3, 2], gap="large")
-            with left:
-                ui.figure(config.FIGURES_DIR / f"{figure}.png")
-            with right:
-                st.markdown(note)
-    st.subheader("Saved tuning and training details")
-    svm, rf = meta.get("svm", {}), meta.get("rf", {})
-    rows = []
-    if svm:
-        rows.append({"Model": "SVM, RBF kernel", "Best parameters": p2.params_text(svm["best_params"]),
-                     "CV AUC": svm["best_cv_auc"], "Test AUC": results["SVM (RBF)"]["auc"],
-                     "Grid search (s)": svm["timing_seconds"]["rbf_grid"]})
-        linear = svm.get("linear_comparison")
-        if linear:
-            rows.append({"Model": "SVM, linear kernel (comparison only)",
-                         "Best parameters": p2.params_text(linear["best_params"]), "CV AUC": linear["best_cv_auc"],
-                         "Test AUC": linear["test_auc"], "Grid search (s)": svm["timing_seconds"]["linear_grid"]})
-    if rf:
-        rows.append({"Model": "Random Forest", "Best parameters": p2.params_text(rf["best_params"]),
-                     "CV AUC": rf["best_cv_auc"], "Test AUC": results["Random Forest"]["auc"],
-                     "Grid search (s)": rf["timing_seconds"]["grid_search"]})
-    xgb = meta.get("xgb", {})
-    if xgb and "XGBoost" in results:
-        rows.append({"Model": "XGBoost", "Best parameters": p2.params_text(xgb["best_params"]),
-                     "CV AUC": xgb["best_cv_auc"], "Test AUC": results["XGBoost"]["auc"],
-                     "Grid search (s)": xgb["timing_seconds"]["grid_search"]})
-    if rows:
-        st.dataframe(pd.DataFrame(rows), hide_index=True,
-                     column_config={"CV AUC": st.column_config.NumberColumn(format="%.3f"),
-                                    "Test AUC": st.column_config.NumberColumn(format="%.3f"),
-                                    "Grid search (s)": st.column_config.NumberColumn(format="%.1f")})
-        ui.caption("Original CV uses training-fold SMOTE, but preprocessing decisions and the outer-training "
-                   "scaler are reused. Agreement with test AUC does not establish absence of leakage or spatial independence.")
+            ui.figure(config.FIGURES_DIR / f"{figure}.png")
+            ui.caption(note)
+    with st.expander("Saved tuning and training details"):
+        st.subheader("Saved tuning and training details")
+        svm, rf = meta.get("svm", {}), meta.get("rf", {})
+        rows = []
+        if svm:
+            rows.append({"Model": "SVM, RBF kernel", "Best parameters": p2.params_text(svm["best_params"]),
+                         "CV AUC": svm["best_cv_auc"], "Test AUC": results["SVM (RBF)"]["auc"],
+                         "Grid search (s)": svm["timing_seconds"]["rbf_grid"]})
+            linear = svm.get("linear_comparison")
+            if linear:
+                rows.append({"Model": "SVM, linear kernel (comparison only)",
+                             "Best parameters": p2.params_text(linear["best_params"]), "CV AUC": linear["best_cv_auc"],
+                             "Test AUC": linear["test_auc"], "Grid search (s)": svm["timing_seconds"]["linear_grid"]})
+        if rf:
+            rows.append({"Model": "Random Forest", "Best parameters": p2.params_text(rf["best_params"]),
+                         "CV AUC": rf["best_cv_auc"], "Test AUC": results["Random Forest"]["auc"],
+                         "Grid search (s)": rf["timing_seconds"]["grid_search"]})
+        xgb = meta.get("xgb", {})
+        if xgb and "XGBoost" in results:
+            rows.append({"Model": "XGBoost", "Best parameters": p2.params_text(xgb["best_params"]),
+                         "CV AUC": xgb["best_cv_auc"], "Test AUC": results["XGBoost"]["auc"],
+                         "Grid search (s)": xgb["timing_seconds"]["grid_search"]})
+        if rows:
+            st.dataframe(pd.DataFrame(rows), hide_index=True,
+                         column_config={"CV AUC": st.column_config.NumberColumn(format="%.3f"),
+                                        "Test AUC": st.column_config.NumberColumn(format="%.3f"),
+                                        "Grid search (s)": st.column_config.NumberColumn(format="%.1f")})
+            ui.caption("Original CV uses training-fold SMOTE, but preprocessing decisions and the outer-training "
+                       "scaler are reused. Agreement with test AUC does not establish absence of leakage or spatial independence.")
     report = config.OUTPUTS_DIR / "evaluation_report.txt"
     if report.exists():
         text = report.read_text(encoding="utf-8")
