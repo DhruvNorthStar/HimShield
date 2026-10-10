@@ -1,3 +1,5 @@
+> **Historical snapshot (September 2026).** Retained for original results and decisions. Current setup, branch and release instructions are in [README.md](README.md), [project status](docs/PROJECT_STATUS.md) and [release readiness](docs/release_readiness.md). Older automatic-push/main-branch instructions require current user approval.
+
 # PROJECT HANDOFF V5: Landslide Susceptibility Mapping for Uttarakhand
 
 Written 17 September 2026 and updated 18 September (scheme 4 theme, XGBoost), on branch `phase3-preparation`. **Supersedes V4 for the current state.** V4

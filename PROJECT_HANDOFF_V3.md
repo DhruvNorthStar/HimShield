@@ -1,3 +1,5 @@
+> **Historical snapshot (September 2026).** Retained for original results and decisions. Current setup, branch and release instructions are in [README.md](README.md), [project status](docs/PROJECT_STATUS.md) and [release readiness](docs/release_readiness.md). Older automatic-push/main-branch instructions require current user approval.
+
 # PROJECT HANDOFF V3: Landslide Susceptibility Mapping for Uttarakhand
 
 Written 16 September 2026 to move the work into a fresh Claude Code session. This file supersedes `PROJECT_HANDOFF.md` (still in the repo, older). Every fact below was checked on disk or in git on 16 September.

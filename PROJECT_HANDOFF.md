@@ -1,3 +1,5 @@
+> **Historical snapshot (September 2026).** Retained for original results and decisions. Current setup, branch and release instructions are in [README.md](README.md), [project status](docs/PROJECT_STATUS.md) and [release readiness](docs/release_readiness.md). Older automatic-push/main-branch instructions require current user approval.
+
 # PROJECT HANDOFF: Landslide Susceptibility Mapping for Uttarakhand
 
 Written 14 September 2026 at the end of a working session, so a fresh Claude Code session can continue without losing context. Updated later on 14 September: rainfall raster built and verified, deadline confirmed as 19 October. Read this whole file before doing anything. `docs/PROJECT_STATUS.md` is the living status document; this file is the complete briefing.
