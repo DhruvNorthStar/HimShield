@@ -99,6 +99,11 @@ asset is written. Source hashes validate the release; file-version checks invali
 source validation when local inputs change. Preview/count cache keys include source
 content identity, so unrelated timestamp changes do not force recomputation.
 
+The statewide view opens its existing saved summary without scanning every district.
+Select **Show official district coverage reconciliation** to request those counts.
+The first derived district view also requests the same cached scan; coverage limits
+remain visible before either action. No calculation or class definition changes.
+
 Measured on the project laptop during verification: source/geometry validation 1.75 s,
 all-district original-cell counts 8.90 s, all 13 image previews 1.95 s combined,
 warm count lookup 1.7 ms and warm preview lookup 0.16 ms. The separate district-render

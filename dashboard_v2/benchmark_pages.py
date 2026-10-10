@@ -40,6 +40,8 @@ def overview(p2, explorer_page, methodology_page) -> None:
         st.subheader("Explore susceptibility")
         st.markdown("**Uttarakhand:** Random Forest coverage.  \n**Rudraprayag:** Random Forest and SVM coverage. "
                     "Interactive and static map views use existing saved artifacts.")
+        ui.caption("Optional local views cover all 13 districts using official 2025 boundaries and saved statewide RF classes. "
+                   "They have partial coverage and are separate from the dedicated Rudraprayag maps; private reference files are required.")
         st.page_link(explorer_page, label="Open Susceptibility Explorer", icon=":material/map:")
     with right, ui.panel("overview-validation"):
         st.subheader("Understand the evidence")

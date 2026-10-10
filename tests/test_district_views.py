@@ -187,6 +187,8 @@ class DistrictIntegrationTests(unittest.TestCase):
     def test_all_thirteen_interactive_images_and_statewide_view(self):
         app = self.app()
         self.assertEqual(next(x.options for x in app.selectbox if x.label == "Geographic scope"), ["Uttarakhand", *dv.DISTRICTS])
+        next(x for x in app.checkbox if x.label == "Show official district coverage reconciliation").set_value(True)
+        app = self.run_app(app)
         self.assertIn("106,620 unassigned", text(app))
         for district in dv.DISTRICTS:
             with self.subTest(district=district):
@@ -209,6 +211,20 @@ class DistrictIntegrationTests(unittest.TestCase):
         app = self.select(app, "Geographic scope", "Uttarakhand")
         self.assertEqual(app.get("iframe")[0].proto.srcdoc,
                          (config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8"))
+
+    def test_statewide_defers_district_scan_until_requested(self):
+        with patch.object(dv, "coverage", side_effect=AssertionError("Unrequested full district scan")):
+            app = self.app()
+            self.assertIn("Scored fringe cells remain unassigned", text(app))
+            self.assertFalse(next(x.value for x in app.checkbox if x.label == "Show official district coverage reconciliation"))
+            self.assertEqual(app.get("iframe")[0].proto.srcdoc,
+                             (config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8"))
+        with patch.object(dv, "coverage", wraps=dv.coverage) as scan:
+            next(x for x in app.checkbox if x.label == "Show official district coverage reconciliation").set_value(True)
+            app = self.run_app(app)
+            scan.assert_called_once()
+            self.assertIn("106,620 unassigned", text(app))
+            self.assertIn("506,492 cells", text(app))
 
     def test_all_thirteen_static_and_forced_offline_images(self):
         for offline in (False, True):

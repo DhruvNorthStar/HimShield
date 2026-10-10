@@ -175,6 +175,8 @@ class DashboardIntegrationTests(unittest.TestCase):
                 self.assertEqual([x.proto.page_script_hash for x in app.sidebar.get("page_link")],
                                  [calc_md5(path) for path in PAGES])
                 if route == "overview":
+                    self.assertIn("Optional local views cover all 13 districts", text)
+                    self.assertIn("private reference files are required", text)
                     values = {x.label: x.value for x in app.metric}
                     self.assertEqual(values["Sample points"], "15,189")
                     self.assertEqual(values["Landslide points"], "5,063")

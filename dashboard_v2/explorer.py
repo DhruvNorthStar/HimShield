@@ -161,10 +161,17 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
                                         "area_km2": st.column_config.NumberColumn("Area (km²)", format="%.1f")})
             ui.caption("Saved full-resolution counts and areas. Shares refer to scored cells; displayed shares are rounded.")
         if official and scope == "Uttarakhand":
-            try:
-                report = district_views.coverage(**official)
-                ui.caption(district_views.reconciliation_note(report))
-                ui.caption(f"Official-state NoData inside the raster rectangle: {report['coverage']['official_state_nodata']:,} cells. "
-                           + district_views.ATTRIBUTION)
-            except (OSError, ValueError) as error:
-                ui.availability("Official coverage check unavailable.", str(error), warning=True)
+            ui.caption("The saved statewide footprint differs from the official 2025 district outline. "
+                       "Scored fringe cells remain unassigned to districts; NoData is not low susceptibility. "
+                       + district_views.ATTRIBUTION)
+            # The statewide product already has its saved full-resolution summary.
+            # Avoid a scan of all district masks until their reconciliation is requested.
+            if st.checkbox("Show official district coverage reconciliation", key="explorer-reconcile",
+                           help="The first request counts original raster cells across all 13 districts. "
+                                "The result is cached and also used by derived district views."):
+                try:
+                    report = district_views.coverage(**official)
+                    ui.caption(district_views.reconciliation_note(report))
+                    ui.caption(f"Official-state NoData inside the raster rectangle: {report['coverage']['official_state_nodata']:,} cells.")
+                except (OSError, ValueError) as error:
+                    ui.availability("Official coverage check unavailable.", str(error), warning=True)
