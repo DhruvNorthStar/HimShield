@@ -14,8 +14,8 @@ measurements: `docs/decisions.md`.
 2. Run the commands in section 5 and report. **Change nothing until the user says what to do next.**
 3. All V4 rules still hold: no retraining or grid widening without the user asking; never claim better accuracy
    than Chauhan et al. (2025) (agreed wording: "AUCs comparable to Chauhan et al. (2025), with road-survey bias
-   quantified (within 1 km of roads: RF 0.934, SVM 0.907)"); never commit data, models or the dataset CSVs; push
-   after every commit; end commit messages with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
+   quantified (within 1 km of roads: RF 0.934, SVM 0.907)"); never commit data, models or the dataset CSVs.
+   The archived push guidance is superseded by the current README and release guidance.
 4. **Branches.** `main` holds Phase 2 only and **must not change until Phase 2 is submitted**. Phase 3 work happens
    on `phase3-preparation`. Merging `main` into the branch is allowed (done once, `c7eeb4e`); merging the branch
    into `main` is not, until the user says so.
@@ -44,7 +44,7 @@ this file).
 | SHAP | `python src/explain_shap.py` | 500 held-out test points (cap in the script), 78 s (real forest 57 MB, about 4x the synthetic 19 s). Mean abs SHAP: dist_roads 0.192, elevation 0.100, slope 0.091, ndvi 0.054, dist_streams 0.035, rainfall 0.029. Top 4 match RF permutation importance; 5 and 6 swap |
 | State raster | `python src/predict_raster_full.py --state --yes` | 58,945,876 cells scored (334,365 water skipped), 548 s, peak 0.80 GB. Very Low 71.1, Low 13.8, Moderate 7.4, High 4.7, Very High 3.1 %; **High + Very High 7.8% (4,099 km2)**. `susceptibility_uk_probability.tif` 150.7 MB, `_zones.tif` 5.9 MB |
 | State web map | `python src/map_generator_full.py` | `outputs/susceptibility_map_uk.html` 6.99 MB: zones at about 90 m, districts, 5,063 GSI points (radius 4, navy `#0d1b2a` with a white outline), popups "GSI record / Slide / District", page title. Browser-checked |
-| Dashboard v2 | `streamlit run dashboard_v2/app.py` (port 8502 in `.claude/launch.json`) | 6 pages: `/`, `/comparison`, `/predict`, `/map`, `/explainability`, `/state-map`; all checked on real data, no errors, no synthetic-era wording |
+| Dashboard v2 | `streamlit run dashboard_v2/app.py` (local preview port 8502) | 6 pages: `/`, `/comparison`, `/predict`, `/map`, `/explainability`, `/state-map`; all checked on real data, no errors, no synthetic-era wording |
 | Orchestrator | `python run_phase3.py --dry-run` | verify always runs; SHAP, state raster and web map skip as up to date |
 
 All outputs are gitignored: `data/processed/susceptibility_*`, `outputs/figures/shap/`, `outputs/susceptibility_map_uk.html`.

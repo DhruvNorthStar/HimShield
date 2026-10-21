@@ -2,7 +2,7 @@
 
 # PROJECT HANDOFF V4: Landslide Susceptibility Mapping for Uttarakhand
 
-Written 17 September 2026 to move the work into a fresh Claude Code session. **Supersedes `PROJECT_HANDOFF_V3.md`** (16 September, written before any real-data work) and `PROJECT_HANDOFF.md` (14 September); both stay in the repo as history. Every number below was read from `models/metadata.json`, the logs or the files on 17 September. The reasons and measurements behind every decision are in `docs/decisions.md`: read it before changing anything.
+Written 17 September 2026 as a session handoff. **Supersedes `PROJECT_HANDOFF_V3.md`** (16 September, written before any real-data work) and `PROJECT_HANDOFF.md` (14 September); both stay in the repo as history. Every number below was read from `models/metadata.json`, the logs or the files on 17 September. The reasons and measurements behind every decision are in `docs/decisions.md`.
 
 ## 0. Instructions for the new session (read before doing anything)
 
@@ -11,7 +11,7 @@ Written 17 September 2026 to move the work into a fresh Claude Code session. **S
 3. **Phase 2 is complete on real data.** Do not retrain, widen grids or change sampling without the user asking. The user decided (17 September) that the grid-edge parameters and the 8 duplicate groups are stated limitations, not reasons to retrain: widening grids after seeing results is p-hacking.
 4. **Never claim the models are better than Chauhan et al. (2025)** in any committed file, dashboard text or message meant for the report. Agreed wording: "AUCs comparable to Chauhan et al. (2025), with road-survey bias quantified (within 1 km of roads: RF 0.934, SVM 0.907)".
 5. **Phase 2 / Phase 3 boundary.** Phase 3 (SHAP, full-state map, dashboard_v2) lives on branch `phase3-preparation`. Do not merge it unless the user asks. XGBoost is Phase 3 only. Spatial cross-validation is future work.
-6. **Git:** work on `main`, commit, push after every commit, confirm with `git ls-remote origin refs/heads/main`. End every commit message with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`. Author `DhruvNorthStar <pandeydhruv92@gmail.com>` (chosen on purpose; the repo is public).
+6. **Git (historical):** work was on `main`, with commits pushed after each change. The author was `DhruvNorthStar <pandeydhruv92@gmail.com>`. Use the current README and release guidance for branch and publication decisions.
 7. **Never commit data, models or licensed layers.** `data/processed/dataset.csv` and `dataset_raw.csv` are untracked **and not gitignored**, and the user decided they must not be committed: never `git add .` or `git commit -a`. `outputs/figures/shap/` and `outputs/susceptibility_map_uk.html` are untracked Phase 3 leftovers.
 8. Never pull GSI data through the BhuSanket website proxy (decided 12 September).
 9. How the user works: reason before code; one step at a time, report after each, wait when told to stop; honest reporting of results and of your own mistakes; one recommendation with its trade-off; confirm before anything irreversible or outside the request; flag contradictions in instructions before acting on them.
@@ -112,10 +112,10 @@ Road-survey bias (quantified); random split, spatial CV future work; grid-edge p
 
 | Item | Value |
 |---|---|
-| Machine | Windows 11 Home, 7.8 GB RAM (often under 1 GB free; Edge and the Claude app use about 3 GB), 4-thread i3 |
+| Machine | Windows 11 Home, 7.8 GB RAM (often under 1 GB free; browser and assistant app used about 3 GB), 4-thread i3 |
 | Conda | Miniforge `%USERPROFILE%\miniforge3`, env `landslide`, Python 3.11.16; shap and Phase 3 packages already installed |
 | QGIS | 3.44.12 LTR, GRASS provider |
-| Preview configs | `.claude/launch.json` (gitignored): `dashboard` (8501), `dashboard_v2` (8502), `maps` (http.server on `outputs/`, 8765) |
+| Preview configs | Local ignored launcher settings: `dashboard` (8501), `dashboard_v2` (8502), `maps` (http.server on `outputs/`, 8765) |
 
 Known issues:
 - Use `"$USERPROFILE/miniforge3/condabin/conda.bat" run -n landslide python -B ...`. For live logs of long runs add `--no-capture-output` and `PYTHONUNBUFFERED=1`, and run in the background.

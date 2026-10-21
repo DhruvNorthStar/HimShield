@@ -2,7 +2,7 @@
 
 # PROJECT HANDOFF: Landslide Susceptibility Mapping for Uttarakhand
 
-Written 14 September 2026 at the end of a working session, so a fresh Claude Code session can continue without losing context. Updated later on 14 September: rainfall raster built and verified, deadline confirmed as 19 October. Read this whole file before doing anything. `docs/PROJECT_STATUS.md` is the living status document; this file is the complete briefing.
+Written 14 September 2026 as a session handoff to preserve context. Updated later on 14 September: rainfall raster built and verified, deadline confirmed as 19 October. Current status is in `docs/PROJECT_STATUS.md`; this file records the original briefing.
 
 ---
 
@@ -91,8 +91,8 @@ echo '{"inputs": {"INPUT": "...", "OUTPUT": "..."}}' | ./qgis_process-qgis-ltr.b
 | Branch | `main`, tracking `origin/main` |
 | State at handoff | clean, local `main` equals `origin/main` |
 | Commit author | `DhruvNorthStar <pandeydhruv92@gmail.com>`; the user explicitly chose this over the GitHub noreply address, knowing the repo is public |
-| Workflow | commit on `main`, **push after every commit**, confirm GitHub matches (`git ls-remote origin refs/heads/main`) |
-| Commit trailer | end messages with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` |
+| Workflow at handoff | commits were made on `main` and pushed after each change; current publication guidance supersedes this practice |
+| Historical co-author credit | Earlier commits contain Claude Opus 5 co-author trailers; Git history retains that attribution |
 | Notebook filter | `nbstripout --install` is active in this clone |
 
 ### What is tracked, what is not
@@ -153,7 +153,7 @@ No LICENSE file. The user was told the repo is "all rights reserved" without one
 | `outputs/figures/*.png` (9) | EDA, feature importance, ROC, confusion matrices, precision-recall; all watermarked synthetic |
 | `outputs/eda_report.txt`, `outputs/evaluation_report.txt` | Text reports (synthetic) |
 
-`models/` holds only `.gitkeep` in git. `outputs/demo_map_*.html` and `.claude/` (the local preview launcher) are ignored on purpose.
+`models/` holds only `.gitkeep` in git. `outputs/demo_map_*.html` and local preview launcher settings are ignored on purpose.
 
 ---
 

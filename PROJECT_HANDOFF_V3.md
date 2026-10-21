@@ -2,7 +2,7 @@
 
 # PROJECT HANDOFF V3: Landslide Susceptibility Mapping for Uttarakhand
 
-Written 16 September 2026 to move the work into a fresh Claude Code session. This file supersedes `PROJECT_HANDOFF.md` (still in the repo, older). Every fact below was checked on disk or in git on 16 September.
+Written 16 September 2026 as a session handoff. This file supersedes `PROJECT_HANDOFF.md` (still in the repo, older). Every fact below was checked on disk or in git on 16 September.
 
 ---
 
@@ -10,7 +10,7 @@ Written 16 September 2026 to move the work into a fresh Claude Code session. Thi
 
 1. Read this whole file. Then run the five commands in section 7 and report what they show. **Do not change anything until the user says what to do next.**
 2. **Hold the Phase 2 / Phase 3 boundary.** Phase 2 is SVM vs Random Forest, the 4-page dashboard, and the Rudraprayag demo map. Phase 3 (full-state prediction, SHAP, dashboard_v2) lives only on the branch `phase3-preparation`. Do not merge it unless the user asks.
-3. **Git workflow:** work on `main` unless told otherwise, commit, **push after every commit**, confirm with `git ls-remote origin refs/heads/<branch>`. End every commit message with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`. Author is `DhruvNorthStar <pandeydhruv92@gmail.com>` (the user chose this on purpose; the repo is public).
+3. **Git workflow (historical):** work was on `main`, with commits pushed after each change. The author was `DhruvNorthStar <pandeydhruv92@gmail.com>`. Use the current README and release guidance for branch and publication decisions.
 4. **Never commit data, models or licensed layers** (see `.gitignore`). On `main`, `outputs/figures/shap/` and `outputs/susceptibility_map_uk.html` are untracked leftovers from Phase 3 testing: **never `git add .` on main**.
 5. **Never pull GSI data through the BhuSanket website proxy** (it routes around an access control and is not defensible in a viva). This was decided on 12 September and stands.
 6. **Rehearse QGIS steps headless on the real data before writing instructions** (section 10), and give QGIS guidance click by click with expected numbers.
