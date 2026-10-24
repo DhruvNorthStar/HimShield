@@ -106,7 +106,8 @@ def panel(key: str):
 def metric_card(column, key: str, label: str, value: str, *, help: str | None = None) -> None:
     with column:
         with panel("metric-" + key):
-            st.metric(label, value, help=help)
+            st.caption(label, help=help)
+            st.metric(label, value, help=help, label_visibility="collapsed")
 
 
 def caption(text: str) -> None:

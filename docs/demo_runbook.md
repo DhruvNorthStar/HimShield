@@ -4,7 +4,7 @@ Use the existing verified artifact-backed laptop. Rehearse early; avoid dependen
 
 ## Before the audience arrives
 
-Connect power, close unnecessary heavy programs and use the local display. Manual browser/mobile/200% zoom sign-off is still pending; AppTest is not visual browser certification.
+Connect power, close unnecessary heavy programs and use the local display. The [final audit](final_release_audit.md) exercised all six pages in a real browser at desktop, laptop, tablet and mobile widths. Actual 200% browser zoom, physical touch and assistive-technology checks still need manual sign-off; AppTest alone is not visual certification.
 
 In Conda-enabled PowerShell, select benchmark defaults and verify saved outputs:
 
@@ -65,14 +65,11 @@ Static views use saved local inputs; no scientific file is generated. Clear `LSM
 Run from the repository root in activated Conda:
 
 ```powershell
-python -m unittest discover -s tests -p "test_dashboard_v2.py" -v
-python -m unittest discover -s tests -p "test_district_views.py" -v
-python -m unittest discover -s tests -p "test_artifact_protection.py" -v
-python -m unittest discover -s tests -p "test_spatial_validation.py" -v
+python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Local-data district cases need matching private inputs; skipped cases do not certify all 13 views. Spatial/protection tests use disposable tiny fixtures; they do not run real training/tuning or the timed pilot. AppTest needs activated DLL PATH. Do not run `run_phase3.py` without `--dry-run`, `--prepare`, a pilot, training or GIS writers as rehearsal.
+Full discovery includes `test_spatial_results_dashboard.py` as well as dashboard, district, protection/CLI and spatial-infrastructure tests. Local-data district cases need matching private inputs; skipped cases do not certify all 13 views. Spatial/protection tests use disposable tiny fixtures; they do not run real training/tuning or the timed pilot. AppTest needs activated DLL PATH. Use `run_phase3.py` only with `--dry-run` during rehearsal. Do not prepare experiments, run pilots, train models or invoke GIS writers as rehearsal.
 
 For manual sign-off, visit six pages and legacy `/map`/`/state-map`, test several districts/both dedicated models, all presets and figure choices. Repeat near 768 px/390 px widths and 200% zoom. Use Tab/Shift+Tab and map arrows, +/−, Home, Enter; check focus, tables, charts, legends and clipping. After demo stop your own server with Ctrl+C; preserve artifacts/backups.
 

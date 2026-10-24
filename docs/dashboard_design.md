@@ -18,7 +18,7 @@ The six visible navigation choices are:
 | Model Comparison | `/comparison` | Saved metrics, thresholds, pairwise intervals and evaluation figures |
 | Location Assessment | `/predict` | Submitted manual conditions, all three saved models and actual model agreement |
 | Explainability | `/explainability` | One selected saved figure, recorded RF SHAP context and feature glossary |
-| Methodology & Validation | `/methodology` | Sources, original preprocessing, EDA and validation limitations |
+| Methodology & Validation | `/methodology` | Sources, original preprocessing, separate spatial/control results and validation limitations |
 
 Native `st.navigation(position="hidden")` registers these pages plus two compatibility
 addresses; six native `st.page_link` controls form the sidebar. No menu items are
@@ -105,9 +105,11 @@ triggered by these presentation functions.
 
 ## Scientific labels
 
-- Existing AUCs describe the original stratified random held-out benchmark, not
-  geographically independent performance. Spatial infrastructure exists; results
-  are pending.
+- Overview/Model Comparison AUCs describe the original stratified random held-out
+  benchmark. Methodology & Validation separately presents the [verified five-fold
+  spatial/control results](spatial_validation_results.md), including fold SD and
+  training-selected thresholds. These blocked within-study results do not certify
+  performance in a new region or future time period.
 - Original missing-value/category decisions and VIF filtering precede the split.
   Its outer-training scaler is reused in CV. SMOTE remains within CV training folds.
   These preprocessing limitations must not be hidden by the new design.
@@ -147,11 +149,14 @@ all four Phase 2 pages and text-palette contrast. It fits
 no models. Interactive-branch tests simulate a successful connectivity probe;
 they do not verify remote assets or browser JavaScript execution.
 
-Run with `python -m unittest discover -s tests -p test_dashboard_v2.py -v` in the
-activated environment. Verify protected artifact identities and benchmark provenance
-separately. AppTest cannot certify browser layout, mobile reflow, focus, map clicking
-or screen-reader behavior. The available browser tool failed to initialize during
-Stages 5C and 5D, so screenshots and mobile/browser certification remain unavailable.
+Run `python -m unittest discover -s tests -v` in the activated environment for the
+complete suite, including `test_spatial_results_dashboard.py`. Verify protected
+artifact identities and benchmark provenance separately. AppTest alone cannot
+certify browser layout, mobile reflow, focus, map clicking or screen-reader behavior.
+The browser tool failed to initialize during Stages 5C and 5D; the later
+[24 October audit](final_release_audit.md) completed 24 real-browser checks across
+six pages and four viewport sizes. Native 200% zoom, physical touch and screen-reader
+checks remain pending; viewport testing is not full accessibility certification.
 No dependencies are added. Shared Phase 2 code/settings and scientific artifacts
 remain unchanged. Rollback: revert the relevant presentation commit; do not
 reset user QGIS or development-data changes and do not restore scientific outputs.

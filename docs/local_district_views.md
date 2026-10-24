@@ -140,8 +140,10 @@ and separate dedicated Rudraprayag products. It never trains a model. Existing
 dashboard tests cover all six pages, saved predictions and Phase 2 compatibility.
 Scientific hashes, timestamps and frozen provenance are checked separately.
 
-AppTest inspects rendered content but cannot certify canvas mouse/touch behavior,
-mobile layout, browser PNG decoding or screen-reader behavior. Browser automation
-could not initialize in this environment; these remain manual checks. Rollback is
-limited to reverting the district presentation commit; do not restore or reset
-scientific files, user QGIS edits or development datasets.
+AppTest alone cannot certify canvas interaction or browser PNG decoding. The
+[final browser audit](final_release_audit.md) subsequently verified the local Tehri
+static/interactive image, zoom/reset and keyboard class inspection, plus the
+statewide and dedicated Rudraprayag products. All 13 district counts/modes also
+pass automated checks. Physical touch, screen readers and actual 200% browser zoom
+remain manual checks. Rollback is limited to presentation changes; do not restore
+or reset scientific files, user QGIS edits or development datasets.

@@ -1,6 +1,10 @@
 # Release readiness
 
-**24 October 2026 update:** returned spatial/control results passed independent verification and are integrated as aggregate-only presentation. See [scientific results and limitations](spatial_validation_results.md). Original models, maps and metrics are preserved. The Stage 6A audit below is historical; its pending-results statements describe 11 October, not the now verified experiment. Public district publication/redistribution, code licensing, fresh-machine/browser checks and historical-data review still require attention.
+**Final audit, 24 October 2026: PARTIAL for portable/public release.** The existing local application passes fresh automated and browser checks; [the final audit](final_release_audit.md) lists the exact remaining blockers. GitHub was confirmed **PUBLIC** by authenticated and unauthenticated API requests. No push or visibility change was performed. A follow-up classified the real CSV blobs as local Codex checkpoint trees, not branch commits; the three checked public branch histories did not contain them. The earlier broad history warning below is not evidence of a public CSV leak.
+
+**24 October 2026 update:** returned spatial/control results passed independent verification and are integrated as aggregate-only presentation. See [scientific results and limitations](spatial_validation_results.md). Original models, maps and metrics are preserved. The Stage 6A audit below is historical; its pending-results statements describe 11 October, not the now verified experiment. Public district publication/redistribution, code licensing, fresh-machine installation, native zoom/touch/assistive-technology checks and historical-data review still require attention. Six-page/four-viewport browser checks have since passed; they are not physical-device or full accessibility certification.
+
+## Archived Stage 6A audit — 11 October 2026
 
 Audited 11 October 2026 on `codex/phase3-integration`, starting from `a2cd0d204be7c097b02314eb4db7fd4a6d2c6bdd`. Documentation/rehearsal is not approval to package, publish, push or promote to `main`.
 

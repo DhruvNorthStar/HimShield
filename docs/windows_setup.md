@@ -1,6 +1,6 @@
 # Windows installation and running guide
 
-Use Windows x86-64 and the verified Python 3.11 environment. These instructions distinguish the working project laptop from a new machine. Stage 6A tested existing-environment commands; it did not recreate/update that environment or install on another machine.
+Use Windows x86-64 and the verified Python 3.11 environment. These instructions distinguish the working project laptop from a new machine. The final audit tested the installed setup and successfully dry-solved all 320 packages in the combined base/Phase 3 specification. It did not install/update an environment or test a second machine. See the [final audit](final_release_audit.md).
 
 ## Existing project laptop
 
@@ -31,7 +31,7 @@ conda env update -n landslide -f environment.phase3.yml
 conda activate landslide
 ```
 
-If `landslide` already exists, do not remove/update it automatically. Use a separately named new environment, specifying that name consistently in creation, update and activation commands. Creation requires network/package availability; a fresh solver/download and second-machine install were not performed during this stage.
+If `landslide` already exists, do not remove/update it automatically. Use a separately named new environment, specifying that name consistently in creation, update and activation commands. Creation requires network/package availability. A combined-specification solver dry run succeeded on 24 October 2026 without installing packages; actual creation, the two-step update sequence and second-machine execution remain unverified.
 
 | File | Purpose and limitation |
 | --- | --- |
@@ -62,6 +62,7 @@ A code snapshot is not a complete demo. Restore verified trusted copies at the s
 | Web maps | `outputs/susceptibility_map_uk.html`, `outputs/demo_map_rudraprayag.html`, `outputs/demo_map_rudraprayag_svm.html` |
 | Static/offline fallback | `data/processed/susceptibility_uk_zones.tif`, `data/processed/susceptibility_rudraprayag_rf.tif`, `data/processed/susceptibility_rudraprayag_svm.tif` (RF zones fallback supported); `data/shapefiles/uttarakhand_boundary.gpkg`, `data/shapefiles/uttarakhand_districts.gpkg`, `data/shapefiles/landslides.gpkg` |
 | Figures/explainability | Existing `outputs/figures/*.png`, six `outputs/figures/shap/*.png`, `outputs/figures/shap/shap_summary.json`, metadata |
+| Separate spatial results | Tracked `artifacts/spatial_validation_results.json`, matching `configs/spatialcv-10km-buffer2km-v1.json` and `dashboard_v2/spatial_results.py`; no fold weights or row-level data are needed for presentation |
 | Full integrity audit | All 216 inventory paths in `artifacts/benchmark.json`, including source inputs; no multi-GB duplication is needed on the existing laptop |
 
 Use the original local artifact tree/recovery copy for the complete verified demo. Determine redistribution rights separately before transferring data. Small code-only installations may show availability messages, but cannot claim full verification with missing inputs. Do not retrain to replace a missing model.

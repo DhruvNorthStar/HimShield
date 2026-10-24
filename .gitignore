@@ -1,7 +1,10 @@
 # ---------------------------------------------------------------------------
-# Data: large, binary and regenerable. Share it through the team drive, never git.
-# The one exception is data/processed/*.csv (a few hundred KB, useful to share).
+# Data: keep source inputs and generated scientific artifacts local.
+# The tracked synthetic CSV is a development example; real datasets stay private.
 # ---------------------------------------------------------------------------
+/data/processed/dataset.csv
+/data/processed/dataset_raw.csv
+
 data/raw/*
 !data/raw/.gitkeep
 data/shapefiles/*

@@ -1,11 +1,11 @@
 # HimShield project status
 
-Updated 24 October 2026 after independent spatial-results verification. September handoffs are historical snapshots.
+Updated 25 October 2026 during consolidated documentation finalization. September handoffs are historical snapshots.
 
 ## Current development
 
 - Branch: `codex/phase3-integration`, in the original `landslide-uttarakhand` repository.
-- Audited implementation checkpoint: `a2cd0d204be7c097b02314eb4db7fd4a6d2c6bdd` (navy district outlines). A later documentation commit does not replace scientific results.
+- Scientific integration checkpoint: `5ac1d01d1be7defaaf87851cabeab552998d33a6`. The earlier map-presentation checkpoint is `a2cd0d204be7c097b02314eb4db7fd4a6d2c6bdd` (navy district outlines); subsequent documentation does not replace either scientific results or map artifacts.
 - Existing Phase 3 work is integrated here; neither `main` nor `phase3-preparation` is altered by this documentation stage.
 - Verified Windows environment: `landslide`, Python 3.11.16, base lock plus Phase 3 additions; see [setup](windows_setup.md).
 
@@ -19,7 +19,7 @@ Updated 24 October 2026 after independent spatial-results verification. Septembe
 | Explainability | Six existing RF SHAP figures and saved RF/XGBoost importance; no per-input SHAP computation |
 | Maps | Statewide RF, dedicated Rudraprayag RF/SVM, interactive/static/offline modes |
 | District extension | All 13 local-only 2025 ABDB district views derived from saved statewide RF classes, honest coverage and image-only payloads |
-| Protection | 216-entry manifest and content dependencies; guarded writers and isolated experiments; 217-file preservation baseline includes manifest |
+| Protection | 216-entry manifest and content dependencies; guarded writers and isolated experiments; 217-file preservation baseline includes the user's local QGIS state; manifest integrity is checked separately |
 | Spatial infrastructure | Five 10 km outer spatial folds, 2 km exclusion policy, three spatial inner folds and random-group control; frozen configuration unchanged |
 | Phase 2 | Original dashboard and results retained |
 
@@ -27,14 +27,14 @@ Updated 24 October 2026 after independent spatial-results verification. Septembe
 
 ## Demonstration and release
 
-The existing artifact-backed laptop passes available automated application checks. Stage 5E measured server-side performance and caching. Actual browser/mobile/200% zoom sign-off remains pending because browser tooling could not initialize; see [runbook](demo_runbook.md).
+The [24 October release audit](final_release_audit.md) passed **142 automated tests** with zero failures, errors or skips and **24 real-browser page/viewport checks**: all six dashboard pages at desktop (1366×900), laptop (1024×768), tablet (768×1024) and mobile (390×844) viewport sizes. These are browser layout checks, not physical-device certification. Native **200% browser zoom, touch and screen-reader checks remain pending**. See the [runbook](demo_runbook.md) for the complete current test command and manual sign-off steps.
 
 Public portable release is not cleared: official publication/redistribution permissions and code-licence selection remain unresolved; trusted artifacts and fresh-machine testing are needed; historical data and QGIS paths require review. See [release readiness](release_readiness.md).
 
-Random splitting, road-survey bias, pseudo-absence sampling, preprocessing leakage and retrospective thresholds remain limitations. See [architecture](architecture.md) and [decisions](decisions.md). Do not claim proven independence ranges, new-region/future-time performance, calibrated event probabilities or conclusive XGBoost superiority.
+The original random benchmark retains preprocessing leakage and retrospective-threshold limitations. The separate spatial/control experiment uses fold-contained preprocessing and training-side thresholds, but study-level sampling/design choices, road-survey bias and pseudo-absence conditioning remain limitations. See [architecture](architecture.md), [verified results](spatial_validation_results.md) and [decisions](decisions.md). Do not claim proven independence ranges, new-region/future-time performance, calibrated event probabilities or conclusive XGBoost superiority.
 
 ## Intentional local work
 
-Modified `uttarakhand.qgz` and two untracked real CSVs remain outside documentation commits. Private ABDB and verification/recovery evidence remain local. No cleanup, retraining, raster regeneration, push or main-branch promotion is part of this stage.
+Modified `uttarakhand.qgz` and two untracked real CSVs remain outside documentation commits. Exact `.gitignore` rules now exclude both real CSV paths while preserving the tracked synthetic example. Private ABDB and verification/recovery evidence remain local. This finalization changes documentation, ignore rules and previously verified presentation only; it does not retrain, regenerate rasters, push or promote to `main`.
 
 Current guides: [Windows setup](windows_setup.md), [runbook](demo_runbook.md), [local districts](local_district_views.md), [artifact protection](artifact_protection.md), unchanged [spatial protocol](spatial_validation_protocol.md).

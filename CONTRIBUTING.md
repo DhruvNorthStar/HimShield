@@ -10,7 +10,7 @@ git status --short
 git diff --check
 ```
 
-Inspect the intended diff and name each approved file when staging. Check `git diff --cached --name-only`, `git diff --cached --check` and `git diff --cached` before committing. Never use `git add .`: real CSVs are untracked but not excluded by `.gitignore`, and QGIS has intentional tracked local modifications.
+Inspect the intended diff and name each approved file when staging. Check `git diff --cached --name-only`, `git diff --cached --check` and `git diff --cached` before committing. Never use `git add .`: both real CSVs are untracked and excluded by exact `.gitignore` rules, but QGIS still has intentional tracked local modifications and unrelated files may be present. Ignore rules are not a substitute for reviewing the index.
 
 A local commit is not permission to push, merge, delete branches or rewrite history. Keep unrelated files outside it. Historical automatic-push/main-branch instructions are superseded.
 
@@ -20,7 +20,7 @@ Read [artifact protection](docs/artifact_protection.md) before invoking writers.
 
 Restore trusted saved artifacts for demos instead of retraining. Only load trusted pickle/joblib files with compatible versions. New approved science is isolated under `outputs/experiments/<experiment_id>/`; it must not silently replace benchmark metrics.
 
-The teammate's portable training package and the frozen [spatial protocol](docs/spatial_validation_protocol.md) are separate work. Do not modify either for dashboard/release documentation. Results require review before incorporation.
+The teammate's portable training package and the frozen [spatial protocol](docs/spatial_validation_protocol.md) are separate work. Do not modify either for dashboard/release documentation. The returned spatial/control results have been [independently verified and integrated as aggregates](docs/spatial_validation_results.md); future results still require review before incorporation. The deployed benchmark models remain unchanged.
 
 ## Setup and tests
 

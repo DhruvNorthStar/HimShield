@@ -59,12 +59,12 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
         st.session_state["explorer-scope"] = "Uttarakhand"
         ui.availability("Previous district selection unavailable.", "Restored statewide coverage; no substitute boundary is used.")
     with ui.panel("explorer-controls"):
-        left, middle, right = st.columns([1, 1, 1.3], gap="medium")
-        scope = left.selectbox("Geographic scope", scopes, key="explorer-scope")
+        scope = st.selectbox("Geographic scope", scopes, key="explorer-scope")
         derived = bool(official and scope != "Uttarakhand" and scope != config.DEMO_DISTRICT)
         if official and scope == config.DEMO_DISTRICT:
-            product = left.selectbox("Map product", [district_views.DEDICATED, district_views.DERIVED], key="explorer-product")
+            product = st.selectbox("Map product", [district_views.DEDICATED, district_views.DERIVED], key="explorer-product")
             derived = product == district_views.DERIVED
+        middle, right = st.columns([1, 1.3], gap="medium")
         catalog = {} if derived else available_maps(map_catalog(scope))
         if not derived and not catalog:
             ui.availability("Map coverage unavailable.",
