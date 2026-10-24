@@ -73,7 +73,9 @@ outputs/demo_map_*.html
 # src/map_generator_full.py; SHAP figures are rebuilt by src/explain_shap.py. The full-state
 # raster is written to data/processed/, which is already ignored.
 outputs/susceptibility_map_uk.html
-outputs/figures/shap/
+# Share only the reviewed aggregate SHAP bar. Point-level plots/metadata stay local.
+outputs/figures/shap/*
+!outputs/figures/shap/shap_bar.png
 
 # Experiments stay local; only the usage guide belongs in Git.
 outputs/experiments/*

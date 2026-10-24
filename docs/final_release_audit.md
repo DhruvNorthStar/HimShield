@@ -4,6 +4,8 @@ Audited 24 October 2026 on `codex/phase3-integration`, starting at scientific in
 
 **Overall: PARTIAL — local demonstration passes; portable/public release is not cleared.** No publication, package, push, main merge, history rewrite, scientific training or saved-output regeneration is part of this audit.
 
+**25 October clarification:** this is the dated 24 October audit. The later public-source review records the owner's [MIT selection](../LICENSE) and [separate third-party notices](../THIRD_PARTY_NOTICES.md). A code-only release excludes the private/uncleared artifacts; it does not certify their distribution or a portable installation. No real CSVs or ABDB vectors were found in integration-branch ancestry. The earlier QGIS absolute-path warning was a checker false positive, corrected below; historical VRT source references are a separate portability issue.
+
 ## Application and scientific checks
 
 The complete fresh suite passes **142 tests, zero failures/errors/skips**. It covers all six Phase 3 pages, all 13 optional districts and their validated counts, interactive/static/offline modes, dedicated Rudraprayag RF/SVM, all three original-model prediction paths/presets, assessment state/errors, saved SHAP figures, spatial-summary consistency, overwrite protection/CLI behavior and Phase 2 compatibility. Synthetic fixtures do not train on the real cohort.
@@ -38,7 +40,7 @@ A read-only scan examined **91 reachable commits and 403 reachable blobs** acros
 
 The real `dataset.csv` and `dataset_raw.csv` blobs occur in local Codex **tree checkpoint refs**, including precise coordinates in the raw schema. No branch commit touching those paths was found, and GitHub path-history checks on all three public branches returned none. This corrects the earlier overly broad history warning: local snapshot reachability is not proof of public dataset exposure. Do not package `.git` or mirror-push private refs; no snapshots were deleted or rewritten.
 
-Current tracked GIS content includes six QuickOSM extent GeoPackages and `uttarakhand.qgz`. The QGIS project/history includes machine-specific absolute references. These need a reviewed release allowlist/portable copy, not changes to the user's original QGIS project. No original/derived ABDB vectors, returned fold weights, large rasters, recovery evidence or local CSVs were added to the audit diff/staging.
+Current tracked GIS content includes six QuickOSM extent GeoPackages and `uttarakhand.qgz`. A 25 October inspection confirmed the six GeoPackages contain rectangular query extents; the older Rudraprayag polygon in branch history is geoBoundaries, covered by the separate data notice. The QGIS Windows-path counter had mistaken suffixes of `http://` and `attachment:///` for drive paths: boundary-aware, URL-decoded inspection found no actual absolute Windows paths in those QGIS archives. Historical VRTs do contain absolute project source references, without the referenced raster pixels. The user's modified QGIS file remains untouched. No original/derived ABDB vectors, returned fold weights, large rasters, recovery evidence or local CSVs were added to the audit diff/staging.
 
 ## Rights and exact release blockers
 

@@ -65,7 +65,7 @@ A code snapshot is not a complete demo. Restore verified trusted copies at the s
 | Separate spatial results | Tracked `artifacts/spatial_validation_results.json`, matching `configs/spatialcv-10km-buffer2km-v1.json` and `dashboard_v2/spatial_results.py`; no fold weights or row-level data are needed for presentation |
 | Full integrity audit | All 216 inventory paths in `artifacts/benchmark.json`, including source inputs; no multi-GB duplication is needed on the existing laptop |
 
-Use the original local artifact tree/recovery copy for the complete verified demo. Determine redistribution rights separately before transferring data. Small code-only installations may show availability messages, but cannot claim full verification with missing inputs. Do not retrain to replace a missing model.
+Use the original local artifact tree/recovery copy for the complete verified demo. The public code release deliberately omits these local models, real CSVs and maps; it does not offer an unrestricted download of them. Determine redistribution rights separately before transferring data; see [third-party notices](../THIRD_PARTY_NOTICES.md). Small code-only installations may show availability messages, but cannot claim full verification with missing inputs. Do not retrain to replace a missing model. The included synthetic CSV is an example input, not a pretrained substitute for the saved real-data demo.
 
 ## Optional private official district views
 

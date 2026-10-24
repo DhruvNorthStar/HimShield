@@ -140,6 +140,12 @@ The tests cover the dashboards, district views, artifact guards, spatial infrast
 
 New approved experiments belong under `outputs/experiments/<experiment_id>/`, separate from the established benchmarks. The [frozen spatial protocol](docs/spatial_validation_protocol.md) records the experiment design. A manifest detects damage but cannot restore files, so retain verified recovery copies. Follow [CONTRIBUTING](CONTRIBUTING.md): stage files explicitly, preserve local QGIS/CSV work, and obtain separate approval before pushing or merging into `main`.
 
+## Licence and public source release
+
+HimShield-owned code is available under the [MIT License](LICENSE). External data keeps its own terms; [third-party notices](THIRD_PARTY_NOTICES.md) identify the source-specific licences and exclusions, including the older geoBoundaries polygon retained in Git history.
+
+The public repository contains source, tests, environment specifications, a synthetic example, aggregate results and selected statistical figures, including the saved [aggregate RF SHAP importance](outputs/figures/shap/shap_bar.png). Point-level SHAP plots/metadata remain local. It does not distribute the real inventory/CSV coordinates, deployed model files, source rasters, saved maps, private official boundaries or training bundles. The synthetic CSV is not a pretrained demo package. Obtain source data from its providers under their terms and restore model/map artifacts only from a separately authorized trusted copy. The 13 official district views remain an optional local feature; publishing the code does not publish or license their inputs.
+
 ## Repository and documentation
 
 | Location | Role |
@@ -155,6 +161,6 @@ New approved experiments belong under `outputs/experiments/<experiment_id>/`, se
 
 Start with [Windows setup](docs/windows_setup.md), [demo runbook](docs/demo_runbook.md), [architecture](docs/architecture.md), [status](docs/PROJECT_STATUS.md) and [release readiness](docs/release_readiness.md). [Data sourcing](docs/01_data_sourcing.md) and [GIS processing](docs/02_qgis_processing.md) describe construction, not demo startup.
 
-The [final release audit](docs/final_release_audit.md) separates the verified local demonstration from portable/public release readiness. It recorded the GitHub repository as **PUBLIC** on 24 October 2026. Recheck visibility before sharing private work. Source-data permissions, a repository code licence and fresh-machine testing still need attention before release.
+The [final release audit](docs/final_release_audit.md) separates the verified local demonstration from a complete portable artifact package. It recorded the GitHub repository as **PUBLIC** on 24 October 2026. The owner selected MIT on 25 October for the public source release. This does not clear excluded-data redistribution, a fresh-machine installation or the remaining manual accessibility checks.
 
 The four `PROJECT_HANDOFF*.md` documents are archived September snapshots. Preserve their historical findings; use current docs and explicit approvals for setup, branch and release instructions.

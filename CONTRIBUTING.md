@@ -32,6 +32,6 @@ Keep notebook logic in `src/` and avoid scratch/output-heavy commits. `nbstripou
 
 ## Packaging and history
 
-Keep credentials, private ABDB inputs/derived geometry, recovery evidence, local datasets and temporary files out of commits/packages. `.gitignore` does not validate rights or erase history. See [release readiness](docs/release_readiness.md) for historical CSV blobs, absolute QGIS paths and the pending code-licence decision.
+Keep credentials, private ABDB inputs/derived geometry, recovery evidence, local datasets and temporary files out of commits/packages. `.gitignore` does not validate rights or erase history. HimShield-owned code uses [MIT](LICENSE); external data retains the terms in [third-party notices](THIRD_PARTY_NOTICES.md). See [release readiness](docs/release_readiness.md) for the distinction between private local CSV checkpoints and branch history. Historical VRTs contain machine-specific source references; the QGIS path warning was corrected in the later audit.
 
 Do not ZIP the entire working folder. A separately approved release needs an explicit reviewed allowlist, source attribution and a fresh-machine rehearsal. No package is created here. Use descriptive commit messages and inspect both versions of conflicts; never discard local work to make verification pass.
