@@ -1,6 +1,6 @@
 # HimShield project status
 
-Updated 11 October 2026 for Stage 6A. September handoffs are historical snapshots.
+Updated 24 October 2026 after independent spatial-results verification. September handoffs are historical snapshots.
 
 ## Current development
 
@@ -23,7 +23,7 @@ Updated 11 October 2026 for Stage 6A. September handoffs are historical snapshot
 | Spatial infrastructure | Five 10 km outer spatial folds, 2 km exclusion policy, three spatial inner folds and random-group control; frozen configuration unchanged |
 | Phase 2 | Original dashboard and results retained |
 
-**Spatial-validation infrastructure is ready, but new performance results are pending.** Teammate training is separate; Stage 6A does not incorporate new trained results into benchmarks.
+**Spatial/control results verified and integrated separately.** All 30 jobs/480 completed planned fits, model inference and 484,534 membership records passed. The Methodology page presents safe aggregates; original deployed models/benchmark metrics are unchanged. See [verified results](spatial_validation_results.md). This is blocked within-study evaluation, not new-region or future-time validation.
 
 ## Demonstration and release
 
@@ -31,7 +31,7 @@ The existing artifact-backed laptop passes available automated application check
 
 Public portable release is not cleared: official publication/redistribution permissions and code-licence selection remain unresolved; trusted artifacts and fresh-machine testing are needed; historical data and QGIS paths require review. See [release readiness](release_readiness.md).
 
-Random splitting, road-survey bias, pseudo-absence sampling, preprocessing leakage and retrospective thresholds remain limitations. See [architecture](architecture.md) and [decisions](decisions.md). Do not claim spatially independent results, calibrated event probabilities or conclusive XGBoost superiority.
+Random splitting, road-survey bias, pseudo-absence sampling, preprocessing leakage and retrospective thresholds remain limitations. See [architecture](architecture.md) and [decisions](decisions.md). Do not claim proven independence ranges, new-region/future-time performance, calibrated event probabilities or conclusive XGBoost superiority.
 
 ## Intentional local work
 

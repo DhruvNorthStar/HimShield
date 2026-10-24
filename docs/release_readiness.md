@@ -1,4 +1,6 @@
-# Release readiness — Stage 6A
+# Release readiness
+
+**24 October 2026 update:** returned spatial/control results passed independent verification and are integrated as aggregate-only presentation. See [scientific results and limitations](spatial_validation_results.md). Original models, maps and metrics are preserved. The Stage 6A audit below is historical; its pending-results statements describe 11 October, not the now verified experiment. Public district publication/redistribution, code licensing, fresh-machine/browser checks and historical-data review still require attention.
 
 Audited 11 October 2026 on `codex/phase3-integration`, starting from `a2cd0d204be7c097b02314eb4db7fd4a6d2c6bdd`. Documentation/rehearsal is not approval to package, publish, push or promote to `main`.
 

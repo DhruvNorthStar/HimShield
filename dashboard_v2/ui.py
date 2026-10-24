@@ -16,8 +16,8 @@ SECONDARY = "#526579"
 BORDER = "#D8E2EC"
 
 BENCHMARK_NOTE = (
-    "Original random held-out benchmark. Spatial-validation infrastructure exists; "
-    "performance results are pending."
+    "Original random held-out benchmark. Separate spatial/control validation results "
+    "and limitations are in Methodology & Validation when available."
 )
 THRESHOLD_NOTE = (
     "Youden thresholds were selected on the held-out test set. They are retrospective benchmark "

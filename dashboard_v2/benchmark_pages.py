@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 
-from dashboard_v2 import ui
+from dashboard_v2 import spatial_results, ui
 from src import config
 
 
@@ -45,8 +45,8 @@ def overview(p2, explorer_page, methodology_page) -> None:
         st.page_link(explorer_page, label="Open Susceptibility Explorer", icon=":material/map:")
     with right, ui.panel("overview-validation"):
         st.subheader("Understand the evidence")
-        st.markdown("The original benchmark uses a random split. Spatial-validation infrastructure is ready; "
-                    "performance results are pending. Review source data, preprocessing and sampling limitations.")
+        st.markdown("The original benchmark uses a random split. The separately verified nested spatial/control "
+                    "experiment is reported in Methodology & Validation when available, with fold variability and sampling limitations.")
         st.page_link(methodology_page, label="Read Methodology & Validation", icon=":material/science:")
     ui.caption(ui.SCORE_NOTE)
 
@@ -54,8 +54,7 @@ def overview(p2, explorer_page, methodology_page) -> None:
 def methodology(p2) -> None:
     meta, df = p2.metadata(), p2.dataset()
     ui.page_header("Methodology & Validation", "Data provenance, original preprocessing and the limits of the existing benchmark.")
-    st.info("Spatial validation infrastructure ready, performance results pending. "
-            "No spatial-validation model has been trained and no geographically independent performance is displayed.")
+    spatial_results.render()
     left, right = st.columns([1.1, 1], gap="large")
     with left, ui.panel("factors"):
         st.subheader("Conditioning factors")
@@ -79,8 +78,8 @@ def methodology(p2) -> None:
             "6. **Evaluation:** score the held-out test set; select retrospective Youden thresholds on that same test set."
         )
         ui.caption("Whole-dataset preprocessing and reuse of the outer-training scaler in inner CV can "
-                   "introduce leakage. The new spatial framework contains learned preprocessing within folds, "
-                   "but it has no measured performance results yet.")
+                   "introduce leakage. The separately reported nested experiment contains learned preprocessing within folds; "
+                   "it does not retrospectively change this original benchmark.")
 
     with ui.panel("study-area"):
         st.subheader("Study area")
@@ -97,11 +96,11 @@ def methodology(p2) -> None:
     with st.expander("Scientific limitations and validation status"):
         items = [
             '- **Stable means "no recorded landslide"**, not that a location cannot fail.',
-            "- **Random train/test split:** nearby samples can appear on both sides; geographically independent performance is unmeasured.",
+            "- **Random train/test split:** nearby samples can appear on both sides; the original benchmark is not geographically independent.",
             "- **Preprocessing:** imputation, category handling and VIF decisions precede the benchmark split; scaling is not refitted inside its CV.",
             "- **Retrospective thresholds:** test-selected Youden metrics are descriptive, not an independent threshold validation.",
             "- **Rainfall:** the 2009–2024 annual mean describes climate, not real-time triggering rainfall.",
-            "- **Spatial validation:** five outer folds, 10 km blocks, 2 km exclusion buffers and three inner spatial folds are implemented; performance results are pending.",
+            "- **Spatial validation:** separate five-fold results use 10 km blocks, 2 km spatial outer buffers and three buffered spatial inner folds. Random-group control has no outer buffer; new-region/future-time generalization remains unmeasured.",
         ]
         if "lithology" in config.DROPPED_COLUMNS:
             items.append("- **Lithology excluded:** Bhukosh geology data was unavailable for this benchmark.")
@@ -124,7 +123,7 @@ def methodology(p2) -> None:
         ui.caption("Model disagreement and the saved bootstrap intervals describe uncertainty within this benchmark. "
                    "They do not account for every inventory omission, sampling bias or change in geography. "
                    "A terrain-condition assessment is manual input analysis; it is neither a GPS feature extraction "
-                   "nor a real-time rainfall warning. Geographically independent performance remains unmeasured.")
+                   "nor a real-time rainfall warning. New-region and future-time generalization remain unmeasured.")
 
 
 def comparison(p2) -> None:

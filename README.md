@@ -4,7 +4,7 @@ HimShield is a BCA project for exploring landslide susceptibility in Uttarakhand
 
 Current development is on `codex/phase3-integration`. `main` retains Phase 2; existing Phase 3 work is integrated into this development branch without promotion to `main`. A default public clone is therefore not a complete current Phase 3 demo. The isolated Phase 2 handoff is a demonstration package, not the development repository.
 
-**Spatial-validation infrastructure is ready; new performance results are pending.** Separately managed teammate training has not been incorporated into this dashboard. All figures and scores below describe the preserved original random-split benchmark.
+**Separate spatial-validation results are now independently verified.** All 30 returned model/fold jobs and 480 completed planned fits passed the audit. Methodology & Validation presents their aggregate results separately; deployed models, maps and the original random-split benchmark below are preserved. See [verified spatial results](docs/spatial_validation_results.md).
 
 ## Start the existing Windows demo
 
@@ -52,6 +52,12 @@ The real dataset has 15,189 rows before preprocessing and 15,169 eligible rows a
 | Missed landslides at 0.5 (count) | 158 | 172 | 167 |
 
 Values are display conversions of `models/metadata.json`, not new results. ROC-AUC measures ranking and is not accuracy. RF minus SVM has a saved mean AUC gap of +1.99 percentage points, 95% bootstrap interval +1.57 to +2.42. XGBoost minus RF is +0.12 percentage points, interval −0.05 to +0.30: this does not establish superiority or equivalence. Intervals are conditional on this random test set.
+
+## Separate nested spatial/control validation
+
+Five outer folds and three buffered spatial inner folds were verified for each model. Mean ROC-AUC ± sample SD: SVM **93.73% ± 0.71 pp**, RF **95.54% ± 0.88 pp**, XGBoost **95.76% ± 0.67 pp** for buffered spatial CV; control **94.17% ± 0.24 pp**, **96.18% ± 0.16 pp**, **96.18% ± 0.09 pp**. Control-minus-spatial AUC gaps are +0.44/+0.64/+0.43 pp. SD is not a confidence interval and no winning model is established.
+
+All 15,169 eligible points are scored once per protocol/model. Random-group control has no outer buffer; both protocols use 2 km spatial inner exclusions. These are within-study blocked results, not new-region/future-time validation. Classification thresholds, preprocessing and tuning differ from the original benchmark, so comparisons are descriptive. [Full metrics, fold variation and limitations](docs/spatial_validation_results.md) explain the independently checked results. Fold models and row-level/private data are not bundled in the dashboard.
 
 ## Scientific interpretation and limitations
 

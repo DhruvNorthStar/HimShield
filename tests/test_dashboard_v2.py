@@ -211,7 +211,8 @@ class DashboardIntegrationTests(unittest.TestCase):
                 if route == "methodology":
                     self.assertIn("whole eligible dataset", text)
                     self.assertIn("outer-training scaler", text)
-                    self.assertIn("Spatial validation infrastructure ready, performance results pending", text)
+                    self.assertIn("Verified spatial validation — separate experiment", [x.value for x in app.subheader])
+                    self.assertNotIn("performance results pending", text)
                     self.assertIn("Road-survey bias", text)
                     self.assertIn(ui.SCORE_NOTE, text)
                     self.assertGreaterEqual(len(app.get("imgs")), 5)

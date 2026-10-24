@@ -31,7 +31,7 @@ Open `http://127.0.0.1:8501`. Use `--server.port=8502` and that URL if occupied.
 | Comparison | Percentages, ROC/PR/confusion, threshold selector | 0.5 versus retrospective Youden; RF/XGBoost interval includes zero without proving superiority/equivalence |
 | Assessment | Each preset, Assess Conditions; edit then resubmit | Manual conditions; three relative scores; submitted snapshot persists; no GPS or calibrated event probability |
 | Explainability | Saved beeswarm/bar/dependence/force figures, glossary | Original RF and 500 test points; association, not causation or fresh per-user SHAP |
-| Methodology | Sources and limitations | Road/pseudo-absence bias and preprocessing caveats; spatial infrastructure ready, performance pending |
+| Methodology | Sources and limitations | Show the separate verified spatial/control results, five-fold SD and original benchmark distinction; retain road/pseudo-absence and generalization caveats |
 
 Optional districts: Almora, Bageshwar, Chamoli, Champawat, Dehradun, Haridwar, Nainital, Pauri Garhwal, Pithoragarh, Rudraprayag, Tehri Garhwal, Udham Singh Nagar, Uttarkashi. Show NoData/unassigned coverage and **Source: Survey of India, Government of India.** Matching private inputs and loopback hosting are required. Keep public official screenshot/image/geometry publication on hold pending permissions.
 
@@ -75,3 +75,7 @@ git diff --check
 Local-data district cases need matching private inputs; skipped cases do not certify all 13 views. Spatial/protection tests use disposable tiny fixtures; they do not run real training/tuning or the timed pilot. AppTest needs activated DLL PATH. Do not run `run_phase3.py` without `--dry-run`, `--prepare`, a pilot, training or GIS writers as rehearsal.
 
 For manual sign-off, visit six pages and legacy `/map`/`/state-map`, test several districts/both dedicated models, all presets and figure choices. Repeat near 768 px/390 px widths and 200% zoom. Use Tab/Shift+Tab and map arrows, +/−, Home, Enter; check focus, tables, charts, legends and clipping. After demo stop your own server with Ctrl+C; preserve artifacts/backups.
+
+## Verified spatial-results demonstration
+
+In Methodology & Validation, show the separate six-row results table, ROC-AUC/AP dots with SD bars, control-minus-spatial gaps and per-fold expander. Explain that SD is not a confidence interval, control outer folds are unbuffered, and no deployed model or map has been replaced. See [complete findings](spatial_validation_results.md). Do not describe this as new-region/future-time validation or calibrated risk.
