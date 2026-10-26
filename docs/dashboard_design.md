@@ -1,4 +1,4 @@
-# HimShield dashboard presentation (Stages 5B–5D)
+# HimShield dashboard presentation and saved-map display
 
 Launch from the repository root, using the activated `landslide` environment:
 
@@ -29,14 +29,21 @@ existing `/predict` address is retained. The default Overview page is `/`.
 This follows [Streamlit's navigation API](https://docs.streamlit.io/1.49.0/develop/api-reference/navigation/st.navigation).
 
 The original explorer products offer **RF statewide**, and **RF/SVM in Rudraprayag**.
+Separately completed statewide SVM/XGBoost products are discovered through a
+read-only integrity gate; unfinished or stale products never become choices.
+See [statewide inference](statewide_inference.md) for the isolated writer and
+private product paths. The dashboard itself never runs inference.
 Optional local official district views now cover all 13 districts using masks of the
 saved statewide RF classes. Rudraprayag selects these as a separate product from its
 dedicated RF/SVM maps. See [local_district_views.md](local_district_views.md) for private
 inputs, loopback-only hosting, image-only interaction, coverage and rights limitations.
 A trained point model is not evidence that a susceptibility map exists. It reads saved HTML
-without rewriting it. Zone summaries come from district metadata or statewide
+without rewriting the file. A reversible in-memory stylesheet stacks legacy map controls
+on narrow frames and bounds the legend; original markup, data and scripts remain intact.
+Zone summaries come from district metadata or statewide
 raster tags, never web-display pixels. Source-cell counts, area and rounded shares
-are distinguished from reduced display cells. No new scientific data is calculated.
+are distinguished from reduced display cells. The dashboard does not calculate
+new model scores; the optional approved writer runs separately.
 
 Choose **Interactive map** for layers and clicking (internet/CDNs/tiles required),
 or **Static / offline map** for a local in-memory preview of the existing raster,
@@ -90,9 +97,32 @@ generated Emotion classes or shared configuration changes. The application-wide
 background selector uses modern CSS `:has`; an older browser may retain its default
 background without losing functionality.
 
-Palette: navy `#102A43`, teal `#0F766E`, background `#F5F7FA`, white surfaces,
-text `#172B4D`, secondary text `#526579`, borders `#D8E2EC`. System fonts support
-offline use. Existing model colours, susceptibility colours and class breaks remain.
+Palette: navy `#0F2D46`, teal `#0E7C86`, background `#F6F8FA`, white surfaces,
+text `#172B4D`, secondary text `#5B6B79`, borders `#D9E2E8`. System fonts support
+offline use. Model cards use blue `#2B6CB0` for SVM, teal for Random Forest and
+purple `#7C3AED` for XGBoost. Saved figures, chart data, susceptibility colours and
+class breaks remain unchanged.
+
+Headers use a restrained accent border, a page title and a concise page-specific
+subtitle. Repeated phase/location badges, the uppercase eyebrow and generic
+benchmark boilerplate are removed from all six headers. Interpretation caveats
+remain in the benchmark, assessment, map, explainability and methodology content.
+The sidebar uses an original local mountain/shield SVG on a navy background and
+native page links, with an owned active-page container for the soft-green pill;
+legacy map addresses highlight Susceptibility Explorer. Long navigation labels wrap.
+The selected text is dark green, with a darker green accent, hover and visible
+keyboard focus states; normal selected text exceeds WCAG AA contrast.
+Metric cards retain their labels and help text. Overview grids respond to their
+available content width, including browser zoom and sidebar space: four counts
+become two columns, then one; benchmark cards and the lower content panels stack
+when space is limited. Native page-link labels wrap rather than truncate.
+Tables scroll within their own surface, and controls retain native labels, focus
+and submission behavior.
+
+The Overview exploration card leads with Uttarakhand and actually available statewide products.
+Coverage badges and a prominent native Explorer link accompany a secondary note
+for Rudraprayag's distinct dedicated RF/SVM maps. Optional private district views
+remain labelled as partial-coverage masks of statewide RF classes.
 
 `dashboard_v2/benchmark_pages.py` owns Phase 3 overview/methodology/comparison presentation;
 loaders, feature-input helpers, prediction transformation, stored results and saved
@@ -143,7 +173,7 @@ triggered by these presentation functions.
 legacy map addresses, scope/model availability and switching, saved zone summaries,
 three prediction presets against saved models with exact numeric equality,
 submission/invalid-input state, partial model availability, flat-ground handling,
-exact HTML embeddings, all three static maps, forced offline mode, every saved SHAP
+exact original HTML content plus the display-only stylesheet, all original static maps, forced offline mode, every saved SHAP
 plot, both importance views, ranking/glossary context, missing-file handling,
 all four Phase 2 pages and text-palette contrast. It fits
 no models. Interactive-branch tests simulate a successful connectivity probe;
@@ -155,17 +185,27 @@ artifact identities and benchmark provenance separately. AppTest alone cannot
 certify browser layout, mobile reflow, focus, map clicking or screen-reader behavior.
 The browser tool failed to initialize during Stages 5C and 5D; the later
 [24 October audit](final_release_audit.md) completed 24 real-browser checks across
-six pages and four viewport sizes. Native 200% zoom, physical touch and screen-reader
-checks remain pending; viewport testing is not full accessibility certification.
+six pages and four viewport sizes. The subsequent local statewide-expansion check
+used Chromium browser interaction on all six pages at 1440, 1024, 390 and 320 px,
+plus native 125%/200% zoom (verified through browser zoom settings and device pixel
+ratio). It checked the original RF and completed SVM/XGBoost statewide overlays,
+all 13 optional districts in both modes, dedicated Rudraprayag products and legacy
+links. Additional model maps require their own completed-product checks.
+Physical touch and screen-reader sign-off remain pending; these checks are not
+full accessibility certification. Screenshots and private-map test outputs stay local.
 No dependencies are added. Shared Phase 2 code/settings and scientific artifacts
 remain unchanged. Rollback: revert the relevant presentation commit; do not
 reset user QGIS or development-data changes and do not restore scientific outputs.
 
 ## Browser-feedback refinements
 
-Uttarakhand shows the fixed text **Random Forest — only available statewide model**
-instead of a disabled dropdown. Rudraprayag offers the RF/SVM maps that actually
-exist; changing back to Uttarakhand restores RF coverage.
+With only one eligible statewide product, Uttarakhand shows a fixed model label
+instead of a disabled dropdown. Once additional completed products pass the
+integrity gate, it offers the real saved models in a native dropdown. Rudraprayag
+continues to offer its dedicated RF/SVM maps separately from derived RF coverage.
+Changing scopes cannot substitute another model's raster. New statewide interactive
+views render a bounded class image in memory, without vectors; the existing saved
+RF HTML and the static/offline preview path are preserved.
 
 Benchmark ROC-AUC, average precision, accuracy, precision, recall, specificity and
 F1 use two-decimal percentages in live cards/tables/tooltips. For example 0.9404 is

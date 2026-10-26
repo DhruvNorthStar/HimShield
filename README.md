@@ -53,7 +53,7 @@ The [demo runbook](docs/demo_runbook.md) covers startup checks, offline fallback
 | Page | What it demonstrates |
 | --- | --- |
 | Overview | Project counts, the original three-model benchmark and links to maps and methodology |
-| Susceptibility Explorer | Statewide RF, 13 optional local district views and dedicated Rudraprayag RF/SVM maps, with interactive and static/offline modes |
+| Susceptibility Explorer | Saved statewide maps, 13 optional local RF district views and dedicated Rudraprayag RF/SVM maps, with interactive and static/offline modes |
 | Model Comparison | Percentage metrics, default and retrospective thresholds, ROC/PR curves, confusion matrices and saved bootstrap comparisons |
 | Location Assessment | Manually entered terrain conditions, three model outputs, example presets and a record of the submitted inputs; no GPS feature extraction |
 | Explainability | Six saved RF SHAP figures, RF/XGBoost feature importance and a feature glossary, with one figure shown at a time |
@@ -61,7 +61,9 @@ The [demo runbook](docs/demo_runbook.md) covers startup checks, offline fallback
 
 Legacy `/map` and `/state-map` links open Explorer at Rudraprayag and Uttarakhand. The original four-page Phase 2 app remains at `dashboard/app.py`.
 
-RF is the only saved statewide model map. The 13 local district views use that same raster; no separate model was trained for each district. Rudraprayag also has dedicated SVM/RF products with a different footprint. There are no statewide SVM or XGBoost maps.
+The original statewide RF map remains unchanged. Additional statewide SVM and XGBoost maps are available only when their separately generated, completed products pass the dashboard's input, checksum and grid checks. A trained point model alone does not enable a map choice. See [statewide inference and provenance](docs/statewide_inference.md) for the local output paths and verification gate.
+
+The 13 optional district views still use the original statewide RF raster; no separate model was trained for each district. Rudraprayag also has dedicated SVM/RF products with a different footprint. These are separate products, not clips of a new statewide SVM map. New statewide products do not change the district masks, counts or model availability.
 
 ## Original random held-out benchmark
 
@@ -144,7 +146,7 @@ New approved experiments belong under `outputs/experiments/<experiment_id>/`, se
 
 HimShield-owned code is available under the [MIT License](LICENSE). External data keeps its own terms; [third-party notices](THIRD_PARTY_NOTICES.md) identify the source-specific licences and exclusions, including the older geoBoundaries polygon retained in Git history.
 
-The public repository contains source, tests, environment specifications, a synthetic example, aggregate results and selected statistical figures, including the saved [aggregate RF SHAP importance](outputs/figures/shap/shap_bar.png). Point-level SHAP plots/metadata remain local. It does not distribute the real inventory/CSV coordinates, deployed model files, source rasters, saved maps, private official boundaries or training bundles. The synthetic CSV is not a pretrained demo package. Obtain source data from its providers under their terms and restore model/map artifacts only from a separately authorized trusted copy. The 13 official district views remain an optional local feature; publishing the code does not publish or license their inputs.
+The public repository contains source, tests, environment specifications, a synthetic example, aggregate results and selected statistical figures, including the saved [aggregate RF SHAP importance](outputs/figures/shap/shap_bar.png). Point-level SHAP plots/metadata remain local. It does not distribute the real inventory/CSV coordinates, deployed model files, source rasters, saved maps, private official boundaries or training bundles. New statewide rasters, receipts, manifests and window checkpoints stay under the ignored `outputs/experiments/statewide-models-v1/` directory. The synthetic CSV is not a pretrained demo package. Obtain source data from its providers under their terms and restore model/map artifacts only from a separately authorized trusted copy. The 13 official district views remain an optional local feature; publishing the code does not publish or license their inputs.
 
 ## Repository and documentation
 

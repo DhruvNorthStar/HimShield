@@ -21,7 +21,7 @@ Open `http://127.0.0.1:8501`; keep the terminal open. Stop your own server with 
 
 ## New machine: code and environment
 
-Obtain a maintainer-reviewed current Phase 3 code snapshot. A default public `main` clone is Phase 2 and need not contain unpushed integration work. Keep the project outside OneDrive and use your actual project-root path instead of copying the example blindly.
+Obtain a maintainer-reviewed current Phase 3 code snapshot from `codex/phase3-integration`. The preserved `main` branch contains Phase 2. Keep the project outside OneDrive and use your actual project-root path instead of copying the example blindly.
 
 Install [Miniforge for Windows](https://github.com/conda-forge/miniforge#install). At the received code root, create a **new** environment from the base, apply the overlay and activate:
 
@@ -60,6 +60,7 @@ A code snapshot is not a complete demo. Restore verified trusted copies at the s
 | Three-model assessment | `models/svm_model.pkl`, `models/rf_model.pkl`, `models/xgb_model.pkl`, `models/scaler.pkl`, `models/feature_names.json`, `models/metadata.json`; `data/processed/dataset.csv` for presets/context |
 | Benchmark reproduction | Above plus `data/processed/prepared.joblib`; full manifest verification additionally needs all recorded inputs/outputs |
 | Web maps | `outputs/susceptibility_map_uk.html`, `outputs/demo_map_rudraprayag.html`, `outputs/demo_map_rudraprayag_svm.html` |
+| Optional new statewide SVM/XGBoost maps | Completed private `outputs/experiments/statewide-models-v1/` products and manifest, plus their matching preserved inputs/code; see [statewide inference](statewide_inference.md). These rasters, receipts and checkpoints are not in the public code package |
 | Static/offline fallback | `data/processed/susceptibility_uk_zones.tif`, `data/processed/susceptibility_rudraprayag_rf.tif`, `data/processed/susceptibility_rudraprayag_svm.tif` (RF zones fallback supported); `data/shapefiles/uttarakhand_boundary.gpkg`, `data/shapefiles/uttarakhand_districts.gpkg`, `data/shapefiles/landslides.gpkg` |
 | Figures/explainability | Existing `outputs/figures/*.png`, six `outputs/figures/shap/*.png`, `outputs/figures/shap/shap_summary.json`, metadata |
 | Separate spatial results | Tracked `artifacts/spatial_validation_results.json`, matching `configs/spatialcv-10km-buffer2km-v1.json` and `dashboard_v2/spatial_results.py`; no fold weights or row-level data are needed for presentation |

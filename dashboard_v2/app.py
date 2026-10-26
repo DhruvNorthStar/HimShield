@@ -276,15 +276,21 @@ def main() -> None:
 
     with st.sidebar:
         ui.sidebar_brand()
-        for page in visible_pages:
-            st.page_link(page, use_container_width=True)
-        st.divider()
-        st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
-        st.caption("Connection: **offline**, maps shown as static copies" if is_offline()
-                   else "Connection: **online**, interactive or static map views")
-        with st.expander("Saved model availability"):
-            ui.model_availability({"SVM": config.SVM_MODEL_PATH, "Random Forest": config.RF_MODEL_PATH,
-                                   "XGBoost": config.XGB_MODEL_PATH})
+        with st.container(key="himshield-navigation"):
+            st.caption("WORKSPACE")
+            active_title = ("Susceptibility Explorer" if pages.title in
+                            ("District map alias", "State map alias") else pages.title)
+            for index, page in enumerate(visible_pages):
+                key = "active" if page.title == active_title else str(index)
+                with st.container(key="himshield-nav-" + key):
+                    st.page_link(page, use_container_width=True)
+        with st.container(key="himshield-sidebar-meta"):
+            st.caption(f"Data source: **{config.DATA_SOURCE}** (`{config.DATASET_CSV.name}`)")
+            st.caption("Connection: **offline**, maps shown as static copies" if is_offline()
+                       else "Connection: **online**, interactive or static map views")
+            with st.expander("Saved model availability"):
+                ui.model_availability({"SVM": config.SVM_MODEL_PATH, "Random Forest": config.RF_MODEL_PATH,
+                                       "XGBoost": config.XGB_MODEL_PATH})
 
     pages.run()
 

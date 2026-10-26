@@ -237,7 +237,7 @@ class DistrictIntegrationTests(unittest.TestCase):
                 self.assertEqual(len(app.get("imgs")), 0)
         app = self.select(app, "Geographic scope", "Uttarakhand")
         self.assertEqual(app.get("iframe")[0].proto.srcdoc,
-                         (config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8"))
+                         explorer.legacy_display_html((config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8")))
 
     def test_statewide_defers_district_scan_until_requested(self):
         with patch.object(dv, "coverage", side_effect=AssertionError("Unrequested full district scan")):
@@ -245,7 +245,7 @@ class DistrictIntegrationTests(unittest.TestCase):
             self.assertIn("Scored fringe cells remain unassigned", text(app))
             self.assertFalse(next(x.value for x in app.checkbox if x.label == "Show official district coverage reconciliation"))
             self.assertEqual(app.get("iframe")[0].proto.srcdoc,
-                             (config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8"))
+                             explorer.legacy_display_html((config.OUTPUTS_DIR / "susceptibility_map_uk.html").read_text(encoding="utf-8")))
         with patch.object(dv, "coverage", wraps=dv.coverage) as scan:
             next(x for x in app.checkbox if x.label == "Show official district coverage reconciliation").set_value(True)
             app = self.run_app(app)
@@ -292,10 +292,10 @@ class DistrictIntegrationTests(unittest.TestCase):
         app = self.select(self.app(), "Geographic scope", config.DEMO_DISTRICT)
         self.assertEqual(next(x.options for x in app.selectbox if x.label == "Map product"), [dv.DEDICATED, dv.DERIVED])
         self.assertEqual(next(x.options for x in app.selectbox if x.label == "Map model"), ["Random Forest", "SVM (RBF)"])
-        self.assertEqual(app.get("iframe")[0].proto.srcdoc, config.DEMO_MAP_HTML.read_text(encoding="utf-8"))
+        self.assertEqual(app.get("iframe")[0].proto.srcdoc, explorer.legacy_display_html(config.DEMO_MAP_HTML.read_text(encoding="utf-8")))
         app = self.select(app, "Map model", "SVM (RBF)")
         self.assertEqual(app.get("iframe")[0].proto.srcdoc,
-                         (config.OUTPUTS_DIR / "demo_map_rudraprayag_svm.html").read_text(encoding="utf-8"))
+                         explorer.legacy_display_html((config.OUTPUTS_DIR / "demo_map_rudraprayag_svm.html").read_text(encoding="utf-8")))
         app = self.select(app, "Map product", dv.DERIVED)
         self.assertEqual(next(x.value for x in app.metric if x.label == "Cells scored"), "2,201,901")
         app = self.select(app, "Map product", dv.DEDICATED)

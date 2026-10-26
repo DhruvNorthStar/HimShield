@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 
-from dashboard_v2 import spatial_results, ui
+from dashboard_v2 import explorer, spatial_results, ui
 from src import config
 
 
@@ -15,34 +15,60 @@ def overview(p2, explorer_page, methodology_page) -> None:
     st.markdown("Explore terrain conditions, compare three saved models and inspect susceptibility coverage. "
                 "HimShield supports research and screening; it does not replace a site investigation or forecast a landslide event.")
     positives = int((df[config.TARGET] == 1).sum())
-    cols = st.columns(4)
-    for col, key, label, value, help_text in zip(cols,
-            ("samples", "positive", "negative", "features"),
-            ("Sample points", "Landslide points", "Stable points", "Model inputs"),
-            (f"{len(df):,}", f"{positives:,}", f"{len(df) - positives:,}", str(len(prep.get("kept_features", [])) or "—")),
-            ("Input dataset, before water exclusions", "Recorded landslide samples",
-             "Sampled points with no recorded landslide; not proof of safety", "Stored encoded benchmark feature schema")):
-        ui.metric_card(col, key, label, value, help=help_text)
+    with st.container(key="himshield-overview-stats"):
+        cols = st.columns(4)
+        for col, key, label, value, help_text in zip(cols,
+                ("samples", "positive", "negative", "features"),
+                ("Sample points", "Landslide points", "Stable points", "Model inputs"),
+                (f"{len(df):,}", f"{positives:,}", f"{len(df) - positives:,}", str(len(prep.get("kept_features", [])) or "—")),
+                ("Input dataset, before water exclusions", "Recorded landslide samples",
+                 "Sampled points with no recorded landslide; not proof of safety", "Stored encoded benchmark feature schema")):
+            ui.metric_card(col, key, label, value, help=help_text)
     ui.caption(f"Retained modelling samples: {prep.get('rows_used', len(df)):,}. "
                "Sample counts above describe the input dataset; water exclusions reduce the modelling count.")
     with ui.panel("overview-benchmark"):
         st.subheader("Three-model benchmark")
+        ui.caption(ui.BENCHMARK_NOTE)
         results = ev.get("models", {})
         if results:
             for i, (col, (name, result)) in enumerate(zip(st.columns(len(results)), results.items())):
                 ui.metric_card(col, f"overview-model-{i}", name + ": ROC-AUC (%)", ui.percent(result["auc"]),
+                               model=name,
                                help=f"Average precision {ui.percent(result['average_precision'])}; original random held-out split. ROC-AUC is not accuracy.")
             ui.caption("Highest observed AUC does not establish conclusive superiority. See Model Comparison for the saved intervals and threshold context.")
         else:
             ui.availability("Benchmark unavailable.", "No saved evaluation is available; no model is fitted here.")
-    left, right = st.columns(2, gap="large")
+    with st.container(key="himshield-overview-links"):
+        left, right = st.columns([1.4, 1], gap="medium")
     with left, ui.panel("overview-explore"):
         st.subheader("Explore susceptibility")
-        st.markdown("**Uttarakhand:** Random Forest coverage.  \n**Rudraprayag:** Random Forest and SVM coverage. "
-                    "Interactive and static map views use existing saved artifacts.")
-        ui.caption("Optional local views cover all 13 districts using official 2025 boundaries and saved statewide RF classes. "
-                   "They have partial coverage and are separate from the dedicated Rudraprayag maps; private reference files are required.")
-        st.page_link(explorer_page, label="Open Susceptibility Explorer", icon=":material/map:")
+        coverage_names, coverage_badge = explorer.statewide_coverage()
+        st.markdown(
+            '<div class="himshield-coverage-title">Uttarakhand</div>'
+            '<div class="himshield-badges" aria-label="Statewide map coverage">'
+            f'<span class="himshield-badge">{coverage_badge}</span>'
+            '<span class="himshield-badge">Interactive / offline</span></div>',
+            unsafe_allow_html=True,
+        )
+        if coverage_names:
+            st.markdown("Explore saved susceptibility maps from " + ", ".join(coverage_names)
+                        + " across the state. Blank areas are unscored.")
+        else:
+            st.markdown("Saved statewide map coverage is currently unavailable.")
+        unavailable = explorer.statewide_unavailable(dict.fromkeys(coverage_names))
+        if unavailable:
+            ui.caption(unavailable)
+        st.markdown(
+            '<div class="himshield-coverage-secondary">'
+            '<strong>Rudraprayag · dedicated RF &amp; SVM maps</strong>'
+            '<p>Separate saved district products, distinct from statewide RF coverage.</p></div>',
+            unsafe_allow_html=True,
+        )
+        ui.caption("Optional local views cover all 13 districts using statewide RF classes. "
+                   "Coverage is partial; private reference files are required.")
+        with st.container(key="himshield-explorer-cta"):
+            st.page_link(explorer_page, label="Open Susceptibility Explorer", icon=":material/map:",
+                         use_container_width=True)
     with right, ui.panel("overview-validation"):
         st.subheader("Understand the evidence")
         st.markdown("The original benchmark uses a random split. The separately verified nested spatial/control "
@@ -136,6 +162,7 @@ def comparison(p2) -> None:
     cols = st.columns(len(names))
     for i, (col, name) in enumerate(zip(cols, names)):
         ui.metric_card(col, f"model-{i}", f"{name}: ROC-AUC (%)", ui.percent(results[name]["auc"]),
+                       model=name,
                        help=f"Average precision {ui.percent(results[name]['average_precision'])}; ROC-AUC measures ranking, not accuracy")
     if gap["separable"]:
         pair_winner = ev.get("phase2_winner", ev["winner"])

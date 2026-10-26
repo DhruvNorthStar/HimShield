@@ -11,15 +11,20 @@ Saved evaluation metadata/reports/figures -> benchmark pages
 Saved RF SHAP summary + six figures      -> explainability
 Saved statewide RF / dedicated RF-SVM rasters + HTML
     -> existing map modes and in-memory static fallback
+Preserved GIS factors + saved SVM/XGBoost + original transform
+    -> explicit isolated inference -> private validated statewide rasters
+    -> read-only completed-product gate -> Explorer
 Private 2025 ABDB + saved statewide RF class raster
     -> bounded cell-centre masks/counts + private image previews
 ```
 
 `src/config.py` defines benchmark paths/settings. `src/artifacts.py` guards writes; `src/provenance.py` inventories artifacts/content dependencies. The two orchestrators use fingerprints rather than timestamp-only freshness. Missing/stale benchmarks are blocked, not silently regenerated.
 
-`dashboard_v2/app.py` registers six native Streamlit pages. It reuses Phase 2 loaders/transforms by excluding `dashboard/app.py`'s final bare `main()` call without rewriting that file. `ui.py` scopes navy/teal styling; `benchmark_pages.py`, `assessment.py`, `explainability.py`, `explorer.py`, `district_views.py`, `image_map.py` separate presentation responsibilities. [Dashboard design](dashboard_design.md) documents routes/components.
+`dashboard_v2/app.py` registers six native Streamlit pages. It reuses Phase 2 loaders/transforms by excluding `dashboard/app.py`'s final bare `main()` call without rewriting that file. `ui.py` scopes navy/teal styling and green navigation; `benchmark_pages.py`, `assessment.py`, `explainability.py`, `explorer.py`, `district_views.py`, `image_map.py` separate presentation responsibilities. `statewide_maps.py` verifies and displays additional completed products without loading an estimator or running inference. [Dashboard design](dashboard_design.md) documents routes/components.
 
 Existing models/data and map assets are cached. Official geometry/counts/previews use bounded single-worker processing. The first district coverage scan is deferred until requested or a derived district opens. HTML caching avoids repeated disk reads but not browser payload costs. Launching the app does not train, compute new SHAP or publish new rasters.
+
+`src/statewide_inference.py` is a separate explicit writer, not a dashboard callback or a replacement legacy pipeline. It reuses the original raster-to-row and saved preprocessing functions, requires an RF-reproducing pilot, retains immutable window checkpoints and publishes only complete validated products through the existing experiment guard. `src/statewide_contract.py` shares lightweight input/path definitions with the consumer. All new rasters and receipts stay in ignored `outputs/experiments/statewide-models-v1/`; no source GIS copy or benchmark-manifest rewrite is needed. See [generation and provenance](statewide_inference.md).
 
 ## Benchmark contract and original method
 

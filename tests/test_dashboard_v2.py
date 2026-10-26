@@ -1,11 +1,14 @@
 """Read-only dashboard integration checks using existing saved artifacts, never fitting models."""
 import ast
+import base64
 import json
 import os
+import re
 import sys
 from pathlib import Path
 import unittest
 from unittest.mock import Mock, patch
+import xml.etree.ElementTree as ET
 
 import joblib
 import pandas as pd
@@ -47,10 +50,43 @@ class DesignContractTests(unittest.TestCase):
         self.assertEqual(ui.percentage_points(-0.0005), "-0.05 pp")
 
     def test_text_palette_contrast(self):
-        for colour in (ui.NAVY, ui.TEAL, ui.TEXT, ui.SECONDARY):
+        for colour in (ui.PRIMARY, ui.NAVY, ui.TEAL, ui.TEXT, ui.SECONDARY):
             for background in (ui.SURFACE, ui.BACKGROUND):
                 with self.subTest(colour=colour, background=background):
                     self.assertGreaterEqual(contrast(colour, background), 4.5)
+
+    def test_active_navigation_uses_readable_soft_green(self):
+        rule = re.search(r'\.st-key-himshield-nav-active \[data-testid="stPageLink-NavLink"\] \{([^}]+)\}', ui.CSS)
+        self.assertIsNotNone(rule)
+        styles = dict(part.strip().split(":", 1) for part in rule[1].split(";") if part.strip())
+        background, foreground = styles["background"].strip(), styles["color"].strip()
+        self.assertGreaterEqual(contrast(foreground, background), 4.5)
+        # A green selected surface remains distinct from the neutral inactive links.
+        self.assertGreater(int(background[3:5], 16), int(background[5:7], 16))
+        self.assertGreater(int(foreground[3:5], 16), int(foreground[5:7], 16))
+
+    def test_page_header_contains_only_title_and_page_subtitle(self):
+        app = AppTest.from_string(
+            'from dashboard_v2 import ui\n'
+            'ui.page_header("Susceptibility Explorer", "Explore saved coverage by scope and model.")'
+        ).run()
+        self.assertFalse(list(app.exception))
+        self.assertEqual([node.value for node in app.title], ["Susceptibility Explorer"])
+        self.assertEqual([node.value for node in app.markdown], ["Explore saved coverage by scope and model."])
+        self.assertFalse(list(app.caption))
+
+    def test_sidebar_brand_embeds_local_svg_with_accessible_name(self):
+        app = AppTest.from_string('from dashboard_v2 import ui\nui.sidebar_brand()').run()
+        self.assertFalse(list(app.exception))
+        markup = app.markdown[0].value
+        image = re.search(r'<img\b[^>]*\bsrc="([^"]+)"[^>]*\balt="([^"]+)"', markup)
+        self.assertIsNotNone(image, "Sidebar identity needs an accessible local image")
+        self.assertIn("mountain", image[2].lower())
+        self.assertIn("shield", image[2].lower())
+        self.assertTrue(image[1].startswith("data:image/svg+xml;base64,"))
+        decoded = base64.b64decode(image[1].split(",", 1)[1], validate=True)
+        self.assertEqual(decoded, (ROOT / "dashboard_v2/assets/himshield-mark.svg").read_bytes())
+        self.assertEqual(ET.fromstring(decoded).tag, "{http://www.w3.org/2000/svg}svg")
 
     def test_styles_are_scoped_and_offline(self):
         self.assertIn(".stApp:has(.himshield-theme)", ui.CSS)
@@ -153,7 +189,10 @@ class DashboardIntegrationTests(unittest.TestCase):
 
     def assert_html(self, app, path):
         self.assertEqual(len(app.get("iframe")), 1)
-        self.assertEqual(app.get("iframe")[0].proto.srcdoc, path.read_text(encoding="utf-8"))
+        original = path.read_text(encoding="utf-8")
+        rendered = app.get("iframe")[0].proto.srcdoc
+        self.assertEqual(rendered, explorer.legacy_display_html(original))
+        self.assertEqual(rendered.replace(explorer.LEGACY_DISPLAY_STYLE, "", 1), original)
 
     def assert_coverage(self, app, summary):
         self.assertEqual(next(x.value for x in app.metric if x.label == "Cells scored"), f"{summary['cells_scored']:,}")
@@ -167,7 +206,7 @@ class DashboardIntegrationTests(unittest.TestCase):
             with self.subTest(route=route):
                 app = self.render(route)
                 text = rendered_text(app)
-                self.assertIn(ui.BENCHMARK_NOTE, text)
+                self.assertEqual(text.count(ui.BENCHMARK_NOTE), int(route == "overview"))
                 self.assertNotIn("phase3-preparation", text)
                 self.assertNotIn("Phase 3 preview", text)
                 self.assertNotIn("Both models", text)
@@ -175,6 +214,11 @@ class DashboardIntegrationTests(unittest.TestCase):
                 self.assertEqual([x.proto.page_script_hash for x in app.sidebar.get("page_link")],
                                  [calc_md5(path) for path in PAGES])
                 if route == "overview":
+                    saved_statewide = ["Random Forest", *explorer.statewide_maps.verified_products()]
+                    expected_badge = "Statewide · " + " + ".join(saved_statewide) + (" only" if len(saved_statewide) == 1 else "")
+                    self.assertIn(expected_badge, text)
+                    self.assertIn("Rudraprayag · dedicated RF &amp; SVM maps", text)
+                    self.assertIn("Separate saved district products, distinct from statewide RF coverage", text)
                     self.assertIn("Optional local views cover all 13 districts", text)
                     self.assertIn("private reference files are required", text)
                     values = {x.label: x.value for x in app.metric}
@@ -197,6 +241,9 @@ class DashboardIntegrationTests(unittest.TestCase):
                     text = rendered_text(app)
                     for name, result in self.meta["evaluation"]["models"].items():
                         self.assertIn(f"Benchmark ROC-AUC (%) {result['auc']:.2%}", text)
+                if route == "comparison":
+                    self.assertIn("Random held-out test set:", text)
+                    self.assertIn(ui.THRESHOLD_NOTE, text)
                 if route == "explainability":
                     values = {x.label: x.value for x in app.metric}
                     self.assertEqual(values["Locations explained"], "500")
@@ -390,8 +437,14 @@ class DashboardIntegrationTests(unittest.TestCase):
 
     def test_explorer_scope_models_and_saved_summaries(self):
         app = self.render("explorer")
-        self.assertFalse(any(x.label == "Map model" for x in app.selectbox))
-        self.assertIn("Random Forest — only available statewide model", rendered_text(app))
+        expected = ["Random Forest", *explorer.statewide_maps.verified_products()]
+        choices = [item for item in app.selectbox if item.label == "Map model"]
+        if len(expected) == 1:
+            self.assertFalse(choices)
+            self.assertIn("Random Forest — only available statewide model", rendered_text(app))
+        else:
+            self.assertEqual(choices[0].options, expected)
+            self.assertEqual(choices[0].value, "Random Forest")
         self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
 
         import rasterio
@@ -405,8 +458,13 @@ class DashboardIntegrationTests(unittest.TestCase):
             self.assert_coverage(app, self.meta[key])
             self.assertIn(model, app.subheader[0].value)
         app = self.select(app, "Geographic scope", "Uttarakhand")
-        self.assertFalse(any(x.label == "Map model" for x in app.selectbox))
-        self.assertIn("Random Forest — only available statewide model", rendered_text(app))
+        choices = [item for item in app.selectbox if item.label == "Map model"]
+        if len(expected) == 1:
+            self.assertFalse(choices)
+            self.assertIn("Random Forest — only available statewide model", rendered_text(app))
+        else:
+            self.assertEqual(choices[0].options, expected)
+            self.assertEqual(choices[0].value, "Random Forest")
         self.assert_html(app, config.OUTPUTS_DIR / "susceptibility_map_uk.html")
 
     def test_single_remaining_district_map_is_labelled_honestly(self):
@@ -419,6 +477,41 @@ class DashboardIntegrationTests(unittest.TestCase):
         self.assertIn("Random Forest — only available district model", rendered_text(app))
         self.assertIn("Available saved district maps: Random Forest.", rendered_text(app))
         self.assert_html(app, config.DEMO_MAP_HTML)
+
+    def test_completed_statewide_products_use_their_own_interactive_static_and_offline_maps(self):
+        """Exercise real completed products when present; never build a missing one."""
+        products = explorer.statewide_maps.verified_products()
+        if not products:
+            self.skipTest("No completed additional statewide product is available; inference is never run by tests")
+        from src import map_generator_full as mg
+        app = self.render("explorer")
+        for model, item in products.items():
+            with self.subTest(model=model):
+                app = self.select(app, "Map model", model)
+                app = self.rerun(app.radio[0].set_value(explorer.INTERACTIVE))
+                self.assertEqual(len(app.get("iframe")), 1)
+                self.assertEqual(len(app.get("imgs")), 0)
+                html = app.get("iframe")[0].proto.srcdoc
+                self.assertIn("L.imageOverlay", html)
+                self.assertIn(model, html)
+                self.assertNotIn("FeatureCollection", html)
+                self.assertFalse(any(x.label == "Show official district coverage reconciliation" for x in app.checkbox))
+                self.assert_coverage(app, item["summary"])
+                st.cache_data.clear()
+                with patch.object(mg, "read_zones", wraps=mg.read_zones) as raster_read, \
+                        patch("streamlit.image", wraps=st.image) as image:
+                    app = self.rerun(app.radio[0].set_value(explorer.STATIC))
+                self.assertEqual(raster_read.call_args.args[0], {"path": item["raster"], "kind": "zones"})
+                self.assertTrue(image.call_args.args[0].startswith(b"\x89PNG\r\n\x1a\n"))
+                self.assertEqual(len(app.get("imgs")), 1)
+                self.assertEqual(len(app.get("iframe")), 0)
+                self.assertIn(model + " · Uttarakhand", app.get("imgs")[0].proto.imgs[0].caption)
+                app = self.rerun(app.radio[0].set_value(explorer.INTERACTIVE))
+                self.assertIn("L.imageOverlay", app.get("iframe")[0].proto.srcdoc)
+                app = self.rerun(app, offline=True)
+                self.assertTrue(app.radio[0].disabled)
+                self.assertEqual(len(app.get("imgs")), 1)
+                self.assertEqual(len(app.get("iframe")), 0)
 
     def test_legacy_links_open_correct_scope_and_allow_switching(self):
         for route, scope in (("map", config.DEMO_DISTRICT), ("state-map", "Uttarakhand")):

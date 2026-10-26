@@ -4,7 +4,7 @@ Use the existing verified artifact-backed laptop. Rehearse early; avoid dependen
 
 ## Before the audience arrives
 
-Connect power, close unnecessary heavy programs and use the local display. The [final audit](final_release_audit.md) exercised all six pages in a real browser at desktop, laptop, tablet and mobile widths. Actual 200% browser zoom, physical touch and assistive-technology checks still need manual sign-off; AppTest alone is not visual certification.
+Connect power, close unnecessary heavy programs and use the local display. The [final audit](final_release_audit.md) exercised all six pages in a real browser at desktop, laptop, tablet and mobile widths. The later local dashboard refinement also checked 320 px layouts and native 125%/200% browser zoom; see [dashboard checks](dashboard_design.md#verification-and-limits). Physical touch and assistive-technology checks still need manual sign-off; AppTest alone is not visual certification.
 
 In Conda-enabled PowerShell, select benchmark defaults and verify saved outputs:
 
@@ -26,8 +26,8 @@ Open `http://127.0.0.1:8501`. Use `--server.port=8502` and that URL if occupied.
 | Stop | Action | Accurate explanation |
 | --- | --- | --- |
 | Overview | Sample counts and three-model summary | Original random benchmark; ROC-AUC is ranking, not percent of sites safe |
-| Explorer | Statewide RF, official district, interactive/static | Saved 30 m source; roughly 90 m statewide web display; district spacing labelled; no fresh model run |
-| Rudraprayag | Dedicated product RF/SVM, then derived RF | Different footprints/products; no statewide SVM/XGBoost map |
+| Explorer | Statewide RF and any verified SVM/XGBoost products, official district, interactive/static | Only completed integrity-checked maps appear; saved 30 m source, roughly 90 m statewide web display; district spacing labelled; no fresh inference in the dashboard |
+| Rudraprayag | Dedicated product RF/SVM, then derived RF | Dedicated products have different footprints; the optional official district views still use the original statewide RF raster |
 | Comparison | Percentages, ROC/PR/confusion, threshold selector | 0.5 versus retrospective Youden; RF/XGBoost interval includes zero without proving superiority/equivalence |
 | Assessment | Each preset, Assess Conditions; edit then resubmit | Manual conditions; three relative scores; submitted snapshot persists; no GPS or calibrated event probability |
 | Explainability | Saved beeswarm/bar/dependence/force figures, glossary | Original RF and 500 test points; association, not causation or fresh per-user SHAP |
@@ -58,6 +58,7 @@ Static views use saved local inputs; no scientific file is generated. Clear `LSM
 | Incorrect native dependency | Diagnose with setup/import checks before event; do not automatically delete working environment |
 | Manifest or prediction mismatch | Stop and inspect exact difference; never refresh hashes or scientific files to pass |
 | Empty internet basemap | Static/offline fallback; no replacement raster generation |
+| Missing statewide SVM/XGBoost choice | Its completed local product or matching provenance is absent; inspect the [product requirements](statewide_inference.md), keep the original RF fallback and do not generate maps during the demo |
 | Experiment/synthetic setting | Clear current-shell `LSM_EXPERIMENT_ID`, `LSM_REBUILD`, `LSM_DATA_SOURCE`; restart your own server |
 
 ## Automated rehearsal

@@ -200,7 +200,7 @@ def page(helpers, chart, file_stamp) -> None:
                "White ticks, when available, mark retrospective test-selected Youden thresholds.")
     columns = st.columns(len(MODEL_PATHS), gap="medium")
     for i, (column, name) in enumerate(zip(columns, MODEL_PATHS)):
-        with column, ui.panel("prediction-" + str(i)):
+        with column, ui.panel("prediction-" + str(i), model=name):
             st.markdown(f"**{name}**")
             score = scores.get(name)
             st.metric("Susceptibility score (%)", ui.percent(score) if score is not None else "—")

@@ -5,22 +5,43 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from dashboard_v2 import district_views, ui
+from dashboard_v2 import district_views, statewide_maps, ui
 from src import config
 from src.demo_map import ZONE_COLOURS
 
 INTERACTIVE = "Interactive map"
 STATIC = "Static / offline map"
 
+LEGACY_DISPLAY_STYLE = """
+<style id="himshield-legacy-map-layout">
+@media (max-width: 480px) {
+  .leaflet-top.leaflet-right { top: 76px; }
+  html .lsm-legend { max-width: calc(100vw - 24px); box-sizing: border-box; }
+  html .lsm-legend .lsm-name { min-width: 0; }
+}
+</style>
+"""
+
+
+def legacy_display_html(content: str) -> str:
+    """Add narrow-frame layout only; retain saved markup/scripts and disk bytes."""
+    if LEGACY_DISPLAY_STYLE in content:
+        return content
+    if "</head>" in content:
+        return content.replace("</head>", LEGACY_DISPLAY_STYLE + "</head>", 1)
+    return LEGACY_DISPLAY_STYLE + content
+
 
 def map_catalog(scope: str) -> dict:
     """Explicit saved-map registry: point-model availability does not imply map coverage."""
     if scope == "Uttarakhand":
-        return {"Random Forest": {
+        catalog = {"Random Forest": {
             "html": config.OUTPUTS_DIR / "susceptibility_map_uk.html",
             "raster": config.PROCESSED_DIR / "susceptibility_uk_zones.tif",
             "kind": "zones", "focus": "state", "metadata": None,
         }}
+        catalog.update(statewide_maps.verified_products())
+        return catalog
     if scope != config.DEMO_DISTRICT:
         return {}  # Other districts must never inherit Rudraprayag's dedicated files.
     slug = config.DEMO_DISTRICT.lower().replace(" ", "_")
@@ -38,7 +59,23 @@ def map_catalog(scope: str) -> dict:
 
 def available_maps(catalog: dict) -> dict:
     return {name: item for name, item in catalog.items()
-            if item["html"].is_file() or item["raster"].is_file()}
+            if (item.get("html") is not None and item["html"].is_file()) or item["raster"].is_file()}
+
+
+def statewide_coverage() -> tuple[list[str], str]:
+    """The card and Explorer describe the same genuinely available saved products."""
+    names = list(available_maps(map_catalog("Uttarakhand")))
+    badge = (" + ".join(names) + (" only" if len(names) == 1 else "")) if names else "unavailable"
+    return names, "Statewide · " + badge
+
+
+def statewide_unavailable(catalog: dict) -> str:
+    missing = [name for name in statewide_maps.MODEL_NAMES.values() if name not in catalog]
+    if not missing:
+        return ""
+    return ("Statewide maps for " + ", ".join(missing)
+            + " are absent or have not passed local completion and integrity checks. "
+              "The dashboard does not run inference.")
 
 
 @st.cache_data(show_spinner=False)
@@ -93,7 +130,10 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
         mode = right.radio("Map view", [INTERACTIVE, STATIC], key="explorer-mode",
                            disabled=offline, horizontal=True)
         if scope == "Uttarakhand":
-            ui.caption("Statewide coverage: saved Random Forest map only. SVM and XGBoost statewide maps are unavailable.")
+            ui.caption("Available saved statewide maps: " + ", ".join(catalog) + ".")
+            unavailable = statewide_unavailable(catalog)
+            if unavailable:
+                ui.caption(unavailable)
         elif derived:
             ui.caption("Derived from the saved statewide RF classes using official 2025 district pixel-centre masks. "
                        "No dedicated SVM or XGBoost map is available for this product.")
@@ -107,9 +147,11 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
         return
 
     item = catalog[model]
-    summary = (p2.metadata().get(item["metadata"], {}) if item["metadata"]
-               else raster_summary(item["raster"]))
-    use_static = offline or mode == STATIC or not item["html"].is_file()
+    summary = item.get("summary") or (p2.metadata().get(item["metadata"], {}) if item["metadata"]
+                                     else raster_summary(item["raster"]))
+    raster_interactive = item.get("renderer") == "raster"
+    has_html = item.get("html") is not None and item["html"].is_file()
+    use_static = offline or mode == STATIC or (not has_html and not raster_interactive)
     if offline:
         st.info("**Offline:** the static view uses local rasters, boundaries and landslide points. "
                 "It needs no basemap connection and cannot be clicked.")
@@ -130,17 +172,24 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
                 ui.availability("Static raster unavailable.",
                                 "This view needs the saved raster. The existing interactive map remains available when online.")
         else:
-            ui.caption("Use the map's layer control and click to inspect the saved geographic information and class. "
-                       "Internet access is required for map libraries and basemap tiles.")
-            components.html(saved_html(str(item["html"]), file_stamp(item["html"])), height=700)
+            if raster_interactive:
+                ui.caption("Pan and zoom, and use the layer control to explore saved susceptibility coverage. "
+                           "Internet access is required for map libraries and basemap tiles.")
+                components.html(statewide_maps.interactive_html(str(item["raster"]), model,
+                                (item["signature"], file_stamp(item["raster"]))), height=700)
+            else:
+                ui.caption("Use the map's layer control and click to inspect the saved geographic information and class. "
+                           "Internet access is required for map libraries and basemap tiles.")
+                components.html(legacy_display_html(saved_html(str(item["html"]), file_stamp(item["html"]))), height=700)
         if scope == "Uttarakhand":
             ui.caption("Source grid: 30 m. The statewide web overlay uses approximately 90 m display cells. "
-                       "A click reports the display class, not an exact 30 m site assessment.")
+                       + ("The display is reduced from the saved source classes." if raster_interactive else
+                          "A click reports the display class, not an exact 30 m site assessment."))
         else:
             ui.caption("Source grid: 30 m. The saved district overlay visualizes model outputs; "
                        "display reduction and resampling do not provide a site survey.")
         ui.caption(ui.SCORE_NOTE + " Water and unavailable source cells are excluded; blank coverage is not a low class. "
-                   "The preserved interactive map retains its original legend wording.")
+                   + ("" if raster_interactive else "The preserved interactive map retains its original legend wording."))
 
     with ui.panel("explorer-summary"):
         st.subheader("Saved coverage summary")
@@ -166,7 +215,7 @@ def page(p2, static_map_png, raster_summary, file_stamp, offline: bool, *,
                        + district_views.ATTRIBUTION)
             # The statewide product already has its saved full-resolution summary.
             # Avoid a scan of all district masks until their reconciliation is requested.
-            if st.checkbox("Show official district coverage reconciliation", key="explorer-reconcile",
+            if model == "Random Forest" and st.checkbox("Show official district coverage reconciliation", key="explorer-reconcile",
                            help="The first request counts original raster cells across all 13 districts. "
                                 "The result is cached and also used by derived district views."):
                 try:
